@@ -1,0 +1,646 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<title>POS หน้าขาย</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+button{font-family:inherit;cursor:pointer}
+button:disabled{cursor:not-allowed}
+a{color:#3B2A20}a:hover{color:#B4441C}
+</style>
+</helmet>
+<div style="width: 1280px; height: 800px; position: relative; overflow: hidden; background: #F5EDE3; color: #3B2A20; font-family: 'Noto Sans Thai', sans-serif; display: flex; flex-direction: column">
+
+  <header style="height: 68px; flex-shrink: 0; display: flex; align-items: center; gap: 16px; padding: 0 20px; background: #3B2A20; color: #F5EDE3">
+    <img src="/_blob/347132067251bd7559386ef4c5c00171" alt="" style="width: 40px; height: 40px; border-radius: 10px">
+    <div style="display: flex; flex-direction: column; line-height: 1.2">
+      <span style="font-size: 18px; font-weight: 700">Cafe'nMe</span>
+      <span style="font-size: 13px; color: #E9D9C6">แท็บเล็ตหน้าร้าน</span>
+    </div>
+    <div style="margin-left: 24px; padding: 6px 14px; border-radius: 999px; background: #574235; font-size: 16px; font-weight: 600">ออเดอร์ {{orderLabel}}</div>
+    <div style="display: flex; align-items: center; gap: 8px; font-size: 14px; color: #E9D9C6">
+      <span style="width: 10px; height: 10px; border-radius: 999px; background: #6FCF8E"></span>ออนไลน์
+    </div>
+    <div style="margin-left: auto; display: flex; align-items: center; gap: 10px">
+      <a href="Orders.dc.html" style="height: 48px; display: flex; align-items: center; gap: 8px; padding: 0 18px; border-radius: 12px; background: #574235; color: #F5EDE3; text-decoration: none; font-size: 16px; font-weight: 600">
+        <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"></path></svg>
+        ออเดอร์วันนี้
+      </a>
+      <div style="height: 48px; display: flex; align-items: center; gap: 10px; padding: 0 14px; border-radius: 12px; background: #574235">
+        <span style="width: 32px; height: 32px; border-radius: 999px; background: #C69C72; color: #3B2A20; display: flex; align-items: center; justify-content: center; font-weight: 700">ม</span>
+        <span style="font-size: 15px; line-height: 1.2">มินท์<br><span style="font-size: 12px; color: #E9D9C6">บาริสต้า</span></span>
+      </div>
+      <a href="Login.dc.html" aria-label="ออกจากระบบ" style="width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; border-radius: 12px; background: #574235; color: #F5EDE3">
+        <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"></path></svg>
+      </a>
+    </div>
+  </header>
+
+  <div style="flex: 1; min-height: 0; display: flex">
+
+    <nav aria-label="หมวดหมู่" style="width: 116px; flex-shrink: 0; display: flex; flex-direction: column; gap: 8px; padding: 16px 10px; background: #EFE3D5; border-right: 1px solid #E0CFBD">
+      <sc-for list="{{cats}}" as="c" hint-placeholder-count="4">
+        <button type="button" onClick="{{c.pick}}" style="height: 84px; border-radius: 14px; border: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-size: 17px; font-weight: 600; background: {{c.bg}}; color: {{c.fg}}">
+          {{c.name}}
+          <span style="font-size: 13px; font-weight: 500; opacity: 0.8">{{c.count}} รายการ</span>
+        </button>
+      </sc-for>
+    </nav>
+
+    <main style="flex: 1; min-width: 0; padding: 18px 20px; overflow-y: auto">
+      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px">
+        <sc-for list="{{products}}" as="p" hint-placeholder-count="6">
+          <button type="button" onClick="{{p.open}}" style="text-align: left; padding: 12px; border-radius: 18px; border: 1px solid #E4D6C6; background: #FFFBF6; display: flex; flex-direction: column; gap: 10px; color: #3B2A20">
+            <sc-if value="{{p.hasImg}}" hint-placeholder-val="{{ true }}">
+              <img src="{{p.img}}" alt="" style="width: 100%; height: 136px; object-fit: contain; border-radius: 12px; background: #F5EDE3">
+            </sc-if>
+            <sc-if value="{{p.noImg}}" hint-placeholder-val="{{ false }}">
+              <div style="width: 100%; height: 136px; border-radius: 12px; background: #EADBC8; display: flex; align-items: center; justify-content: center; font-size: 48px; font-weight: 700; color: #8A6A4F">{{p.initial}}</div>
+            </sc-if>
+            <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px; width: 100%">
+              <span style="font-size: 18px; font-weight: 600">{{p.name}}</span>
+              <span style="font-size: 18px; font-weight: 700; color: #B4441C">{{p.price}}</span>
+            </div>
+          </button>
+        </sc-for>
+      </div>
+    </main>
+
+    <aside aria-label="ออเดอร์ปัจจุบัน" style="width: 404px; flex-shrink: 0; display: flex; flex-direction: column; background: #FFFBF6; border-left: 1px solid #E4D6C6">
+
+      <section style="padding: 14px 16px; border-bottom: 1px solid #E4D6C6">
+        <sc-if value="{{noMember}}" hint-placeholder-val="{{ true }}">
+          <div style="display: flex; gap: 10px">
+            <button type="button" onClick="{{openScan}}" style="flex: 1; height: 56px; border-radius: 14px; border: 0; background: #3B2A20; color: #F5EDE3; font-size: 16px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px">
+              <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2M7 12h10"></path></svg>
+              สแกนบัตรสมาชิก
+            </button>
+            <button type="button" onClick="{{openPhone}}" style="width: 128px; height: 56px; border-radius: 14px; border: 1px solid #D9C5B0; background: #FFFBF6; color: #3B2A20; font-size: 16px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 6px">
+              <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2" width="12" height="20" rx="2"></rect><path d="M11 18h2"></path></svg>
+              เบอร์โทร
+            </button>
+          </div>
+        </sc-if>
+        <sc-if value="{{hasMember}}" hint-placeholder-val="{{ false }}">
+          <div style="display: flex; flex-direction: column; gap: 10px">
+            <div style="display: flex; align-items: center; gap: 12px">
+              <span style="width: 44px; height: 44px; border-radius: 999px; background: #06C755; color: #ffffff; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 700">{{memberInitial}}</span>
+              <div style="flex: 1; min-width: 0; line-height: 1.25">
+                <div style="font-size: 17px; font-weight: 700">{{memberName}}</div>
+                <div style="font-size: 14px; color: #6B5547">{{memberPhone}} · สะสม {{memberStamps}}</div>
+              </div>
+              <button type="button" onClick="{{removeMember}}" aria-label="นำสมาชิกออก" style="width: 44px; height: 44px; border-radius: 12px; border: 1px solid #E4D6C6; background: #FFFBF6; color: #6B5547; display: flex; align-items: center; justify-content: center">
+                <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"></path></svg>
+              </button>
+            </div>
+            <div style="display: flex; gap: 6px">
+              <sc-for list="{{stampDots}}" as="d" hint-placeholder-count="10">
+                <img src="{{d.src}}" alt="" style="width: 30px; height: 30px">
+              </sc-for>
+            </div>
+            <sc-if value="{{hasReward}}" hint-placeholder-val="{{ false }}">
+              <button type="button" onClick="{{toggleRedeem}}" style="height: 52px; border-radius: 14px; display: flex; align-items: center; gap: 10px; padding: 0 12px; font-size: 15px; font-weight: 600; border: 2px solid {{rewardBorder}}; background: {{rewardBg}}; color: #3B2A20">
+                <img src="/_blob/9f38dc1fdf8c85d9bb7d71bc1fd56b5e" alt="" style="width: 36px; height: 36px">
+                <span style="flex: 1; text-align: left">{{rewardLabel}}</span>
+                <span style="font-size: 14px; color: #B4441C">{{rewardAction}}</span>
+              </button>
+            </sc-if>
+          </div>
+        </sc-if>
+      </section>
+
+      <div style="flex: 1; min-height: 0; overflow-y: auto; padding: 6px 16px">
+        <sc-if value="{{cartEmpty}}" hint-placeholder-val="{{ false }}">
+          <div style="height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: #6B5547; text-align: center">
+            <svg aria-hidden="true" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#C69C72" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8h1a4 4 0 0 1 0 8h-1M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V8ZM6 2v2M10 2v2M14 2v2"></path></svg>
+            <span style="font-size: 17px; font-weight: 600">ยังไม่มีรายการ</span>
+            <span style="font-size: 14px">แตะเมนูทางซ้ายเพื่อเริ่มออเดอร์</span>
+          </div>
+        </sc-if>
+        <sc-for list="{{lines}}" as="l" hint-placeholder-count="2">
+          <div style="display: flex; gap: 10px; padding: 12px 0; border-bottom: 1px solid #EFE3D5">
+            <div style="flex: 1; min-width: 0">
+              <div style="font-size: 17px; font-weight: 600">{{l.name}}</div>
+              <div style="font-size: 14px; color: #6B5547">{{l.mods}}</div>
+              <div style="font-size: 15px; font-weight: 700; margin-top: 4px">{{l.total}}</div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 4px">
+              <button type="button" onClick="{{l.dec}}" aria-label="ลดจำนวน" style="width: 44px; height: 44px; border-radius: 12px; border: 1px solid #D9C5B0; background: #FFFBF6; color: #3B2A20; font-size: 22px">−</button>
+              <span style="width: 32px; text-align: center; font-size: 18px; font-weight: 700">{{l.qty}}</span>
+              <button type="button" onClick="{{l.inc}}" aria-label="เพิ่มจำนวน" style="width: 44px; height: 44px; border-radius: 12px; border: 1px solid #D9C5B0; background: #FFFBF6; color: #3B2A20; font-size: 22px">+</button>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+
+      <footer style="padding: 14px 16px 16px; border-top: 1px solid #E4D6C6; display: flex; flex-direction: column; gap: 6px">
+        <div style="display: flex; justify-content: space-between; font-size: 15px; color: #6B5547"><span>รวม {{itemCount}} รายการ</span><span>{{subtotal}}</span></div>
+        <sc-if value="{{hasDiscount}}" hint-placeholder-val="{{ false }}">
+          <div style="display: flex; justify-content: space-between; font-size: 15px; color: #2F6B3F; font-weight: 600"><span>ส่วนลดรางวัลสมาชิก</span><span>−{{discount}}</span></div>
+        </sc-if>
+        <div style="display: flex; justify-content: space-between; align-items: baseline; margin-top: 2px"><span style="font-size: 18px; font-weight: 600">ยอดชำระ</span><span style="font-size: 32px; font-weight: 700">{{total}}</span></div>
+        <button type="button" onClick="{{openPay}}" disabled="{{cartEmpty}}" style="margin-top: 6px; height: 72px; border-radius: 16px; border: 0; color: #ffffff; font-size: 22px; font-weight: 700; background: {{payBg}}">ชำระเงิน {{total}}</button>
+      </footer>
+    </aside>
+  </div>
+
+  <sc-if value="{{showSheet}}" hint-placeholder-val="{{ false }}">
+    <div style="position: absolute; inset: 0; background: rgba(43, 30, 22, 0.55); display: flex; align-items: center; justify-content: center">
+      <div role="dialog" aria-label="เลือกตัวเลือก" style="width: 900px; height: 660px; border-radius: 24px; background: #FFFBF6; display: flex; overflow: hidden">
+        <div style="width: 280px; flex-shrink: 0; background: #F5EDE3; padding: 24px; display: flex; flex-direction: column; gap: 12px">
+          <sc-if value="{{sheet.hasImg}}" hint-placeholder-val="{{ true }}">
+            <img src="{{sheet.img}}" alt="" style="width: 232px; height: 232px; object-fit: contain">
+          </sc-if>
+          <sc-if value="{{sheet.noImg}}" hint-placeholder-val="{{ false }}">
+            <div style="width: 232px; height: 232px; border-radius: 16px; background: #EADBC8; display: flex; align-items: center; justify-content: center; font-size: 80px; font-weight: 700; color: #8A6A4F">{{sheet.initial}}</div>
+          </sc-if>
+          <div style="font-size: 26px; font-weight: 700">{{sheet.name}}</div>
+          <div style="font-size: 17px; color: #6B5547">ราคาเริ่มต้น {{sheet.base}}</div>
+          <div style="margin-top: auto; display: flex; flex-direction: column; gap: 8px">
+            <span style="font-size: 15px; font-weight: 600">จำนวน</span>
+            <div style="display: flex; align-items: center; gap: 8px">
+              <button type="button" onClick="{{sheet.dec}}" aria-label="ลดจำนวน" style="width: 64px; height: 64px; border-radius: 16px; border: 1px solid #D9C5B0; background: #FFFBF6; color: #3B2A20; font-size: 28px">−</button>
+              <span style="flex: 1; text-align: center; font-size: 28px; font-weight: 700">{{sheet.qty}}</span>
+              <button type="button" onClick="{{sheet.inc}}" aria-label="เพิ่มจำนวน" style="width: 64px; height: 64px; border-radius: 16px; border: 1px solid #D9C5B0; background: #FFFBF6; color: #3B2A20; font-size: 28px">+</button>
+            </div>
+          </div>
+        </div>
+        <div style="flex: 1; min-width: 0; display: flex; flex-direction: column">
+          <div style="flex: 1; overflow-y: auto; padding: 24px 28px; display: flex; flex-direction: column; gap: 22px">
+            <sc-for list="{{sheet.groups}}" as="g" hint-placeholder-count="3">
+              <div style="display: flex; flex-direction: column; gap: 10px">
+                <div style="display: flex; align-items: center; gap: 10px">
+                  <span style="font-size: 19px; font-weight: 700">{{g.name}}</span>
+                  <span style="font-size: 13px; font-weight: 600; padding: 3px 10px; border-radius: 999px; background: {{g.ruleBg}}; color: {{g.ruleFg}}">{{g.rule}}</span>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px">
+                  <sc-for list="{{g.chips}}" as="m" hint-placeholder-count="4">
+                    <button type="button" onClick="{{m.toggle}}" aria-pressed="{{m.selected}}" style="height: 64px; border-radius: 14px; font-size: 17px; font-weight: 600; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.2; border: 2px solid {{m.border}}; background: {{m.bg}}; color: {{m.fg}}">
+                      {{m.name}}
+                      <span style="font-size: 13px; font-weight: 500">{{m.delta}}</span>
+                    </button>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="padding: 16px 28px 24px; border-top: 1px solid #E4D6C6; display: flex; gap: 12px">
+            <button type="button" onClick="{{closeSheet}}" style="width: 160px; height: 68px; border-radius: 16px; border: 1px solid #D9C5B0; background: #FFFBF6; color: #3B2A20; font-size: 18px; font-weight: 600">ยกเลิก</button>
+            <button type="button" onClick="{{sheet.add}}" disabled="{{sheet.blocked}}" style="flex: 1; height: 68px; border-radius: 16px; border: 0; color: #ffffff; font-size: 20px; font-weight: 700; background: {{sheet.addBg}}">{{sheet.addLabel}}</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{showPay}}" hint-placeholder-val="{{ false }}">
+    <div style="position: absolute; inset: 0; background: rgba(43, 30, 22, 0.55); display: flex; align-items: center; justify-content: center">
+      <div role="dialog" aria-label="ชำระเงิน" style="width: 1000px; height: 680px; border-radius: 24px; background: #FFFBF6; display: flex; overflow: hidden">
+        <div style="width: 360px; flex-shrink: 0; background: #F5EDE3; padding: 28px; display: flex; flex-direction: column; gap: 10px">
+          <span style="font-size: 16px; color: #6B5547">ออเดอร์ {{orderLabel}}</span>
+          <sc-for list="{{lines}}" as="l" hint-placeholder-count="2">
+            <div style="display: flex; justify-content: space-between; gap: 8px; font-size: 16px"><span>{{l.qty}} × {{l.name}}</span><span>{{l.total}}</span></div>
+          </sc-for>
+          <sc-if value="{{hasDiscount}}" hint-placeholder-val="{{ false }}">
+            <div style="display: flex; justify-content: space-between; font-size: 16px; color: #2F6B3F; font-weight: 600"><span>รางวัลสมาชิก</span><span>−{{discount}}</span></div>
+          </sc-if>
+          <div style="margin-top: auto; border-top: 1px solid #E0CFBD; padding-top: 14px">
+            <div style="font-size: 18px; font-weight: 600">ยอดชำระ</div>
+            <div style="font-size: 56px; font-weight: 700; line-height: 1.1">{{total}}</div>
+          </div>
+        </div>
+        <div style="flex: 1; min-width: 0; padding: 24px 28px; display: flex; flex-direction: column; gap: 18px">
+          <div role="tablist" aria-label="วิธีชำระ" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; padding: 6px; border-radius: 18px; background: #F5EDE3">
+            <button type="button" role="tab" aria-selected="{{isCash}}" onClick="{{pickCash}}" style="height: 60px; border-radius: 14px; border: 0; font-size: 19px; font-weight: 700; background: {{cashTabBg}}; color: {{cashTabFg}}">เงินสด</button>
+            <button type="button" role="tab" aria-selected="{{isPromptPay}}" onClick="{{pickPromptPay}}" style="height: 60px; border-radius: 14px; border: 0; font-size: 19px; font-weight: 700; background: {{ppTabBg}}; color: {{ppTabFg}}">พร้อมเพย์</button>
+          </div>
+
+          <sc-if value="{{isCash}}" hint-placeholder-val="{{ true }}">
+            <div style="flex: 1; display: flex; gap: 20px; min-height: 0">
+              <div style="flex: 1; display: flex; flex-direction: column; gap: 12px">
+                <div style="padding: 14px 18px; border-radius: 16px; border: 2px solid #3B2A20">
+                  <div style="font-size: 14px; color: #6B5547">รับเงินมา</div>
+                  <div style="font-size: 40px; font-weight: 700; line-height: 1.15">{{received}}</div>
+                </div>
+                <div style="padding: 14px 18px; border-radius: 16px; background: {{changeBg}}">
+                  <div style="font-size: 14px; color: {{changeFg}}">เงินทอน</div>
+                  <div style="font-size: 40px; font-weight: 700; line-height: 1.15; color: {{changeFg}}">{{change}}</div>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+                  <sc-for list="{{quick}}" as="q" hint-placeholder-count="4">
+                    <button type="button" onClick="{{q.pick}}" style="height: 60px; border-radius: 14px; border: 1px solid #D9C5B0; background: #FFFBF6; color: #3B2A20; font-size: 19px; font-weight: 700">{{q.label}}</button>
+                  </sc-for>
+                </div>
+              </div>
+              <div style="width: 280px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; align-content: start">
+                <sc-for list="{{keys}}" as="k" hint-placeholder-count="12">
+                  <button type="button" onClick="{{k.press}}" aria-label="{{k.aria}}" style="height: 72px; border-radius: 14px; border: 1px solid #E4D6C6; background: #F5EDE3; color: #3B2A20; font-size: 26px; font-weight: 600">{{k.label}}</button>
+                </sc-for>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{isPromptPay}}" hint-placeholder-val="{{ false }}">
+            <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px">
+              <div style="padding: 16px; border-radius: 20px; background: #ffffff; border: 1px solid #E4D6C6">
+                <div style="display: flex; justify-content: center; padding: 6px 0 10px"><span style="padding: 4px 14px; border-radius: 8px; background: #113566; color: #ffffff; font-size: 15px; font-weight: 700; letter-spacing: 0.5px">PromptPay</span></div>
+                <div role="img" aria-label="QR พร้อมเพย์ ตัวอย่าง" style="width: 250px; height: 250px; display: grid; grid-template-columns: repeat(25, minmax(0, 1fr))">
+                  <sc-for list="{{qrCells}}" as="cell" hint-placeholder-count="625">
+                    <span style="background: {{cell.bg}}"></span>
+                  </sc-for>
+                </div>
+              </div>
+              <div style="font-size: 18px; font-weight: 600">สแกนจ่าย {{total}} · Cafe'nMe</div>
+              <div style="font-size: 14px; color: #6B5547">ตรวจยอดเข้าในแอปธนาคาร แล้วกด “ได้รับเงินแล้ว”</div>
+            </div>
+          </sc-if>
+
+          <div style="display: flex; gap: 12px">
+            <button type="button" onClick="{{closePay}}" style="width: 160px; height: 72px; border-radius: 16px; border: 1px solid #D9C5B0; background: #FFFBF6; color: #3B2A20; font-size: 18px; font-weight: 600">กลับ</button>
+            <button type="button" onClick="{{confirmPay}}" disabled="{{payBlocked}}" style="flex: 1; height: 72px; border-radius: 16px; border: 0; color: #ffffff; font-size: 22px; font-weight: 700; background: {{confirmBg}}">{{confirmLabel}}</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{showDone}}" hint-placeholder-val="{{ false }}">
+    <div style="position: absolute; inset: 0; background: #F5EDE3; display: flex; align-items: center; justify-content: center">
+      <div style="width: 620px; display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center">
+        <span style="width: 96px; height: 96px; border-radius: 999px; background: #2F6B3F; display: flex; align-items: center; justify-content: center">
+          <svg aria-hidden="true" width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5L20 7"></path></svg>
+        </span>
+        <div style="font-size: 20px; color: #6B5547">ชำระเงินเรียบร้อย · ออเดอร์</div>
+        <div style="font-size: 72px; font-weight: 700; line-height: 1">{{done.orderLabel}}</div>
+        <sc-if value="{{done.isCash}}" hint-placeholder-val="{{ true }}">
+          <div style="padding: 12px 32px; border-radius: 18px; background: #FFFBF6; border: 1px solid #E4D6C6">
+            <span style="font-size: 18px; color: #6B5547">เงินทอน </span><span style="font-size: 40px; font-weight: 700">{{done.change}}</span>
+          </div>
+        </sc-if>
+        <sc-if value="{{done.hasMember}}" hint-placeholder-val="{{ true }}">
+          <div style="display: flex; align-items: center; gap: 12px; padding: 12px 20px; border-radius: 18px; background: #FFFBF6; border: 1px solid #E4D6C6">
+            <img src="/_blob/a15ffc33eaf81945780b47b32b43d888" alt="" style="width: 40px; height: 40px">
+            <span style="font-size: 18px; text-align: left">{{done.memberName}} ได้ <b>+{{done.earned}} แสตมป์</b> · ตอนนี้ {{done.stampsNow}}</span>
+          </div>
+          <sc-if value="{{done.unlocked}}" hint-placeholder-val="{{ false }}">
+            <div style="font-size: 17px; font-weight: 600; color: #2F6B3F">ครบแล้ว! ได้เครื่องดื่มฟรี 1 แก้ว ส่งแจ้งเตือนทาง LINE ให้ลูกค้าแล้ว</div>
+          </sc-if>
+        </sc-if>
+        <div style="display: flex; gap: 12px; margin-top: 10px; width: 100%">
+          <button type="button" style="flex: 1; height: 64px; border-radius: 16px; border: 1px solid #D9C5B0; background: #FFFBF6; color: #3B2A20; font-size: 18px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px">
+            <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z"></path></svg>
+            พิมพ์ใบเสร็จ
+          </button>
+          <sc-if value="{{done.hasMember}}" hint-placeholder-val="{{ true }}">
+            <button type="button" style="flex: 1; height: 64px; border-radius: 16px; border: 1px solid #D9C5B0; background: #FFFBF6; color: #3B2A20; font-size: 18px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px">
+              <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 21l1.9-5.4A8 8 0 1 1 21 12Z"></path></svg>
+              ส่งใบเสร็จทาง LINE
+            </button>
+          </sc-if>
+        </div>
+        <button type="button" onClick="{{newOrder}}" style="width: 100%; height: 76px; border-radius: 18px; border: 0; background: #3B2A20; color: #F5EDE3; font-size: 22px; font-weight: 700">เริ่มออเดอร์ใหม่</button>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{showScan}}" hint-placeholder-val="{{ false }}">
+    <div style="position: absolute; inset: 0; background: rgba(43, 30, 22, 0.55); display: flex; align-items: center; justify-content: center">
+      <div role="dialog" aria-label="สแกนบัตรสมาชิก" style="width: 560px; border-radius: 24px; background: #FFFBF6; padding: 24px; display: flex; flex-direction: column; gap: 16px; align-items: center">
+        <div style="font-size: 22px; font-weight: 700">สแกน QR บัตรสมาชิก</div>
+        <div style="width: 360px; height: 270px; border-radius: 18px; background: #2B1E16; position: relative; display: flex; align-items: center; justify-content: center">
+          <div style="width: 180px; height: 180px; border: 4px solid #F5EDE3; border-radius: 20px"></div>
+          <span style="position: absolute; bottom: 12px; font-size: 14px; color: #E9D9C6">กล้องหน้า · ให้ลูกค้าเปิดบัตรใน LINE</span>
+        </div>
+        <div style="font-size: 14px; color: #6B5547">ใช้เครื่องสแกนบาร์โค้ด USB ได้เช่นกัน</div>
+        <div style="display: flex; gap: 12px; width: 100%">
+          <button type="button" onClick="{{closeOverlay}}" style="flex: 1; height: 60px; border-radius: 14px; border: 1px solid #D9C5B0; background: #FFFBF6; color: #3B2A20; font-size: 17px; font-weight: 600">ยกเลิก</button>
+          <button type="button" onClick="{{simulateScan}}" style="flex: 1; height: 60px; border-radius: 14px; border: 0; background: #3B2A20; color: #F5EDE3; font-size: 17px; font-weight: 700">จำลองการสแกน</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{showPhone}}" hint-placeholder-val="{{ false }}">
+    <div style="position: absolute; inset: 0; background: rgba(43, 30, 22, 0.55); display: flex; align-items: center; justify-content: center">
+      <div role="dialog" aria-label="ค้นหาสมาชิกด้วยเบอร์โทร" style="width: 760px; border-radius: 24px; background: #FFFBF6; padding: 24px; display: flex; gap: 24px">
+        <div style="flex: 1; display: flex; flex-direction: column; gap: 14px">
+          <div style="font-size: 22px; font-weight: 700">ค้นหาด้วยเบอร์โทร</div>
+          <div style="height: 68px; border-radius: 16px; border: 2px solid #3B2A20; display: flex; align-items: center; padding: 0 18px; font-size: 30px; font-weight: 700; letter-spacing: 1px">{{phoneDisplay}}</div>
+          <sc-if value="{{phoneHasResult}}" hint-placeholder-val="{{ false }}">
+            <button type="button" onClick="{{simulateScan}}" style="text-align: left; padding: 14px; border-radius: 16px; border: 2px solid #C69C72; background: #F5EDE3; color: #3B2A20; display: flex; align-items: center; gap: 12px">
+              <span style="width: 44px; height: 44px; border-radius: 999px; background: #06C755; color: #ffffff; display: flex; align-items: center; justify-content: center; font-weight: 700">พ</span>
+              <span style="flex: 1; line-height: 1.3"><b style="font-size: 17px">คุณแพรว</b><br><span style="font-size: 14px; color: #6B5547">081-xxx-4821 · สะสม 8/10 · มีรางวัล 1</span></span>
+              <span style="font-size: 15px; font-weight: 700; color: #B4441C">เลือก</span>
+            </button>
+          </sc-if>
+          <sc-if value="{{phoneNoResult}}" hint-placeholder-val="{{ true }}">
+            <div style="font-size: 15px; color: #6B5547">พิมพ์อย่างน้อย 4 หลักเพื่อค้นหา</div>
+          </sc-if>
+          <button type="button" onClick="{{closeOverlay}}" style="margin-top: auto; height: 60px; border-radius: 14px; border: 1px solid #D9C5B0; background: #FFFBF6; color: #3B2A20; font-size: 17px; font-weight: 600">ยกเลิก</button>
+        </div>
+        <div style="width: 300px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px">
+          <sc-for list="{{phoneKeys}}" as="k" hint-placeholder-count="12">
+            <button type="button" onClick="{{k.press}}" aria-label="{{k.aria}}" style="height: 76px; border-radius: 14px; border: 1px solid #E4D6C6; background: #F5EDE3; color: #3B2A20; font-size: 28px; font-weight: 600">{{k.label}}</button>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"startScreen":{"editor":"enum","options":["order","modifiers","member","payment-cash","payment-promptpay","done","phone"],"default":"order"},"$preview":{"width":1280,"height":800}}'>
+var IMG = {
+  americano: '/_blob/ab77c98e9c7b70bef2c3699c06b5e6b6',
+  latte: '/_blob/7868fae746fabf6e4f05517645c1b8fa',
+  thaitea: '/_blob/902086fd478da975d60cd878d60906a4',
+  matcha: '/_blob/3c7efe897950e1cf9305e37b594992a7',
+  stampOn: '/_blob/a15ffc33eaf81945780b47b32b43d888',
+  stampOff: '/_blob/e5b87c8d917d0cc432737812eb54fa9d'
+};
+var GROUPS = {
+  type: { name: 'ประเภท', min: 1, max: 1, mods: [{ id: 't0', name: 'ร้อน', d: 0 }, { id: 't1', name: 'เย็น', d: 5 }, { id: 't2', name: 'ปั่น', d: 10 }] },
+  sweet: { name: 'ความหวาน', min: 1, max: 1, mods: [{ id: 's0', name: '0%', d: 0 }, { id: 's25', name: '25%', d: 0 }, { id: 's50', name: '50%', d: 0 }, { id: 's100', name: '100%', d: 0 }] },
+  milk: { name: 'นม', min: 0, max: 1, mods: [{ id: 'm1', name: 'นมโอ๊ต', d: 15 }, { id: 'm2', name: 'นมอัลมอนด์', d: 15 }] },
+  shot: { name: 'ช็อตเพิ่ม', min: 0, max: 1, mods: [{ id: 'x1', name: 'เพิ่มช็อต', d: 15 }] }
+};
+var PRODUCTS = [
+  { id: 'americano', name: 'อเมริกาโน่', cat: 'coffee', price: 50, img: IMG.americano, groups: ['type', 'sweet', 'milk', 'shot'] },
+  { id: 'latte', name: 'ลาเต้', cat: 'coffee', price: 55, img: IMG.latte, groups: ['type', 'sweet', 'milk', 'shot'] },
+  { id: 'cappuccino', name: 'คาปูชิโน่', cat: 'coffee', price: 55, img: null, groups: ['type', 'sweet', 'milk', 'shot'] },
+  { id: 'thaitea', name: 'ชาไทย', cat: 'tea', price: 45, img: IMG.thaitea, groups: ['type', 'sweet'] },
+  { id: 'matcha', name: 'มัทฉะลาเต้', cat: 'tea', price: 60, img: IMG.matcha, groups: ['type', 'sweet', 'milk'] },
+  { id: 'cocoa', name: 'โกโก้', cat: 'other', price: 45, img: null, groups: ['type', 'sweet', 'milk'] }
+];
+var CATS = [{ id: 'all', name: 'ทั้งหมด' }, { id: 'coffee', name: 'กาแฟ' }, { id: 'tea', name: 'ชา' }, { id: 'other', name: 'อื่นๆ' }];
+var MEMBER = { name: 'คุณแพรว', phone: '081-xxx-4821', stamps: 8, goal: 10, rewards: 1 };
+var SAMPLE_CART = [
+  { key: 1, productId: 'latte', name: 'ลาเต้', qty: 1, mods: ['เย็น', '50%', 'นมโอ๊ต'], unit: 75 },
+  { key: 2, productId: 'thaitea', name: 'ชาไทย', qty: 2, mods: ['เย็น', '100%'], unit: 50 }
+];
+
+function baht(n) { return '฿' + n.toLocaleString('th-TH'); }
+// Skip honorifics and Thai leading vowels: "คุณแพรว" -> "พ", "โกโก้" -> "ก".
+function thaiInitial(name) {
+  var s = name.trim().replace(/^(คุณ|พี่|น้อง)\s*/, '').replace(/^[เแโใไ]+/, '');
+  return (s || name.trim()).charAt(0) || '?';
+}
+function pad(n) { return '#' + String(n).padStart(3, '0'); }
+function findProduct(id) { return PRODUCTS.filter(function (p) { return p.id === id; })[0]; }
+
+function seed(screen) {
+  var s = { screen: 'order', cat: 'all', sheet: null, cart: [], member: null, redeem: false, payMethod: 'cash', cashStr: '', orderNo: 24, phoneStr: '', done: null, nextKey: 10 };
+  if (screen === 'modifiers') { s.cart = SAMPLE_CART.slice(); s.screen = 'modifiers'; s.sheet = { productId: 'americano', sel: { type: ['t1'], sweet: ['s50'] }, qty: 1 }; }
+  if (screen === 'member') { s.cart = SAMPLE_CART.slice(); s.member = Object.assign({}, MEMBER); s.redeem = true; }
+  if (screen === 'payment-cash') { s.cart = SAMPLE_CART.slice(); s.member = Object.assign({}, MEMBER); s.screen = 'payment'; s.cashStr = '500'; }
+  if (screen === 'payment-promptpay') { s.cart = SAMPLE_CART.slice(); s.member = Object.assign({}, MEMBER); s.screen = 'payment'; s.payMethod = 'promptpay'; }
+  if (screen === 'done') { s.screen = 'done'; s.done = { orderNo: 24, isCash: true, change: 325, hasMember: true, memberName: 'คุณแพรว', earned: 3, stampsNow: '1/10', unlocked: true }; }
+  if (screen === 'phone') { s.cart = SAMPLE_CART.slice(); s.screen = 'phone'; s.phoneStr = '0814821'; }
+  return s;
+}
+
+function qrCells() {
+  var n = 25, cells = [];
+  function finder(r, c, r0, c0) {
+    var y = r - r0, x = c - c0;
+    if (y < 0 || x < 0 || y > 6 || x > 6) return null;
+    var edge = y === 0 || y === 6 || x === 0 || x === 6;
+    var core = y >= 2 && y <= 4 && x >= 2 && x <= 4;
+    return edge || core;
+  }
+  for (var r = 0; r < n; r++) {
+    for (var c = 0; c < n; c++) {
+      var f = finder(r, c, 0, 0);
+      if (f === null) f = finder(r, c, 0, 18);
+      if (f === null) f = finder(r, c, 18, 0);
+      var on = f !== null ? f : ((r * 7 + c * 13 + r * c) % 5 < 2);
+      if (f === null && ((r === 7 || c === 7) && (r < 8 && c < 8))) on = false;
+      cells.push({ bg: on ? '#1B1410' : '#ffffff' });
+    }
+  }
+  return cells;
+}
+var QR = qrCells();
+
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = seed((props && props.startScreen) || 'order');
+  }
+
+  componentDidUpdate(prev) {
+    if (prev.startScreen !== this.props.startScreen) this.setState(seed(this.props.startScreen || 'order'));
+  }
+
+  totals() {
+    var s = this.state;
+    var subtotal = s.cart.reduce(function (a, l) { return a + l.unit * l.qty; }, 0);
+    var cheapest = s.cart.length ? Math.min.apply(null, s.cart.map(function (l) { return l.unit; })) : 0;
+    var discount = s.redeem && s.member && s.member.rewards > 0 ? cheapest : 0;
+    var items = s.cart.reduce(function (a, l) { return a + l.qty; }, 0);
+    return { subtotal: subtotal, discount: discount, total: Math.max(0, subtotal - discount), items: items };
+  }
+
+  sheetVals() {
+    var self = this, s = this.state;
+    if (!s.sheet) return { groups: [] };
+    var p = findProduct(s.sheet.productId);
+    var unit = p.price, blocked = false, chosen = [];
+    var groups = p.groups.map(function (gid) {
+      var g = GROUPS[gid], sel = s.sheet.sel[gid] || [];
+      if (sel.length < g.min) blocked = true;
+      var chips = g.mods.map(function (m) {
+        var on = sel.indexOf(m.id) >= 0;
+        if (on) { unit += m.d; chosen.push(m.name); }
+        return {
+          name: m.name,
+          delta: m.d ? '+' + baht(m.d) : 'ไม่เพิ่มราคา',
+          selected: on ? 'true' : 'false',
+          bg: on ? '#3B2A20' : '#FFFBF6',
+          fg: on ? '#F5EDE3' : '#3B2A20',
+          border: on ? '#3B2A20' : '#D9C5B0',
+          toggle: function () {
+            var cur = (self.state.sheet.sel[gid] || []).slice();
+            var i = cur.indexOf(m.id);
+            if (g.max === 1) cur = i >= 0 && g.min === 0 ? [] : [m.id];
+            else if (i >= 0) cur.splice(i, 1);
+            else if (cur.length < g.max) cur.push(m.id);
+            var nextSel = Object.assign({}, self.state.sheet.sel); nextSel[gid] = cur;
+            self.setState({ sheet: Object.assign({}, self.state.sheet, { sel: nextSel }) });
+          }
+        };
+      });
+      var missing = sel.length < g.min;
+      return {
+        name: g.name, chips: chips,
+        rule: g.min > 0 ? 'ต้องเลือก ' + g.min : (g.max > 1 ? 'เลือกได้สูงสุด ' + g.max : 'ไม่บังคับ'),
+        ruleBg: missing ? '#F7DCD0' : '#EFE3D5',
+        ruleFg: missing ? '#8E3415' : '#6B5547'
+      };
+    });
+    var qty = s.sheet.qty;
+    return {
+      name: p.name, img: p.img, hasImg: !!p.img, noImg: !p.img, initial: thaiInitial(p.name),
+      base: baht(p.price), qty: qty, groups: groups, blocked: blocked,
+      addBg: blocked ? '#C9B6A4' : '#B4441C',
+      addLabel: blocked ? 'เลือกตัวเลือกที่ต้องเลือกก่อน' : 'เพิ่มลงออเดอร์ · ' + baht(unit * qty),
+      dec: function () { self.setState({ sheet: Object.assign({}, self.state.sheet, { qty: Math.max(1, qty - 1) }) }); },
+      inc: function () { self.setState({ sheet: Object.assign({}, self.state.sheet, { qty: Math.min(99, qty + 1) }) }); },
+      add: function () {
+        if (blocked) return;
+        var line = { key: self.state.nextKey, productId: p.id, name: p.name, qty: qty, mods: chosen, unit: unit };
+        self.setState({ cart: self.state.cart.concat([line]), sheet: null, screen: 'order', nextKey: self.state.nextKey + 1 });
+      }
+    };
+  }
+
+  renderVals() {
+    var self = this, s = this.state, t = this.totals();
+    var member = s.member;
+
+    var cats = CATS.map(function (c) {
+      var on = s.cat === c.id;
+      return {
+        name: c.name,
+        count: PRODUCTS.filter(function (p) { return c.id === 'all' || p.cat === c.id; }).length,
+        bg: on ? '#3B2A20' : 'transparent',
+        fg: on ? '#F5EDE3' : '#3B2A20',
+        pick: function () { self.setState({ cat: c.id }); }
+      };
+    });
+
+    var products = PRODUCTS.filter(function (p) { return s.cat === 'all' || p.cat === s.cat; }).map(function (p) {
+      return {
+        name: p.name, price: baht(p.price), img: p.img, hasImg: !!p.img, noImg: !p.img, initial: thaiInitial(p.name),
+        open: function () { self.setState({ screen: 'modifiers', sheet: { productId: p.id, sel: {}, qty: 1 } }); }
+      };
+    });
+
+    var lines = s.cart.map(function (l) {
+      return {
+        name: l.name, qty: l.qty, mods: l.mods.join(' · '), total: baht(l.unit * l.qty),
+        inc: function () { self.setState({ cart: self.state.cart.map(function (x) { return x.key === l.key ? Object.assign({}, x, { qty: x.qty + 1 }) : x; }) }); },
+        dec: function () {
+          self.setState({ cart: self.state.cart.map(function (x) { return x.key === l.key ? Object.assign({}, x, { qty: x.qty - 1 }) : x; }).filter(function (x) { return x.qty > 0; }) });
+        }
+      };
+    });
+
+    var stampDots = [];
+    if (member) for (var i = 0; i < member.goal; i++) stampDots.push({ src: i < member.stamps ? IMG.stampOn : IMG.stampOff });
+
+    var received = parseInt(s.cashStr || '0', 10);
+    var change = received - t.total;
+    var isCash = s.payMethod === 'cash';
+    var payBlocked = isCash ? received < t.total : false;
+
+    var quick = [
+      { label: 'พอดี', v: t.total }, { label: baht(100), v: 100 }, { label: baht(500), v: 500 }, { label: baht(1000), v: 1000 }
+    ].map(function (q) { return { label: q.label, pick: function () { self.setState({ cashStr: String(q.v) }); } }; });
+
+    function keypad(field, maxLen) {
+      return ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'C', '0', '⌫'].map(function (k) {
+        return {
+          label: k,
+          aria: k === 'C' ? 'ล้าง' : (k === '⌫' ? 'ลบ' : k),
+          press: function () {
+            var cur = self.state[field] || '';
+            var next = k === 'C' ? '' : (k === '⌫' ? cur.slice(0, -1) : (cur + k).slice(0, maxLen));
+            var patch = {}; patch[field] = next.replace(/^0+(?=\d)/, field === 'cashStr' ? '' : '0');
+            if (field === 'phoneStr') patch[field] = next;
+            self.setState(patch);
+          }
+        };
+      });
+    }
+
+    var phone = s.phoneStr || '';
+    var phoneDisplay = phone ? phone.replace(/^(\d{3})(\d{0,3})(\d{0,4}).*/, function (_, a, b, c) { return [a, b, c].filter(Boolean).join('-'); }) : '0__-___-____';
+
+    var done = s.done || {};
+
+    return {
+      orderLabel: pad(s.orderNo),
+      cats: cats, products: products, lines: lines,
+      cartEmpty: s.cart.length === 0,
+      itemCount: t.items, subtotal: baht(t.subtotal), discount: baht(t.discount), hasDiscount: t.discount > 0, total: baht(t.total),
+      payBg: s.cart.length === 0 ? '#C9B6A4' : '#B4441C',
+      openPay: function () { if (self.state.cart.length) self.setState({ screen: 'payment', cashStr: '' }); },
+
+      noMember: !member, hasMember: !!member,
+      memberName: member ? member.name : '', memberInitial: member ? thaiInitial(member.name) : '',
+      memberPhone: member ? member.phone : '', memberStamps: member ? member.stamps + '/' + member.goal : '',
+      stampDots: stampDots,
+      hasReward: !!(member && member.rewards > 0),
+      rewardLabel: s.redeem ? 'ใช้รางวัล: เครื่องดื่มฟรี 1 แก้ว' : 'มีรางวัล: เครื่องดื่มฟรี ' + (member ? member.rewards : 0) + ' แก้ว',
+      rewardAction: s.redeem ? 'ยกเลิก' : 'ใช้เลย',
+      rewardBg: s.redeem ? '#E7F1E8' : '#FFFBF6',
+      rewardBorder: s.redeem ? '#2F6B3F' : '#C69C72',
+      toggleRedeem: function () { self.setState({ redeem: !self.state.redeem }); },
+      removeMember: function () { self.setState({ member: null, redeem: false }); },
+      openScan: function () { self.setState({ screen: 'scan' }); },
+      openPhone: function () { self.setState({ screen: 'phone', phoneStr: '' }); },
+      simulateScan: function () { self.setState({ member: Object.assign({}, MEMBER), screen: 'order' }); },
+      closeOverlay: function () { self.setState({ screen: 'order' }); },
+
+      showSheet: s.screen === 'modifiers' && !!s.sheet,
+      sheet: this.sheetVals(),
+      closeSheet: function () { self.setState({ screen: 'order', sheet: null }); },
+
+      showPay: s.screen === 'payment',
+      isCash: isCash, isPromptPay: !isCash,
+      cashTabBg: isCash ? '#3B2A20' : 'transparent', cashTabFg: isCash ? '#F5EDE3' : '#3B2A20',
+      ppTabBg: !isCash ? '#3B2A20' : 'transparent', ppTabFg: !isCash ? '#F5EDE3' : '#3B2A20',
+      pickCash: function () { self.setState({ payMethod: 'cash' }); },
+      pickPromptPay: function () { self.setState({ payMethod: 'promptpay' }); },
+      received: baht(received),
+      change: change >= 0 ? baht(change) : 'ขาดอีก ' + baht(-change),
+      changeBg: change >= 0 ? '#E7F1E8' : '#F7DCD0',
+      changeFg: change >= 0 ? '#245232' : '#8E3415',
+      quick: quick, keys: keypad('cashStr', 6), qrCells: QR,
+      payBlocked: payBlocked,
+      confirmBg: payBlocked ? '#C9B6A4' : '#2F6B3F',
+      confirmLabel: isCash ? (payBlocked ? 'ใส่จำนวนเงินที่รับ' : 'รับเงิน · ทอน ' + baht(Math.max(0, change))) : 'ได้รับเงินแล้ว',
+      closePay: function () { self.setState({ screen: 'order' }); },
+      confirmPay: function () {
+        var st = self.state, tt = self.totals(), m = st.member;
+        var earned = tt.items, now = m ? m.stamps + earned : 0, unlocked = m ? now >= m.goal : false;
+        self.setState({
+          screen: 'done',
+          done: {
+            orderNo: st.orderNo, isCash: st.payMethod === 'cash', change: Math.max(0, parseInt(st.cashStr || '0', 10) - tt.total),
+            hasMember: !!m, memberName: m ? m.name : '', earned: earned,
+            stampsNow: m ? (unlocked ? (now - m.goal) : now) + '/' + m.goal : '', unlocked: unlocked
+          }
+        });
+      },
+
+      showDone: s.screen === 'done',
+      done: {
+        orderLabel: pad(done.orderNo || s.orderNo), isCash: !!done.isCash, change: baht(done.change || 0),
+        hasMember: !!done.hasMember, memberName: done.memberName || '', earned: done.earned || 0,
+        stampsNow: done.stampsNow || '', unlocked: !!done.unlocked
+      },
+      newOrder: function () {
+        var next = seed('order'); next.orderNo = self.state.orderNo + 1; self.setState(next);
+      },
+
+      showScan: s.screen === 'scan',
+      showPhone: s.screen === 'phone',
+      phoneDisplay: phoneDisplay,
+      phoneHasResult: phone.length >= 4, phoneNoResult: phone.length < 4,
+      phoneKeys: keypad('phoneStr', 10)
+    };
+  }
+}
+</script>
+</body>
+</html>

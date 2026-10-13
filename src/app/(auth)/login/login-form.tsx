@@ -1,0 +1,54 @@
+"use client";
+
+import { useActionState, useRef, useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
+import { signIn, type AuthActionState } from "@/server/auth-actions";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { gsap, MOTION, prefersReducedMotion, useGSAP } from "@/components/motion/gsap";
+
+const initialState: AuthActionState = {};
+
+export function LoginForm() {
+  const formRef = useRef<HTMLFormElement>(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [state, action, pending] = useActionState(signIn, initialState);
+  useGSAP(() => {
+    if (prefersReducedMotion() || !formRef.current) return;
+    const media = gsap.matchMedia();
+    media.add("(prefers-reduced-motion: no-preference)", () => {
+      const card = formRef.current?.closest("[data-auth-card]");
+      if (card) gsap.fromTo(card, { y: 10, opacity: 0 }, { y: 0, opacity: 1, duration: MOTION.base, ease: MOTION.ease });
+      const fields = formRef.current?.querySelectorAll("[data-auth-field]");
+      if (fields?.length) gsap.fromTo(fields, { y: 6, opacity: 0 }, { y: 0, opacity: 1, duration: MOTION.base, stagger: MOTION.stagger, ease: MOTION.ease });
+      const line = card?.querySelector<SVGPathElement>("[data-logo-line]");
+      if (line) gsap.fromTo(line, { drawSVG: "0%" }, { drawSVG: "100%", duration: MOTION.base, ease: MOTION.ease });
+    });
+    return () => media.revert();
+  }, { scope: formRef });
+
+  return (
+    <form key={state.email ?? ""} ref={formRef} action={action} noValidate className="space-y-4">
+      <div data-auth-field className="space-y-2">
+        <Label htmlFor="email">อีเมล</Label>
+        <Input id="email" name="email" type="email" autoComplete="email" defaultValue={state.email ?? ""} required />
+        {state.errors?.email?.[0] && <p className="text-sm text-destructive">{state.errors.email[0]}</p>}
+      </div>
+      <div data-auth-field className="space-y-2">
+        <Label htmlFor="password">รหัสผ่าน</Label>
+        <div className="relative">
+          <Input id="password" name="password" type={showPassword ? "text" : "password"} autoComplete="current-password" className="pr-12" required />
+          <Button type="button" variant="ghost" aria-label={showPassword ? "ซ่อนรหัสผ่าน" : "แสดงรหัสผ่าน"} aria-pressed={showPassword} className="absolute right-0 top-1/2 size-11 -translate-y-1/2" onClick={() => setShowPassword((shown) => !shown)}>
+            {showPassword ? <EyeOff aria-hidden="true" /> : <Eye aria-hidden="true" />}
+          </Button>
+        </div>
+        {state.errors?.password?.[0] && <p className="text-sm text-destructive">{state.errors.password[0]}</p>}
+      </div>
+      {state.message && <p role="status" className="text-sm text-destructive">{state.message}</p>}
+      <Button data-auth-field type="submit" className="w-full" disabled={pending}>
+        {pending ? "กำลังเข้าสู่ระบบ…" : "เข้าสู่ระบบ"}
+      </Button>
+    </form>
+  );
+}

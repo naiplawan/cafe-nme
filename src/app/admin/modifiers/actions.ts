@@ -1,0 +1,113 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { requireStaff } from "@/lib/auth";
+import {
+  modifierGroupSchema,
+  modifierSchema,
+} from "@/lib/validation/menu";
+import {
+  createModifier,
+  createModifierGroup,
+  createStandardModifierGroups,
+  deleteModifier,
+  deleteModifierGroup,
+  setGroupProducts,
+  updateModifierGroup,
+} from "@/server/modifiers";
+
+export type ModifierFormState = { error?: string; success?: boolean; createdGroupId?: string; message?: string };
+
+function field(formData: FormData, name: string) {
+  const value = formData.get(name);
+  return typeof value === "string" ? value : "";
+}
+
+export async function createModifierGroupAction(
+  _state: ModifierFormState,
+  formData: FormData,
+): Promise<ModifierFormState> {
+  const session = await requireStaff();
+  const parsed = modifierGroupSchema.safeParse({
+    name: field(formData, "name"),
+    minSelect: field(formData, "minSelect"),
+    maxSelect: field(formData, "maxSelect"),
+  });
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "ข้อมูลไม่ถูกต้อง" };
+
+  const group = await createModifierGroup(session.shopId, parsed.data);
+  revalidatePath("/admin/modifiers");
+  revalidatePath("/admin");
+  return { success: true, createdGroupId: group.id };
+}
+
+export async function createStandardModifierGroupsAction(_state: ModifierFormState, _formData: FormData): Promise<ModifierFormState> {
+  void _state;
+  void _formData;
+  const { shopId } = await requireStaff();
+  const result = await createStandardModifierGroups(shopId);
+  revalidatePath("/admin/modifiers");
+  revalidatePath("/admin");
+  // With no products yet there is nothing to link; the stock-menu import links these groups later.
+  if (result.linkedProducts === 0) return { success: true, message: "เพิ่มชุดตัวเลือกแล้ว — เมื่อเพิ่มเมนู ระบบจะผูกตัวเลือกให้เมนูตัวอย่างอัตโนมัติ" };
+  return { success: true, message: `ผูกกับสินค้า ${result.linkedProducts} รายการแล้ว — ปรับเพิ่มได้ในแต่ละกลุ่ม` };
+}
+
+export async function setGroupProductsAction(_state: ModifierFormState, formData: FormData): Promise<ModifierFormState> {
+  void _state;
+  const { shopId } = await requireStaff();
+  const groupId = field(formData, "groupId");
+  const productIds = formData.getAll("productIds").filter((value): value is string => typeof value === "string");
+  await setGroupProducts(shopId, groupId, productIds);
+  revalidatePath("/admin/modifiers");
+  revalidatePath("/admin");
+  return { success: true };
+}
+
+export async function updateModifierGroupAction(
+  _state: ModifierFormState,
+  formData: FormData,
+): Promise<ModifierFormState> {
+  const session = await requireStaff();
+  const parsed = modifierGroupSchema.safeParse({
+    name: field(formData, "name"),
+    minSelect: field(formData, "minSelect"),
+    maxSelect: field(formData, "maxSelect"),
+  });
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "ข้อมูลไม่ถูกต้อง" };
+
+  await updateModifierGroup(session.shopId, field(formData, "groupId"), parsed.data);
+  revalidatePath("/admin/modifiers");
+  return { success: true };
+}
+
+export async function deleteModifierGroupAction(formData: FormData) {
+  const { shopId } = await requireStaff();
+  await deleteModifierGroup(shopId, field(formData, "groupId"));
+  revalidatePath("/admin/modifiers");
+  revalidatePath("/admin");
+}
+
+export async function createModifierAction(
+  _state: ModifierFormState,
+  formData: FormData,
+): Promise<ModifierFormState> {
+  const { shopId } = await requireStaff();
+  const parsed = modifierSchema.safeParse({
+    groupId: field(formData, "groupId"),
+    name: field(formData, "name"),
+    priceDelta: field(formData, "priceDelta"),
+  });
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "ข้อมูลไม่ถูกต้อง" };
+
+  const { groupId, name, priceDelta } = parsed.data;
+  await createModifier(shopId, groupId, { name, priceDeltaSatang: priceDelta });
+  revalidatePath("/admin/modifiers");
+  return { success: true };
+}
+
+export async function deleteModifierAction(formData: FormData) {
+  const { shopId } = await requireStaff();
+  await deleteModifier(shopId, field(formData, "modifierId"));
+  revalidatePath("/admin/modifiers");
+}

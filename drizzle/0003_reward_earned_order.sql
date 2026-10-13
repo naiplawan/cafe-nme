@@ -1,0 +1,2 @@
+ALTER TABLE "rewards" ADD COLUMN "earned_order_id" uuid;--> statement-breakpoint
+ALTER TABLE "rewards" ADD CONSTRAINT "rewards_earned_order_id_orders_id_fk" FOREIGN KEY ("earned_order_id") REFERENCES "public"."orders"("id") ON DELETE no action ON UPDATE no action;
