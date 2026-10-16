@@ -30,8 +30,16 @@ async function requestApi(path: string, init?: RequestInit): Promise<unknown> {
     },
     cache: "no-store",
   });
+  if (response.status === 409) {
+    // A conflict carries a message meant for staff (e.g. "เบอร์โทรนี้มีสมาชิกแล้ว").
+    const body: unknown = await response.json().catch(() => null);
+    const message = body && typeof body === "object" && "message" in body && typeof body.message === "string" ? body.message : null;
+    throw new Error(message ?? "Nest members API returned 409");
+  }
   if (!response.ok) { throw new Error(`Nest members API returned ${response.status}`); }
-  return response.json();
+  // Nest sends a handler's `null` (e.g. an unknown member) as an empty body.
+  const text = await response.text();
+  return text ? JSON.parse(text) : null;
 }
 
 const shopPath = (shopId: string) => `/v1/shops/${encodeURIComponent(UUID.parse(shopId))}/members`;

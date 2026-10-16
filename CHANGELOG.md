@@ -10,6 +10,8 @@ versioning (pre-1.0: minor = features, patch = fixes).
 - Production demo seeding now requires explicit confirmation and custom owner credentials, and skips when the demo shop or owner already exists.
 
 ### Fixed
+- Entering a wrong POS PIN now shows "PIN ไม่ถูกต้อง" instead of crashing the sign-in page with a server error.
+- Adding a walk-in member with a phone number that already exists now shows the API's message ("เบอร์โทรนี้มีสมาชิกแล้ว"), and looking up an unknown member token returns no member instead of crashing.
 - Admin dashboard reports now compare the text-based business date column with text date bounds, preventing PostgreSQL type errors.
 - POS pairing now handles invalid or expired codes without crashing, and production has the rate-limit table required by pairing requests.
 

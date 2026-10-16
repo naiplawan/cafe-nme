@@ -4,7 +4,7 @@ import { and, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { posDevices, shops, staff } from "@/db/schema";
 import { hashPin } from "@/lib/pin";
-import { createDevice, getPosDevice, listPosStaff, pairDevice, regeneratePairingCode, verifyManagerPin } from "./pos-session";
+import { createDevice, getPosDevice, listPosStaff, pairDevice, regeneratePairingCode, staffLogin, verifyManagerPin } from "./pos-session";
 
 const cookies = vi.hoisted(() => {
   const values = new Map<string, string>();
@@ -41,24 +41,25 @@ describe("POS session integration", () => {
   });
 
   it("creates and regenerates shop-scoped one-time pairing codes", async () => {
-    const created = await createDevice(shopId, "Tablet");
+    const created = await createDevice(shopId, managerId, "Tablet");
     deviceId = created.deviceId;
     expect(created.pairingCode).toMatch(/^\d{6}$/);
     const [stored] = await db.select().from(posDevices).where(and(eq(posDevices.shopId, shopId), eq(posDevices.id, deviceId)));
     expect(stored.pairingCodeHash).not.toBe(created.pairingCode);
     expect(stored.pairingExpiresAt!.getTime()).toBeGreaterThan(Date.now());
 
-    const renewed = await regeneratePairingCode(shopId, deviceId);
+    const renewed = await regeneratePairingCode(shopId, managerId, deviceId);
     expect(renewed).toMatch(/^\d{6}$/);
     expect(renewed).not.toBe(created.pairingCode);
-    await expect(regeneratePairingCode(randomUUID(), deviceId)).rejects.toThrow("POS device not found");
+    // Another shop's actor cannot touch this device.
+    await expect(regeneratePairingCode(randomUUID(), managerId, deviceId)).rejects.toThrow();
   });
 
   it("consumes a valid pairing code, sets the device cookie, and returns its shop", async () => {
     const [device] = await db.select().from(posDevices).where(and(eq(posDevices.shopId, shopId), eq(posDevices.id, deviceId)));
     const [paired] = await db.select().from(posDevices).where(eq(posDevices.id, deviceId));
     expect(paired.pairingCodeHash).toBe(device.pairingCodeHash);
-    const code = await regeneratePairingCode(shopId, deviceId);
+    const code = await regeneratePairingCode(shopId, managerId, deviceId);
     const result = await pairDevice(code);
     expect(result).toMatchObject({ deviceId, deviceName: "Tablet", shop: { id: shopId, name: "POS Auth Test" } });
     expect(cookies.values.get("pos_device")).toBeTruthy();
@@ -73,6 +74,10 @@ describe("POS session integration", () => {
     const rows = await listPosStaff(shopId);
     expect(rows.map((row) => row.id)).toContain(managerId);
     expect(rows.map((row) => row.id)).not.toContain(inactiveId);
+    // Manager PIN checks run inside a signed-in POS staff session on the paired device.
+    expect(await staffLogin(inactiveId, "1357")).toBe(false);
+    expect(await staffLogin(managerId, "0000")).toBe(false);
+    expect(await staffLogin(managerId, "2468")).toBe(true);
     expect(await verifyManagerPin(shopId, "2468")).toEqual({ staffId: managerId });
     expect(await verifyManagerPin(shopId, "1357")).toBeNull();
     expect(await verifyManagerPin(randomUUID(), "2468")).toBeNull();

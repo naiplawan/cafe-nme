@@ -56,7 +56,9 @@ async function requestApi<T>(path: string, schema: z.ZodType<T>, init?: RequestI
     cache: "no-store",
   });
   if (!response.ok) throw new Error(`Nest POS access API returned ${response.status}`);
-  const parsed = schema.safeParse(await response.json());
+  // Nest sends a handler's `null` (e.g. a wrong PIN) as an empty body, which response.json() cannot parse.
+  const text = await response.text();
+  const parsed = schema.safeParse(text ? JSON.parse(text) : null);
   if (!parsed.success) throw new Error("Nest POS access API returned an invalid payload");
   return parsed.data;
 }
