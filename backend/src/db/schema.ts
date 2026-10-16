@@ -47,6 +47,8 @@ export const shops = pgTable("shops", {
   receiptFooter: text("receipt_footer"),
   stampGoal: integer("stamp_goal").notNull().default(10),
   stampExpiryMonths: integer("stamp_expiry_months").notNull().default(12),
+  // Sold-out products become available again on the shop's next business day.
+  autoClearSoldOut: boolean("auto_clear_sold_out").notNull().default(true),
   createdAt: createdAt(),
 });
 
@@ -101,9 +103,13 @@ export const products = pgTable(
     name: text("name").notNull(),
     basePriceSatang: integer("base_price_satang").notNull(),
     imageUrl: text("image_url"),
+    // Tile colour shown when there is no image; null picks one from the name.
+    tileColor: text("tile_color"),
     isActive: boolean("is_active").notNull().default(true),
     // Temporarily out of stock: still listed on the POS but cannot be sold. Staff toggle it.
     soldOut: boolean("sold_out").notNull().default(false),
+    // Business date (YYYY-MM-DD, shop timezone) the product was marked sold out.
+    soldOutOn: text("sold_out_on"),
     earnsStamp: boolean("earns_stamp").notNull().default(true),
     sort: integer("sort").notNull().default(0),
     createdAt: createdAt(),

@@ -50,6 +50,20 @@
       "when": 1792107136075,
       "tag": "0006_material_shiva",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1792135295232,
+      "tag": "0007_sold_out_auto_clear",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1792137946927,
+      "tag": "0008_product_tile_color",
+      "breakpoints": true
     }
   ]
 }

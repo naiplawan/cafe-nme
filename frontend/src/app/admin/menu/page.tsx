@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
 import { requireStaff } from "@/lib/auth";
-import { listCategories, listModifierGroupsForShop, listProducts } from "@/server/menu";
+import { getMenuSettings, listCategories, listModifierGroupsForShop, listProducts } from "@/server/menu";
 import { AdminPageHeader } from "../_components/page-header";
 import { createProductAction } from "./actions";
 import { CategoryManager, ImportStockMenu, OpenProductSectionButton, ProductForm } from "./forms";
@@ -15,10 +15,11 @@ export default async function MenuPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const [{ shopId }, query] = await Promise.all([requireStaff(), searchParams]);
-  const [categories, products, modifierGroups] = await Promise.all([
+  const [categories, products, modifierGroups, settings] = await Promise.all([
     listCategories(shopId),
     listProducts(shopId),
     listModifierGroupsForShop(shopId),
+    getMenuSettings(shopId),
   ]);
   const step = parseMenuStep(query.step, categories.length);
   const filters = parseProductFilters(query);
@@ -55,7 +56,7 @@ export default async function MenuPage({
           </section>
 
           <section aria-label="สินค้า">
-            <MenuProductList products={products} categories={categories} initialFilters={filters} />
+            <MenuProductList products={products} categories={categories} initialFilters={filters} modifierGroups={modifierGroups} autoClearSoldOut={settings.autoClearSoldOut} />
           </section>
         </>
       ) : null}

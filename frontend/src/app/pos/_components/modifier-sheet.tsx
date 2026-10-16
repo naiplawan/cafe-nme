@@ -5,9 +5,9 @@ import { Minus, Plus } from "lucide-react";
 import { formatBaht } from "@/lib/money";
 import type { PosProduct } from "@/lib/pricing";
 import Image from "next/image";
+import { ProductTile } from "@/components/product-tile";
 import { useGSAP } from "@/components/motion/gsap";
 import { gsap, MOTION, prefersReducedMotion } from "@/components/motion/gsap";
-import { thaiInitial } from "@/lib/thai";
 import { trapDialogTab } from "@/lib/dialog-focus";
 
 type ModifierSheetProps = {
@@ -73,7 +73,7 @@ export function ModifierSheet({ product, initialModifierIds = [], initialQty = 1
       className="relative z-10 flex h-[min(660px,calc(100dvh-32px))] w-[min(900px,calc(100vw-32px))] overflow-hidden rounded-3xl border border-[#E4D6C6] bg-[#FFFBF6] shadow-[0_24px_70px_rgba(43,30,22,0.22)] outline-none">
       <div className="flex w-[280px] shrink-0 flex-col gap-3 bg-[#F5EDE3] p-6">
         {product.imageUrl ? <Image src={product.imageUrl} alt="" width={232} height={232} unoptimized className="size-[232px] object-contain" /> :
-          <div className="flex size-[232px] items-center justify-center rounded-2xl bg-[#EADBC8] text-[80px] font-bold text-[#8A6A4F]">{thaiInitial(product.name)}</div>}
+          <ProductTile name={product.name} tileColor={product.tileColor} className="size-[232px] rounded-2xl text-[80px]" />}
         <h2 id={`${id}-modifier-title`} className="text-[26px] font-bold">{product.name}</h2>
         {isEditing && <p className="-mt-2 text-sm font-medium text-[#8A6A4F]">แก้ไขรายการในออเดอร์</p>}
         <p className="text-[17px] text-[#6B5547]">ราคาเริ่มต้น {formatBaht(product.basePriceSatang)}</p>

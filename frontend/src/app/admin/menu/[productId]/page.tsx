@@ -35,14 +35,14 @@ export default async function EditProductPage({
       <Link href={returnHref} className={buttonVariants({ variant: "link" })}><ArrowLeft aria-hidden="true" size={16} /> กลับไปหน้าเมนู</Link>
       <AdminPageHeader section="สินค้า" title={`แก้ไข ${product.name}`} description="ปรับรายละเอียดที่แสดงในเมนูและหน้าขาย" action={<DeleteProductForm productId={product.id} name={product.name} />} />
       <div className="rounded-xl border bg-card px-4 pt-4 sm:px-5 sm:pt-5">
-      <ProductForm
-        categories={categories}
-        modifierGroups={modifierGroups}
-        product={product}
-        action={save}
-        submitLabel="บันทึกสินค้า"
-        returnHref={returnHref}
-      />
+        <ProductForm
+          categories={categories}
+          modifierGroups={modifierGroups}
+          product={product}
+          action={save}
+          submitLabel="บันทึกสินค้า"
+          returnHref={returnHref}
+        />
       </div>
     </div>
   );

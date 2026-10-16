@@ -18,8 +18,12 @@ import {
   deleteProduct,
   importStockMenu,
   renameCategory,
+  reorderCategories,
+  reorderProducts,
   restoreProductsForSale,
   setProductsActive,
+  updateMenuSettings,
+  updateProductsModifierGroup,
   updateProductWithModifierGroups,
 } from "@/server/menu";
 
@@ -79,6 +83,7 @@ function parseProduct(formData: FormData) {
     price: textField(formData, "price"),
     categoryId: textField(formData, "categoryId"),
     imageUrl: textField(formData, "imageUrl"),
+    tileColor: textField(formData, "tileColor"),
     earnsStamp: textField(formData, "earnsStamp"),
     isActive: textField(formData, "isActive"),
   };
@@ -164,6 +169,14 @@ export async function bulkUpdateProductsAction(
     revalidatePath("/admin/menu");
     return { message: `เปิดขายแล้ว ${restored.length} รายการ` };
   }
+  const modifierGroupAction = textField(formData, "modifierGroupAction");
+  if (modifierGroupAction === "add" || modifierGroupAction === "remove") {
+    const groupId = uuidSchema.safeParse(textField(formData, "modifierGroupId"));
+    if (!groupId.success) return { message: "กรุณาเลือกกลุ่มตัวเลือก" };
+    const changed = await updateProductsModifierGroup(shopId, [...new Set(ids.data)], modifierGroupAction, groupId.data);
+    revalidatePath("/admin/menu");
+    return { message: modifierGroupAction === "add" ? `เพิ่มกลุ่มตัวเลือกให้ ${changed.length} รายการ` : `เอากลุ่มตัวเลือกออกจาก ${changed.length} รายการ` };
+  }
   if (isActiveValue !== "true" && isActiveValue !== "false") return { message: "กรุณาเลือกสถานะสินค้า" };
   const changed = await setProductsActive(shopId, [...new Set(ids.data)], isActiveValue === "true");
   revalidatePath("/admin/menu");
@@ -180,4 +193,34 @@ export async function clearSoldOutProductsAction(
   const cleared = await clearSoldOutProducts(shopId);
   revalidatePath("/admin/menu");
   return { message: `เปิดขายแล้ว ${cleared.length} รายการ` };
+}
+
+export async function setAutoClearSoldOutAction(autoClearSoldOut: boolean) {
+  const { shopId } = await requireStaff();
+  await updateMenuSettings(shopId, autoClearSoldOut === true);
+  revalidatePath("/admin/menu");
+}
+
+const idListSchema = z.array(uuidSchema).max(1000);
+
+async function saveOrder(ids: unknown, save: (shopId: string, ids: string[]) => Promise<unknown>): Promise<MenuActionState> {
+  const { shopId } = await requireStaff();
+  const parsed = idListSchema.safeParse(ids);
+  if (!parsed.success) return { message: "ลำดับไม่ถูกต้อง" };
+  try {
+    await save(shopId, parsed.data);
+  } catch {
+    // The API rejects an order that no longer matches the menu (someone added or deleted an item meanwhile).
+    return { message: "เมนูเปลี่ยนไประหว่างจัดลำดับ โหลดหน้าใหม่แล้วลองอีกครั้ง" };
+  }
+  revalidatePath("/admin/menu");
+  return { message: null, success: true };
+}
+
+export async function reorderCategoriesAction(categoryIds: string[]) {
+  return saveOrder(categoryIds, reorderCategories);
+}
+
+export async function reorderProductsAction(productIds: string[]) {
+  return saveOrder(productIds, reorderProducts);
 }

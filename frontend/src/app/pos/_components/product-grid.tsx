@@ -3,10 +3,10 @@
 import type { PosMenu } from "@/lib/pricing";
 import { formatBaht } from "@/lib/money";
 import Image from "next/image";
+import { ProductTile } from "@/components/product-tile";
 import { useGSAP } from "@/components/motion/gsap";
 import { gsap, MOTION, prefersReducedMotion } from "@/components/motion/gsap";
 import { useEffect, useRef } from "react";
-import { thaiInitial } from "@/lib/thai";
 import { useState } from "react";
 import { Search, X } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -104,7 +104,7 @@ export function ProductGrid({ menu, categoryId, addedProductId, onChoose }: Prod
             onClick={() => manageSoldOut ? void changeSoldOut(product.id, soldOut) : soldOut ? showNotice("เมนูนี้หมดแล้ว") : onChoose(product.id)}
             className={`relative flex min-w-0 flex-col gap-2 rounded-[18px] border bg-[#FFFBF6] p-2.5 text-left text-[#3B2A20] shadow-[0_3px_12px_rgba(59,42,32,0.04)] transition-[border-color,box-shadow,transform] duration-150 active:scale-[0.97] active:shadow-sm motion-reduce:transform-none motion-reduce:transition-none ${manageSoldOut ? "border-dashed border-[#B4441C]" : "border-[#E4D6C6]"} ${!manageSoldOut && soldOut ? "opacity-55 grayscale" : ""} ${pendingIds.has(product.id) ? "pointer-events-none" : ""}`}>
           {product.imageUrl ? <Image src={product.imageUrl} alt="" width={400} height={96} unoptimized className="h-24 w-full rounded-xl bg-[#F5EDE3] object-contain" /> :
-            <div className="flex h-24 w-full items-center justify-center rounded-xl bg-[#EADBC8] text-4xl font-bold text-[#8A6A4F]">{thaiInitial(product.name)}</div>}
+            <ProductTile name={product.name} tileColor={product.tileColor} className="h-24 w-full rounded-xl text-4xl" />}
           {soldOut && <span className="absolute right-4 top-4 rounded-full bg-[#3B2A20] px-3 py-1 text-sm font-bold text-white">หมด</span>}
           <span className="flex min-h-11 w-full items-center justify-between gap-2"><span className="line-clamp-2 min-w-0 text-base font-semibold leading-tight">{product.name}</span>
             <span className="shrink-0 text-base font-bold tabular-nums text-[#B4441C]">{formatBaht(product.basePriceSatang)}</span></span>

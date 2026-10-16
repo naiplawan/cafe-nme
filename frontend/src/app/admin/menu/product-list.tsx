@@ -3,8 +3,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { useActionState, useId, useMemo, useState } from "react";
+import { useActionState, useId, useMemo, useState, useTransition } from "react";
 import { Badge } from "@/components/ui/badge";
+import { ProductTile } from "@/components/product-tile";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -12,14 +13,16 @@ import { ConfirmSubmit } from "@/components/ui/confirm-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { formatBaht } from "@/lib/money";
-import { bulkUpdateProductsAction, clearSoldOutProductsAction } from "./actions";
-import { DEFAULT_PRODUCT_FILTERS, type ProductFilters as ProductFilterValues, menuQuery, productEditHref } from "./menu-steps";
+import { bulkUpdateProductsAction, clearSoldOutProductsAction, reorderProductsAction, setAutoClearSoldOutAction } from "./actions";
+import { ReorderActions, SortableList } from "./sortable-list";
+import { DEFAULT_PRODUCT_FILTERS, type ProductFilters as ProductFilterValues, bulkActionConfirmation, menuQuery, productEditHref } from "./menu-steps";
 
 type Product = {
   id: string;
   name: string;
   basePriceSatang: number;
   imageUrl: string | null;
+  tileColor: string | null;
   isActive: boolean;
   earnsStamp: boolean;
   soldOut: boolean;
@@ -28,6 +31,7 @@ type Product = {
 };
 
 type Category = { id: string; name: string };
+type ModifierGroupOption = { id: string; name: string; modifierNames: string[] };
 
 export function ProductEditLink({ href }: { href: string }) {
   return <Link href={href} className={buttonVariants({ variant: "outline", size: "sm" })}>แก้ไข</Link>;
@@ -61,14 +65,17 @@ export function MenuProductList({
   categories,
   emptyStateAction,
   initialFilters = DEFAULT_PRODUCT_FILTERS,
+  modifierGroups = [],
+  autoClearSoldOut = true,
 }: {
   products: Product[];
   categories: Category[];
   emptyStateAction?: ReactNode;
   initialFilters?: ProductFilterValues;
+  modifierGroups?: ModifierGroupOption[];
+  autoClearSoldOut?: boolean;
 }) {
   const [state, action] = useActionState(bulkUpdateProductsAction, { message: null });
-  const [soldOutState, clearSoldOut] = useActionState(clearSoldOutProductsAction, { message: null });
   const [filters, setFilters] = useState(initialFilters);
   const { q: search, category, status } = filters;
   // Mirror filters into the URL so step hops and the edit page can return to them.
@@ -81,6 +88,7 @@ export function MenuProductList({
   const setCategory = (value: string) => updateFilters({ category: value });
   const setStatus = (value: string) => updateFilters({ status: value });
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [reordering, setReordering] = useState(false);
   const validSelectedIds = useMemo(() => getValidSelectedProductIds(selectedIds, products.map((product) => product.id)), [products, selectedIds]);
   const selectedSet = useMemo(() => new Set(validSelectedIds), [validSelectedIds]);
   const filtered = useMemo(() => products.filter((product) =>
@@ -101,6 +109,8 @@ export function MenuProductList({
     }
     return [...grouped.values()];
   }, [filtered]);
+
+  if (reordering) return <ProductReorder products={products} onDone={() => setReordering(false)} />;
 
   if (groups.length === 0) {
     if (products.length === 0) {
@@ -123,36 +133,20 @@ export function MenuProductList({
 
   return (
     <div className="space-y-4">
-      {soldOutCount > 0 || soldOutState.message ? (
-        <ConfirmSubmit action={clearSoldOut} className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground" shouldConfirm={() => shouldConfirmSoldOutReset(soldOutCount)} message={`ล้างสถานะหมดสำหรับ ${soldOutCount} รายการหรือไม่? สินค้าที่ปิดใช้งานจะยังปิดใช้งานอยู่`} confirmLabel="ล้างสถานะหมด">
-          {soldOutCount > 0 ? <><span>หมดชั่วคราว {soldOutCount} รายการ</span><Button type="submit" variant="outline" size="sm">ล้างสถานะหมด</Button></> : null}
-          {soldOutState.message ? <span role="status">{soldOutState.message}</span> : null}
-        </ConfirmSubmit>
-      ) : null}
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <SoldOutControls soldOutCount={soldOutCount} autoClearSoldOut={autoClearSoldOut} />
+        {products.length > 1 ? <Button type="button" variant="ghost" size="sm" onClick={() => setReordering(true)}>จัดลำดับ</Button> : null}
+      </div>
       <ConfirmSubmit action={action} className="space-y-4" shouldConfirm={(form) => shouldConfirmBulkAction(new FormData(form).getAll("productIds").length)} message={(form, submitter) => {
-        const count = new FormData(form).getAll("productIds").length;
-        if (submitter?.name === "restoreForSale") {
-          const hiddenNote = selectionVisibility.hidden > 0 ? ` โดยมี ${selectionVisibility.hidden} รายการซ่อนจากตัวกรอง` : "";
-          return `เปิดขายสินค้า ${count} รายการและล้างสถานะหมด${hiddenNote}หรือไม่?`;
-        }
-        const actionLabel = submitter?.value === "true" ? "แสดง" : "ซ่อน";
-        const location = submitter?.value === "true" ? "บนหน้าขาย" : "จากหน้าขาย";
-        const hiddenNote = selectionVisibility.hidden > 0 ? ` โดยมี ${selectionVisibility.hidden} รายการซ่อนจากตัวกรอง` : "";
-        return `${actionLabel}สินค้า ${count} รายการ${location}${hiddenNote}หรือไม่?`;
-      }} confirmLabel={(submitter) => submitter?.name === "restoreForSale" ? "เปิดขาย" : submitter?.value === "true" ? "แสดง" : "ซ่อน"}>
+        const data = new FormData(form);
+        const groupName = modifierGroups.find((group) => group.id === data.get("modifierGroupId"))?.name;
+        return bulkActionConfirmation({ name: submitter?.name, value: submitter?.value }, data.getAll("productIds").length, selectionVisibility.hidden, groupName).message;
+      }} confirmLabel={(submitter) => bulkActionConfirmation({ name: submitter?.name, value: submitter?.value }, 0, 0).label}>
       {validSelectedIds.filter((id) => !filteredIds.has(id)).map((id) => <input key={id} type="hidden" name="productIds" value={id} />)}
       <div className="space-y-4">
         <ProductFilters products={products} categories={categories} search={search} setSearch={setSearch} category={category} setCategory={setCategory} status={status} setStatus={setStatus} />
       </div>
-      {validSelectedIds.length > 0 ? (
-        <div className="sticky top-[17rem] z-10 flex flex-wrap items-center gap-2 rounded-xl border bg-background/95 p-2 pl-4 backdrop-blur md:top-2">
-          <span className="mr-auto text-sm">เลือก {validSelectedIds.length}{selectionVisibility.hidden > 0 ? <span className="text-muted-foreground"> · ซ่อนจากตัวกรอง {selectionVisibility.hidden}</span> : null}</span>
-          <Button type="button" variant="ghost" size="sm" onClick={() => setSelectedIds([])}>ยกเลิก</Button>
-          <Button type="submit" name="isActive" value="true" variant="outline" size="sm">แสดงบนหน้าขาย</Button>
-          <Button type="submit" name="isActive" value="false" variant="outline" size="sm">ซ่อนจากหน้าขาย</Button>
-          <Button type="submit" name="restoreForSale" value="true" size="sm">เปิดขาย</Button>
-        </div>
-      ) : null}
+      {validSelectedIds.length > 0 ? <BulkActionBar selectedCount={validSelectedIds.length} hiddenCount={selectionVisibility.hidden} onClear={() => setSelectedIds([])} modifierGroups={modifierGroups} actionState={state} /> : null}
       <p className="text-sm text-muted-foreground empty:hidden" role="status" aria-live="polite">{state.message}</p>
       {groups.map((group) => (
         <Card key={group.id}>
@@ -162,7 +156,7 @@ export function MenuProductList({
                 {group.products.map((product) => (
                   <li key={product.id} className="grid grid-cols-[auto_3rem_minmax(0,1fr)] items-center gap-2 py-3 sm:gap-3">
                     <Checkbox name="productIds" value={product.id} checked={selectedSet.has(product.id)} onCheckedChange={(checked) => setSelectedIds((current) => checked ? getValidSelectedProductIds([...current, product.id], products.map((item) => item.id)) : current.filter((id) => id !== product.id))} aria-label={`เลือก ${product.name}`} className="size-5 after:-inset-3" />
-                    {product.imageUrl ? <Image src={product.imageUrl} alt="" width={48} height={48} className="size-12 rounded-md object-cover" /> : <div className="size-12 rounded-md bg-muted" aria-hidden="true" />}
+                    {product.imageUrl ? <Image src={product.imageUrl} alt="" width={48} height={48} className="size-12 rounded-md object-cover" /> : <ProductTile name={product.name} tileColor={product.tileColor} className="size-12 rounded-md text-lg" />}
                     <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center">
                       <div className="min-w-0 flex-1 space-y-1">
                         <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
@@ -185,6 +179,108 @@ export function MenuProductList({
       ))}
       </ConfirmSubmit>
     </div>
+  );
+}
+
+/** Products arrive in admin order (category order, then sort), which is also the POS "all" order. */
+function ProductReorder({ products, onDone }: { products: Product[]; onDone: () => void }) {
+  const [groups, setGroups] = useState(() => {
+    const grouped = new Map<string, { id: string; name: string; items: { id: string; name: string; isActive: boolean }[] }>();
+    for (const product of products) {
+      const key = product.categoryId ?? "uncategorized";
+      const group = grouped.get(key) ?? { id: key, name: product.categoryName ?? "ไม่มีหมวดหมู่", items: [] };
+      group.items.push({ id: product.id, name: product.name, isActive: product.isActive });
+      grouped.set(key, group);
+    }
+    return [...grouped.values()];
+  });
+  const hidden = new Set(groups.flatMap((group) => group.items.filter((item) => !item.isActive).map((item) => item.id)));
+  return (
+    <div className="space-y-5">
+      {groups.map((group) => (
+        <section key={group.id} aria-label={group.name} className="space-y-2">
+          <h3 className="text-sm font-medium">{group.name}</h3>
+          <SortableList
+            label={`ลำดับสินค้าใน ${group.name}`}
+            items={group.items}
+            onChange={(items) => setGroups((current) => current.map((entry) => entry.id === group.id
+              ? { ...entry, items: items.map((item) => ({ ...item, isActive: !hidden.has(item.id) })) }
+              : entry))}
+            renderItem={(item) => <>{item.name}{hidden.has(item.id) ? <span className="ml-2 text-xs text-muted-foreground">ซ่อนจากหน้าขาย</span> : null}</>}
+          />
+        </section>
+      ))}
+      <div className="sticky bottom-0 bg-background/95 py-3 backdrop-blur">
+        <ReorderActions ids={groups.flatMap((group) => group.items.map((item) => item.id))} save={reorderProductsAction} onDone={onDone} />
+      </div>
+    </div>
+  );
+}
+
+function SoldOutControls({ soldOutCount, autoClearSoldOut }: { soldOutCount: number; autoClearSoldOut: boolean }) {
+  const [soldOutState, clearSoldOut] = useActionState(clearSoldOutProductsAction, { message: null });
+  return (
+    <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-muted-foreground">
+      {soldOutCount > 0 || soldOutState.message ? (
+        <ConfirmSubmit action={clearSoldOut} className="flex flex-wrap items-center gap-3" shouldConfirm={() => shouldConfirmSoldOutReset(soldOutCount)} message={`ล้างสถานะหมดสำหรับ ${soldOutCount} รายการหรือไม่? สินค้าที่ปิดใช้งานจะยังปิดใช้งานอยู่`} confirmLabel="ล้างสถานะหมด">
+          {soldOutCount > 0 ? <><span>หมดชั่วคราว {soldOutCount} รายการ</span><Button type="submit" variant="outline" size="sm">ล้างสถานะหมด</Button></> : null}
+          {soldOutState.message ? <span role="status">{soldOutState.message}</span> : null}
+        </ConfirmSubmit>
+      ) : null}
+      <AutoClearSoldOutToggle initial={autoClearSoldOut} />
+    </div>
+  );
+}
+
+function BulkActionBar({ selectedCount, hiddenCount, onClear, modifierGroups, actionState }: {
+  selectedCount: number;
+  hiddenCount: number;
+  onClear: () => void;
+  modifierGroups: ModifierGroupOption[];
+  actionState: unknown;
+}) {
+  const [groupId, setGroupId] = useState("");
+  const [handledState, setHandledState] = useState(actionState);
+  if (actionState !== handledState) {
+    // React resets the form after an action, which empties the group select; keep state in step.
+    setHandledState(actionState);
+    setGroupId("");
+  }
+  // Groups without options cannot be attached in the product form either.
+  const assignableGroups = modifierGroups.filter((group) => group.modifierNames.length > 0);
+  return (
+    <div className="sticky top-[17rem] z-10 flex flex-wrap items-center gap-2 rounded-xl border bg-background/95 p-2 pl-4 backdrop-blur md:top-2">
+      <span className="mr-auto text-sm">เลือก {selectedCount}{hiddenCount > 0 ? <span className="text-muted-foreground"> · ซ่อนจากตัวกรอง {hiddenCount}</span> : null}</span>
+      <Button type="button" variant="ghost" size="sm" onClick={onClear}>ยกเลิก</Button>
+      <Button type="submit" name="isActive" value="true" variant="outline" size="sm">แสดงบนหน้าขาย</Button>
+      <Button type="submit" name="isActive" value="false" variant="outline" size="sm">ซ่อนจากหน้าขาย</Button>
+      <Button type="submit" name="restoreForSale" value="true" size="sm">เปิดขาย</Button>
+      {assignableGroups.length > 0 ? (
+        <span className="flex basis-full flex-wrap items-center justify-end gap-2">
+          <select name="modifierGroupId" aria-label="กลุ่มตัวเลือกเสริม" value={groupId} onChange={(event) => setGroupId(event.target.value)} className="min-h-11 rounded-lg border border-input bg-background px-3 text-sm">
+            <option value="">ตัวเลือกเสริม…</option>
+            {assignableGroups.map((group) => <option key={group.id} value={group.id}>{group.name}</option>)}
+          </select>
+          <Button type="submit" name="modifierGroupAction" value="add" variant="outline" size="sm" disabled={!groupId}>เพิ่มให้ที่เลือก</Button>
+          <Button type="submit" name="modifierGroupAction" value="remove" variant="ghost" size="sm" disabled={!groupId}>เอาออก</Button>
+        </span>
+      ) : null}
+    </div>
+  );
+}
+
+function AutoClearSoldOutToggle({ initial }: { initial: boolean }) {
+  const [enabled, setEnabled] = useState(initial);
+  const [pending, startTransition] = useTransition();
+  const id = useId();
+  return (
+    <label htmlFor={id} className="flex min-h-11 items-center gap-2">
+      <Checkbox id={id} checked={enabled} disabled={pending} onCheckedChange={(checked) => {
+        setEnabled(checked);
+        startTransition(() => setAutoClearSoldOutAction(checked));
+      }} />
+      เปิดขายสินค้าที่หมดอัตโนมัติเมื่อขึ้นวันใหม่
+    </label>
   );
 }
 
@@ -253,7 +349,7 @@ export function PosMenuPreview({ products }: { products: Product[] }) {
             <h3 className="text-sm font-semibold">{category}</h3>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
               {items.map((product) => <div key={product.id} className="overflow-hidden rounded-xl border bg-card">
-                {product.imageUrl ? <Image src={product.imageUrl} alt="" width={240} height={140} className="h-28 w-full object-cover" /> : <div className="h-28 bg-muted" aria-hidden="true" />}
+                {product.imageUrl ? <Image src={product.imageUrl} alt="" width={240} height={140} className="h-28 w-full object-cover" /> : <ProductTile name={product.name} tileColor={product.tileColor} className="h-28 text-4xl" />}
                 <div className="p-3"><p className="line-clamp-2 text-sm font-medium">{product.name}</p><p className="mt-1 text-sm text-muted-foreground">{formatBaht(product.basePriceSatang)}</p></div>
               </div>)}
             </div>

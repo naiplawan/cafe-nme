@@ -11,6 +11,7 @@ export class ProductDto {
   @ApiProperty({ type: Number }) @Allow() price!: number;
   @ApiProperty({ type: String, nullable: true }) @Allow() categoryId!: string | null;
   @ApiProperty({ type: String, nullable: true }) @Allow() imageUrl!: string | null;
+  @ApiPropertyOptional({ type: String, nullable: true, enum: ["amber", "rose", "emerald", "sky", "violet", "stone"] }) @Allow() tileColor?: string | null;
   @ApiProperty({ type: Boolean }) @Allow() earnsStamp!: boolean;
   @ApiProperty({ type: Boolean }) @Allow() isActive!: boolean;
   @ApiProperty({ type: [String] }) @Allow() modifierGroupIds!: string[];
@@ -20,6 +21,16 @@ export class BulkProductUpdateDto {
   @ApiProperty({ type: [String] }) @Allow() productIds!: string[];
   @ApiPropertyOptional({ type: Boolean }) @Allow() isActive?: boolean;
   @ApiPropertyOptional({ type: Boolean }) @Allow() restoreForSale?: boolean;
+  @ApiPropertyOptional({ enum: ["add", "remove"] }) @Allow() modifierGroupAction?: "add" | "remove";
+  @ApiPropertyOptional({ type: String }) @Allow() modifierGroupId?: string;
+}
+
+export class CategoryIdsDto {
+  @ApiProperty({ type: [String] }) @Allow() categoryIds!: string[];
+}
+
+export class MenuSettingsDto {
+  @ApiProperty({ type: Boolean }) @Allow() autoClearSoldOut!: boolean;
 }
 
 export class ModifierGroupDto {

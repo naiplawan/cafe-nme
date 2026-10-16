@@ -15,6 +15,7 @@ describe("productSchema", () => {
       price: 5500,
       categoryId: null,
       imageUrl: null,
+      tileColor: null,
       earnsStamp: true,
       isActive: false,
     });

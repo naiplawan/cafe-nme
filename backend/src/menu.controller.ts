@@ -1,6 +1,6 @@
 import { ApiStandardErrors } from "./common/api-errors.decorator.js";
 import { ApiSecurity, ApiTags } from "@nestjs/swagger";
-import { BulkProductUpdateDto, CreateCategoryDto, ProductDto } from "./common/request.dto.js";
+import { BulkProductUpdateDto, CategoryIdsDto, CreateCategoryDto, MenuSettingsDto, ProductDto, ProductIdsDto } from "./common/request.dto.js";
 import {
   Body,
   Controller,
@@ -29,9 +29,19 @@ export class MenuController {
     return this.menu.getMenu(shopId);
   }
 
+  @Patch("settings")
+  updateSettings(@Param("shopId", new ParseUUIDPipe()) shopId: string, @Body() body: MenuSettingsDto) {
+    return this.menu.updateSettings(shopId, body);
+  }
+
   @Post("categories")
   createCategory(@Param("shopId", new ParseUUIDPipe()) shopId: string, @Body() body: CreateCategoryDto) {
     return this.menu.createCategory(shopId, body);
+  }
+
+  @Post("categories/reorder")
+  reorderCategories(@Param("shopId", new ParseUUIDPipe()) shopId: string, @Body() body: CategoryIdsDto) {
+    return this.menu.reorderCategories(shopId, body);
   }
 
   @Patch("categories/:categoryId")
@@ -92,6 +102,11 @@ export class MenuController {
   @Post("products/bulk")
   bulkUpdateProducts(@Param("shopId", new ParseUUIDPipe()) shopId: string, @Body() body: BulkProductUpdateDto) {
     return this.menu.bulkUpdateProducts(shopId, body);
+  }
+
+  @Post("products/reorder")
+  reorderProducts(@Param("shopId", new ParseUUIDPipe()) shopId: string, @Body() body: ProductIdsDto) {
+    return this.menu.reorderProducts(shopId, body);
   }
 
   @Post("products/import-stock")

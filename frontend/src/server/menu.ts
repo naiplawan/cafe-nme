@@ -8,6 +8,7 @@ export type ProductInput = {
   price: number;
   categoryId: string | null;
   imageUrl: string | null;
+  tileColor?: string | null;
   earnsStamp: boolean;
   isActive: boolean;
 };
@@ -24,6 +25,7 @@ const productListItemSchema = z.object({
   name: z.string(),
   basePriceSatang: z.number().int(),
   imageUrl: z.string().nullable(),
+  tileColor: z.string().nullable(),
   isActive: z.boolean(),
   soldOut: z.boolean(),
   earnsStamp: z.boolean(),
@@ -37,10 +39,12 @@ const modifierGroupSchema = z.object({
   maxSelect: z.number().int(),
   modifierNames: z.array(z.string()),
 });
+const menuSettingsSchema = z.object({ autoClearSoldOut: z.boolean() });
 const menuSchema = z.object({
   categories: z.array(categorySchema),
   products: z.array(productListItemSchema),
   modifierGroups: z.array(modifierGroupSchema),
+  settings: menuSettingsSchema,
 });
 const productRowSchema = z.object({
   id: z.uuid(),
@@ -49,6 +53,7 @@ const productRowSchema = z.object({
   name: z.string(),
   basePriceSatang: z.number().int(),
   imageUrl: z.string().nullable(),
+  tileColor: z.string().nullable(),
   isActive: z.boolean(),
   soldOut: z.boolean(),
   earnsStamp: z.boolean(),
@@ -194,6 +199,27 @@ export async function restoreProductsForSale(shopId: string, productIds: string[
   return requestMenu(shopId, "/products/bulk", jsonBody({ productIds, restoreForSale: true }), z.array(idRowSchema));
 }
 
+export async function updateProductsModifierGroup(shopId: string, productIds: string[], action: "add" | "remove", modifierGroupId: string) {
+  if (productIds.length === 0) return [];
+  return requestMenu(shopId, "/products/bulk", jsonBody({ productIds, modifierGroupAction: action, modifierGroupId }), z.array(idRowSchema));
+}
+
+export async function reorderCategories(shopId: string, categoryIds: string[]) {
+  return requestMenu(shopId, "/categories/reorder", jsonBody({ categoryIds }), z.array(idRowSchema));
+}
+
+export async function reorderProducts(shopId: string, productIds: string[]) {
+  return requestMenu(shopId, "/products/reorder", jsonBody({ productIds }), z.array(idRowSchema));
+}
+
+export async function getMenuSettings(shopId: string) {
+  return (await getMenu(shopId)).settings;
+}
+
+export async function updateMenuSettings(shopId: string, autoClearSoldOut: boolean) {
+  return requestMenu(shopId, "/settings", patchBody({ autoClearSoldOut }), menuSettingsSchema);
+}
+
 export async function clearSoldOutProducts(shopId: string) {
   return requestMenu(shopId, "/products/clear-sold-out", jsonBody({}), z.array(idRowSchema));
 }
@@ -210,6 +236,7 @@ export async function setProductModifierGroups(shopId: string, productId: string
     price: current.basePriceSatang,
     categoryId: current.categoryId,
     imageUrl: current.imageUrl,
+    tileColor: current.tileColor,
     earnsStamp: current.earnsStamp,
     isActive: current.isActive,
   }, groupIds);

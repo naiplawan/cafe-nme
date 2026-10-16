@@ -14,12 +14,17 @@ versioning (pre-1.0: minor = features, patch = fixes).
 - POS pairing now handles invalid or expired codes without crashing, and production has the rate-limit table required by pairing requests.
 
 ### Added
-- The admin menu is split into Categories, Products, and POS preview tabs that can be opened in any order; the product form is split into Basics, Modifiers, Image, and Sale tabs that save from any tab, creates a category inline, and links to the new product after adding it.
+- The admin menu is split into Categories, Products, and POS preview tabs that can be opened in any order; the product form shows every section on one page with jump links (Basics, Modifiers, Image, Sale), creates a category inline, and links to the new product after adding it.
+- Categories and products can be reordered by dragging or with arrow buttons; the POS shows the saved order within each category and in the All view.
+- A modifier group can be added to or removed from many selected products in one confirmed bulk action.
+- Sold-out products can reopen automatically on the shop's next business day; the setting sits next to the sold-out controls and is on by default.
+- Products without a photo show a coloured tile with their first letter on the POS and in admin; owners can pick the colour or leave it automatic.
 - Admin menu filters are kept in the URL, so switching tabs and returning from a product's edit page keeps the current search, category, and status.
 - Product creation now supports product images and modifier groups; selected products can be reopened for sale in one confirmed bulk action.
 - Added a NestJS backend workspace with an internal API, generated OpenAPI documentation, and database readiness checks.
 
 ### Changed
+- Database migrations `0007` (sold-out business date, auto-clear setting) and `0008` (product tile colour) must run before deploying the new API, which reads those columns.
 - Simplified the admin menu layout: plain tabs, no duplicate headings, and the sold-out reset and bulk-action bar only appear when they apply; category filter chips no longer show item counts.
 - Menu management now offers a one-click filter reset, clearer sale-visibility labels, and hides the sample-menu action after all examples are added.
 - Split the application into separate `frontend/` (Next.js) and `backend/` (NestJS) workspaces.

@@ -20,6 +20,8 @@ const menuProductSchema = z.object({
   categoryId: z.uuid().nullable(),
   basePriceSatang: z.number().int().nonnegative(),
   imageUrl: z.string().nullable(),
+  // Optional: menus cached by the POS before this field existed still parse.
+  tileColor: z.string().nullish(),
   earnsStamp: z.boolean(),
   soldOut: z.boolean(),
   groups: z.array(menuGroupSchema),

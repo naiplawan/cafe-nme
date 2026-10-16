@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { parseBahtToSatang } from "@/lib/money";
+import { isTileColor } from "@/lib/tile-colors";
 
 const name = z.string().trim().min(1, "กรุณากรอกชื่อ").max(80);
 
@@ -36,6 +37,8 @@ export const productSchema = z.object({
     .trim()
     .optional()
     .transform((v) => (v ? v : null)),
+  // Empty means "automatic"; anything outside the palette is treated the same way.
+  tileColor: z.string().optional().transform((v) => (isTileColor(v) ? v : null)),
   earnsStamp: checkbox,
   isActive: checkbox,
 });

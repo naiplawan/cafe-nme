@@ -1,5 +1,6 @@
 import { Inject, Injectable } from "@nestjs/common";
 import { DatabaseService } from "./database.service.js";
+import { clearExpiredSoldOut } from "./sold-out.js";
 
 export interface MenuCategory { id: string; name: string }
 export interface MenuModifier { id: string; name: string; priceDeltaSatang: number }
@@ -9,6 +10,7 @@ export interface MenuProduct {
   categoryId: string | null;
   basePriceSatang: number;
   imageUrl: string | null;
+  tileColor: string | null;
   earnsStamp: boolean;
   soldOut: boolean;
   groups: { id: string; name: string; minSelect: number; maxSelect: number; modifiers: MenuModifier[] }[];
@@ -20,6 +22,7 @@ export class CatalogService {
 
   async getPosMenu(shopId: string): Promise<{ categories: MenuCategory[]; products: MenuProduct[] }> {
     const db = this.database.connection;
+    await clearExpiredSoldOut(db, shopId);
     const [categories, products] = await Promise.all([
       db<MenuCategory[]>`
         select id::text as id, name
@@ -29,7 +32,7 @@ export class CatalogService {
       `,
       db<(Omit<MenuProduct, "groups"> & { sort: number })[]>`
         select id::text as id, name, category_id::text as "categoryId",
-          base_price_satang as "basePriceSatang", image_url as "imageUrl",
+          base_price_satang as "basePriceSatang", image_url as "imageUrl", tile_color as "tileColor",
           earns_stamp as "earnsStamp", sold_out as "soldOut", sort
         from products
         where shop_id = ${shopId}::uuid and is_active = true

@@ -46,3 +46,36 @@ export function menuReturnHref(back: unknown) {
 export function productEditHref(productId: string, filters: ProductFilters) {
   return `/admin/menu/${productId}?back=${encodeURIComponent(menuQuery("products", filters))}`;
 }
+
+/** Confirmation text and button label for a bulk-bar submit button. */
+export function bulkActionConfirmation(
+  action: { name?: string; value?: string },
+  count: number,
+  hiddenCount: number,
+  groupName?: string,
+) {
+  const hiddenNote = hiddenCount > 0 ? ` โดยมี ${hiddenCount} รายการซ่อนจากตัวกรอง` : "";
+  if (action.name === "restoreForSale") {
+    return { message: `เปิดขายสินค้า ${count} รายการและล้างสถานะหมด${hiddenNote}หรือไม่?`, label: "เปิดขาย" };
+  }
+  if (action.name === "modifierGroupAction") {
+    const group = `“${groupName ?? "กลุ่มตัวเลือก"}”`;
+    return action.value === "add"
+      ? { message: `เพิ่ม ${group} ให้สินค้า ${count} รายการ${hiddenNote}หรือไม่?`, label: "เพิ่ม" }
+      : { message: `เอา ${group} ออกจากสินค้า ${count} รายการ${hiddenNote}หรือไม่?`, label: "เอาออก" };
+  }
+  const show = action.value === "true";
+  return {
+    message: `${show ? "แสดง" : "ซ่อน"}สินค้า ${count} รายการ${show ? "บนหน้าขาย" : "จากหน้าขาย"}${hiddenNote}หรือไม่?`,
+    label: show ? "แสดง" : "ซ่อน",
+  };
+}
+
+/** Returns a copy of the list with the item at `from` moved to index `to`. */
+export function moveItem<T>(items: readonly T[], from: number, to: number): T[] {
+  if (from === to || from < 0 || to < 0 || from >= items.length || to >= items.length) return [...items];
+  const next = [...items];
+  const [item] = next.splice(from, 1);
+  next.splice(to, 0, item);
+  return next;
+}
