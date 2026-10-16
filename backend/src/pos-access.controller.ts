@@ -18,6 +18,7 @@ import {
   Delete,
   Get,
   Inject,
+  NotFoundException,
   Param,
   ParseUUIDPipe,
   Post,
@@ -83,8 +84,10 @@ export class PosAccessController {
   }
 
   @Post("pos/pair")
-  pairDevice(@Body() value: PairingCodeDto) {
-    return this.access.pairDevice(text(object(value).code, "code", 6));
+  async pairDevice(@Body() value: PairingCodeDto) {
+    const device = await this.access.pairDevice(text(object(value).code, "code", 6));
+    if (!device) throw new NotFoundException("Pairing code is invalid or expired");
+    return device;
   }
 
   @Post("pos/device")

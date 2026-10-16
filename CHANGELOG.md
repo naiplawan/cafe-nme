@@ -11,6 +11,7 @@ versioning (pre-1.0: minor = features, patch = fixes).
 
 ### Fixed
 - Admin dashboard reports now compare the text-based business date column with text date bounds, preventing PostgreSQL type errors.
+- POS pairing now handles invalid or expired codes without crashing, and production has the rate-limit table required by pairing requests.
 
 ### Added
 - Product creation now supports product images and modifier groups; selected products can be reopened for sale in one confirmed bulk action.
