@@ -1,14 +1,14 @@
-import { Injectable, UnauthorizedException, type CanActivate, type ExecutionContext } from "@nestjs/common";
+import { Inject, Injectable, UnauthorizedException, type CanActivate, type ExecutionContext } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import type { Request } from "express";
 
 @Injectable()
 export class InternalApiGuard implements CanActivate {
-  constructor(private readonly config: ConfigService) {}
+  constructor(@Inject(ConfigService) private readonly config: ConfigService) {}
 
   canActivate(context: ExecutionContext): boolean {
-    const secret = this.config.getOrThrow<string>("APP_SECRET");
+    const secret = this.config.getOrThrow<string>("INTERNAL_API_SECRET");
     const request = context.switchToHttp().getRequest<Request>();
     const provided = request.header("x-internal-api-token");
 

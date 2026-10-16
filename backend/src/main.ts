@@ -3,18 +3,20 @@ import { Logger, ValidationPipe } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { NestFactory } from "@nestjs/core";
 import { SwaggerModule } from "@nestjs/swagger";
-import helmet from "helmet";
+import { createRequire } from "node:module";
 import { randomUUID } from "node:crypto";
 import type { RequestHandler } from "express";
 import { AppModule } from "./app.module.js";
 import { HttpExceptionFilter } from "./http-exception.filter.js";
 import { createOpenApiDocument } from "./openapi.js";
 
+const helmetMiddleware = createRequire(import.meta.url)("helmet") as () => RequestHandler;
+
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const config = app.get(ConfigService);
   const logger = new Logger("Bootstrap");
-  app.use(helmet());
+  app.use(helmetMiddleware());
   // This API is called server-to-server by the frontend; browser CORS stays disabled.
   const requestIdMiddleware: RequestHandler = (request, response, next) => {
     const requestId = randomUUID();

@@ -13,6 +13,7 @@ versioning (pre-1.0: minor = features, patch = fixes).
 ### Changed
 - Menu management now offers a one-click filter reset, clearer sale-visibility labels, and hides the sample-menu action after all examples are added.
 - Split the application into separate `frontend/` (Next.js) and `backend/` (NestJS) workspaces.
+- Configure the frontend and NestJS API as separate Vercel projects, using Vercel's assigned API port and a dedicated internal request secret while preserving the data-encryption secret.
 
 ### Fixed
 - Prevent duplicate category names, ignoring letter case, from creating indistinguishable menu groups; preserve the no-category choice when saving a product.

@@ -1,7 +1,8 @@
 export interface RuntimeEnvironment {
   API_PORT: number;
-  APP_SECRET: string;
   DATABASE_URL: string;
+  INTERNAL_API_SECRET: string;
+  APP_SECRET?: string;
   LINE_DEV_MOCK?: string;
   NODE_ENV?: string;
 }
@@ -21,12 +22,12 @@ export function validateEnvironment(environment: Record<string, unknown>): Runti
     throw new Error("DATABASE_URL must be a valid PostgreSQL URL");
   }
 
-  const appSecret = environment.APP_SECRET;
-  if (typeof appSecret !== "string" || appSecret.length < 32) {
-    throw new Error("APP_SECRET must be at least 32 characters");
+  const internalApiSecret = environment.INTERNAL_API_SECRET ?? environment.APP_SECRET;
+  if (typeof internalApiSecret !== "string" || internalApiSecret.length < 32) {
+    throw new Error("INTERNAL_API_SECRET must be at least 32 characters");
   }
 
-  const rawPort = environment.API_PORT ?? "3101";
+  const rawPort = environment.API_PORT ?? environment.PORT ?? "3101";
   const port = typeof rawPort === "number" ? rawPort : Number(rawPort);
   if (!Number.isInteger(port) || port < 1 || port > 65_535) {
     throw new Error("API_PORT must be an integer between 1 and 65535");
@@ -42,8 +43,9 @@ export function validateEnvironment(environment: Record<string, unknown>): Runti
 
   return {
     API_PORT: port,
-    APP_SECRET: appSecret,
     DATABASE_URL: databaseUrl,
+    INTERNAL_API_SECRET: internalApiSecret,
+    ...(typeof environment.APP_SECRET === "string" ? { APP_SECRET: environment.APP_SECRET } : {}),
     ...(typeof lineDevMock === "string" ? { LINE_DEV_MOCK: lineDevMock } : {}),
     ...(typeof environment.NODE_ENV === "string" ? { NODE_ENV: environment.NODE_ENV } : {}),
   };
