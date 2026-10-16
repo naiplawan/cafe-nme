@@ -19,7 +19,7 @@ stock stamp images).
 - `GET /api/brand/[shopId]/logo` — public, immutable-cached (URL carries `?v=`).
 - `@/components/brand/brand`: `<BrandLogo logoUrl size className? alt? />`,
   `<BrandStamp filled logoUrl size className? alt? />` (needs `--brand` on an ancestor).
-- Font for server images: `src/server/fonts/IBMPlexSansThai-Bold.ttf` (OFL).
+- Font for server images: `frontend/src/server/fonts/IBMPlexSansThai-Bold.ttf` (OFL).
 - Table `shop_brands` (migration 0004, RLS on).
 
 ## Rules
@@ -29,5 +29,5 @@ stock stamp images).
 - Thai UI copy. No `console.*` (use `@/lib/logger`). Keep the existing GSAP motion and
   reduced-motion behaviour working. Touch targets ≥ 44px.
 - Colours on top of the accent use `var(--brand-fg)`, never hard-coded white.
-- Next.js 16 here differs from older versions: read `node_modules/next/dist/docs/` before using
+- Next.js 16 here differs from older versions: read `frontend/node_modules/next/dist/docs/` before using
   an API you are unsure of (e.g. `next/og` ImageResponse, server actions, `connection()`).

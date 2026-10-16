@@ -4,13 +4,29 @@ All notable changes to Cafe'nMe are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); the project uses semantic
 versioning (pre-1.0: minor = features, patch = fixes).
 
+## [Unreleased]
+
+### Added
+- Product creation now supports product images and modifier groups; selected products can be reopened for sale in one confirmed bulk action.
+- Added a NestJS backend workspace with an internal API, generated OpenAPI documentation, and database readiness checks.
+
+### Changed
+- Menu management now offers a one-click filter reset, clearer sale-visibility labels, and hides the sample-menu action after all examples are added.
+- Split the application into separate `frontend/` (Next.js) and `backend/` (NestJS) workspaces.
+
+### Fixed
+- Prevent duplicate category names, ignoring letter case, from creating indistinguishable menu groups; preserve the no-category choice when saving a product.
+
+### Security
+- Restrict the LIFF development identity mock to development and normalize server errors without returning internal exception details.
+
 ## [0.1.0] - 2026-10-13
 
 First release of the MVP on top of the Create Next App scaffold (`731772e`).
 
 ### Added
 - **Data model and auth** — Drizzle schema with RLS-enabled tables and migrations 0000–0005
-  (`src/db/schema.ts`, `drizzle/`); Supabase Auth sign-up/login and onboarding that creates the
+  (`backend/src/db/schema.ts`, `backend/drizzle/`); Supabase Auth sign-up/login and onboarding that creates the
   shop, the owner and the owner's POS PIN (`src/app/(auth)`, `src/app/onboarding`, `src/server/auth-actions.ts`).
 - **POS (tablet)** — device pairing by code or QR (`/pos/pair?code=`), staff PIN login, photo menu
   with search, add-ons with editable cart lines, cart persisted across refresh, cash with smart

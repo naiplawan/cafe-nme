@@ -4,7 +4,7 @@ GSAP-animated SVG charts, no chart library. Read `docs/MOTION.md` first — its 
 (import GSAP only from `@/components/motion/gsap`, `useGSAP` with scope, reduced motion via
 `gsap.matchMedia()`, transforms/opacity/DrawSVG only, never block input).
 
-## Phase 1a — chart kit: `src/components/charts/` (client components, `"use client"`)
+## Phase 1a — chart kit: `frontend/src/components/charts/` (client components, `"use client"`)
 
 Props must be serializable — server pages render these directly, so **no function props**.
 Number formatting is chosen with `format`:
@@ -40,9 +40,9 @@ Shared rules for every chart:
   render final state immediately. Durations: admin ≤ 0.8 s total, POS ≤ 0.3 s.
 - Responsive: fill container width; no horizontal page scroll at 360 px.
 - Thai labels; numbers `tabular-nums`.
-- Export everything from `src/components/charts/index.ts`.
+- Export everything from `frontend/src/components/charts/index.ts`.
 
-## Phase 1b — data: `src/server/reports.ts` additions (server-only, scoped by shopId, paid orders only)
+## Phase 1b — data: `frontend/src/server/reports.ts` additions (server-only, scoped by shopId, paid orders only)
 
 ```ts
 export async function hourlySales(shopId, from, to): Promise<{ hour: number; orders: number; netSatang: number }[]>;
@@ -57,7 +57,7 @@ export async function memberOverview(shopId): Promise<{ total: number; lineLinke
 ```
 Existing and reusable: `salesSummary` (incl. `byMethod`), `salesByItem`, `dailySales` (sparse — zero-fill in UI).
 
-Plus `scripts/seed-sales.ts` + package script `db:seed-sales`: generates ~30 days of realistic paid orders for
+Plus `backend/scripts/seed-sales.ts` + package script `db:seed-sales`: generates ~30 days of realistic paid orders for
 the `demo-cafe` shop (7:00–18:00, morning + lunch peaks, 20–60 orders/day, 1–3 items each from active products
 with their prices, ~70% cash / 30% PromptPay, ~35% attached to existing members with stamp_ledger earn rows,
 a few voids). Must keep `daily_no` sequential per business date after any existing orders, set `paid_at`,

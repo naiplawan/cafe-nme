@@ -1,4 +1,11 @@
+packages:
+  - frontend
+  - backend
+
 allowBuilds:
+  '@scarf/scarf': false
   esbuild: true
   sharp: false
   unrs-resolver: false
+overrides:
+  esbuild@0.18.20: ^0.25.4

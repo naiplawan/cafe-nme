@@ -1,0 +1,83 @@
+<div id="admin-report-improvement">
+  <style>
+    #admin-report-improvement {
+      --cafe-ink: #38271f;
+      --cafe-muted: #77685f;
+      --cafe-paper: #fbf8f2;
+      --cafe-surface: #fffdf9;
+      --cafe-line: #e8ded2;
+      --cafe-primary: #7c452d;
+      --cafe-primary-ink: #fffaf5;
+      --cafe-soft: #f2e9df;
+      color: var(--cafe-ink);
+      font: 14px/1.45 system-ui, sans-serif;
+    }
+
+    #admin-report-improvement * { box-sizing: border-box; }
+    #admin-report-improvement .preview { max-width: 760px; margin: 0 auto; }
+    #admin-report-improvement .window { padding: 24px; border-radius: 20px; background: var(--cafe-paper); }
+    #admin-report-improvement .heading { margin-bottom: 18px; }
+    #admin-report-improvement .eyebrow { color: var(--cafe-primary); font-size: 12px; font-weight: 600; }
+    #admin-report-improvement h2 { margin: 3px 0 0; font-size: 25px; line-height: 1.2; }
+    #admin-report-improvement .filters { padding: 16px; border: 1px solid var(--cafe-line); border-radius: 16px; background: var(--cafe-surface); }
+    #admin-report-improvement .fields { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; align-items: end; gap: 12px; }
+    #admin-report-improvement .field-label { display: block; margin-bottom: 6px; font-weight: 600; }
+    #admin-report-improvement .date { display: flex; min-height: 48px; align-items: center; padding: 0 12px; border: 1px solid var(--cafe-line); border-radius: 10px; background: var(--cafe-surface); }
+    #admin-report-improvement .apply { display: flex; min-height: 48px; align-items: center; justify-content: center; padding: 0 18px; border-radius: 10px; background: var(--cafe-primary); color: var(--cafe-primary-ink); font-weight: 600; }
+    #admin-report-improvement .quick { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 14px; }
+    #admin-report-improvement .quick-label { margin-right: 2px; font-weight: 600; }
+    #admin-report-improvement .range { display: inline-flex; min-height: 44px; align-items: center; padding: 0 15px; border: 1px solid var(--cafe-line); border-radius: 999px; background: var(--cafe-surface); }
+    #admin-report-improvement .range.selected { border-color: var(--cafe-primary); background: var(--cafe-primary); color: var(--cafe-primary-ink); font-weight: 600; }
+    #admin-report-improvement .compare { margin: 12px 0 0; color: var(--cafe-muted); font-size: 12px; }
+    #admin-report-improvement .section-label { margin: 20px 0 9px; color: var(--cafe-muted); font-size: 12px; font-weight: 600; }
+    #admin-report-improvement .metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+    #admin-report-improvement .metric { min-width: 0; padding: 14px; border: 1px solid var(--cafe-line); border-radius: 14px; background: var(--cafe-surface); }
+    #admin-report-improvement .metric-name { color: var(--cafe-muted); }
+    #admin-report-improvement .metric-value { margin-top: 5px; font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
+    #admin-report-improvement .metric-note { margin-top: 4px; color: var(--cafe-muted); font-size: 12px; }
+    @media (max-width: 540px) {
+      #admin-report-improvement .window { padding: 16px; }
+      #admin-report-improvement .fields { grid-template-columns: 1fr; }
+      #admin-report-improvement .apply { width: 100%; }
+      #admin-report-improvement .metrics { grid-template-columns: 1fr; }
+      #admin-report-improvement .metric { padding: 12px 14px; }
+    }
+  </style>
+
+  <div class="preview" role="img" aria-label="ตัวอย่างหน้ารายงานที่จัดตัวกรองช่วงวันที่ ปุ่มช่วงด่วน และตัวเลขหลักเป็นลำดับ">
+    <div class="window">
+      <header class="heading">
+        <div class="eyebrow">ยอดขาย</div>
+        <h2>รายงาน</h2>
+      </header>
+
+      <section class="filters" aria-label="ตัวกรองช่วงวันที่">
+        <div class="fields">
+          <div>
+            <span class="field-label">ตั้งแต่</span>
+            <div class="date">15 ต.ค. 2026</div>
+          </div>
+          <div>
+            <span class="field-label">ถึงวันที่</span>
+            <div class="date">15 ต.ค. 2026</div>
+          </div>
+          <div class="apply">ดูรายงาน</div>
+        </div>
+        <div class="quick">
+          <span class="quick-label">ช่วงด่วน</span>
+          <span class="range selected">วันนี้</span>
+          <span class="range">7 วัน</span>
+          <span class="range">เดือนนี้</span>
+        </div>
+        <p class="compare">เปรียบเทียบกับ 14 ต.ค. 2026 · 1 วันก่อนหน้า</p>
+      </section>
+
+      <div class="section-label">ตัวเลขหลัก</div>
+      <section class="metrics" aria-label="ตัวเลขหลัก">
+        <div class="metric"><div class="metric-name">ยอดขายสุทธิ</div><div class="metric-value">฿8,450</div><div class="metric-note">+8.2% เทียบช่วงก่อน</div></div>
+        <div class="metric"><div class="metric-name">ออเดอร์</div><div class="metric-value">62</div><div class="metric-note">+4.1% เทียบช่วงก่อน</div></div>
+        <div class="metric"><div class="metric-name">แก้วที่ขาย</div><div class="metric-value">75</div><div class="metric-note">+6.7% เทียบช่วงก่อน</div></div>
+      </section>
+    </div>
+  </div>
+</div>

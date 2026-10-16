@@ -4,6 +4,14 @@ A point of sale for Thai cafés with a LINE stamp-card membership. Staff sell on
 
 The product scope, decisions and architecture are in [PLAN.md](./PLAN.md).
 
+The applications live in separate workspace packages:
+
+```text
+frontend/  Next.js app, browser assets, and frontend tests
+backend/   NestJS API, database schema/migrations, seed scripts, and Supabase config
+docs/      Product and engineering documentation
+```
+
 <p align="center"><img src="docs/screenshots/pos-sale.webp" alt="POS sales screen on a 1280×800 tablet" width="820"></p>
 
 ## Features
@@ -39,7 +47,7 @@ The product scope, decisions and architecture are in [PLAN.md](./PLAN.md).
 
 ## Stack
 
-Next.js 16 (App Router, Cache Components) · React 19 · Tailwind CSS 4 · shadcn/ui (Base UI) · GSAP · Supabase (Postgres + Auth) · Drizzle ORM · LINE Messaging API + LIFF · Vitest.
+Frontend: Next.js 16 (App Router, Cache Components) · React 19 · Tailwind CSS 4 · shadcn/ui (Base UI) · GSAP · Vitest. Backend: NestJS 12 · Postgres · Drizzle ORM · Supabase Auth · LINE Messaging API + LIFF.
 
 ## Local setup
 
@@ -47,7 +55,7 @@ Prerequisites: Node.js 20.9+, pnpm, Docker.
 
 1. `pnpm install`
 2. Start local Supabase: `pnpm supabase start -x realtime,storage-api,imgproxy,edge-runtime,logflare,vector,supavisor`
-3. Copy `.env.example` to `.env.local` and fill it in from `pnpm supabase status` (plus `APP_SECRET`, e.g. `openssl rand -hex 32`).
+3. Copy `frontend/.env.example` to `frontend/.env.local` and fill it in from `pnpm supabase status` (plus `APP_SECRET`, e.g. `openssl rand -hex 32`). Backend-only deployments need `DATABASE_URL`, `APP_SECRET`, and `API_PORT` from `backend/.env.example`.
 4. `pnpm db:migrate`
 5. `pnpm db:seed`, then optionally `pnpm db:seed-menu` (30 photo menu items) and `pnpm db:seed-sales` (30 days of demo orders; `--reset` removes them).
 6. `pnpm dev`
@@ -57,9 +65,10 @@ Prerequisites: Node.js 20.9+, pnpm, Docker.
 
 | Name | Purpose |
 | --- | --- |
-| `DATABASE_URL` | Postgres connection string used by Drizzle (server only). |
+| `DATABASE_URL` | Postgres connection string used by the backend (server only). |
 | `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase Auth for the admin login. |
 | `SUPABASE_SERVICE_ROLE_KEY` | Used by the seed script only. |
+| `API_BASE_URL` / `API_PORT` | Frontend's backend URL and Nest's listening port. |
 | `APP_SECRET` | Signs POS sessions and member QR tokens; derives the key that encrypts LINE secrets. |
 | `LINE_DEV_MOCK` | `1` only in local development. |
 
@@ -70,7 +79,7 @@ LINE channel IDs, secret and access token are entered per shop in **Admin › �
 | Command | Description |
 | --- | --- |
 | `pnpm dev` / `build` / `start` | Develop, build and run the app. |
-| `pnpm typecheck` / `lint` | TypeScript and ESLint (no warnings allowed). |
+| `pnpm typecheck` / `lint` | TypeScript checks for both apps and workspace lint. |
 | `pnpm test` / `test:int` | Unit tests / integration tests against the database. |
 | `pnpm db:generate` / `db:migrate` | Generate and apply Drizzle migrations. |
 | `pnpm db:seed` / `db:seed-menu` / `db:seed-sales` | Demo shop, stock menu, demo sales. |

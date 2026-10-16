@@ -14,7 +14,7 @@ error text #8E3415 (bg #F7DCD0) · disabled #C9B6A4 · LINE green #06C755 · ove
 Font is already Noto Sans Thai (root layout). Target: landscape tablet 1280×800, must also work at
 1024×768 and larger; touch targets ≥ 44 px, primary actions 64–84 px tall. No hover-only affordances.
 
-Shared, already written: `src/app/pos/_components/keypad.tsx` → `<Keypad value onChange maxLength clearLabel? keyClassName? className? />`.
+Shared, already written: `frontend/src/app/pos/_components/keypad.tsx` → `<Keypad value onChange maxLength clearLabel? keyClassName? className? />`.
 Pure helpers usable in client components: `priceCart`, `rewardDiscount`, `stampsForLines` (`@/lib/pricing`), `formatBaht` (`@/lib/money`).
 Server: `requirePosStaff()` (`@/server/pos-session`), `getPosMenu` (`@/server/catalog`), `checkout`, `getOrder`,
 `listOrdersForDay`, `voidOrder` (`@/server/orders`), `getMemberSummary` (`@/server/loyalty`),
@@ -24,11 +24,11 @@ Server: `requirePosStaff()` (`@/server/pos-session`), `getPosMenu` (`@/server/ca
 ## Ownership and interfaces
 
 ### Worker `sale` — sales screen
-Owns: `src/app/pos/layout.tsx`, `src/app/pos/page.tsx`, `src/app/pos/actions.ts`,
-`src/app/pos/_components/{pos-app,pos-header,category-rail,product-grid,modifier-sheet,cart-panel,member-panel,scan-dialog,phone-dialog}.tsx`.
+Owns: `frontend/src/app/pos/layout.tsx`, `frontend/src/app/pos/page.tsx`, `frontend/src/app/pos/actions.ts`,
+`frontend/src/app/pos/_components/{pos-app,pos-header,category-rail,product-grid,modifier-sheet,cart-panel,member-panel,scan-dialog,phone-dialog}.tsx`.
 
 ```ts
-// src/app/pos/actions.ts ("use server"; every action calls requirePosStaff() and uses its shopId)
+// frontend/src/app/pos/actions.ts ("use server"; every action calls requirePosStaff() and uses its shopId)
 export async function lookupMemberByQr(token: string): Promise<MemberSummary | null>;
 export async function searchMembersByPhone(query: string): Promise<MemberSummary[]>; // ≥ 4 digits, max 5
 ```
@@ -52,10 +52,10 @@ full-screen background (`min-h-dvh`), no header (each page draws its own header 
 After `onNewOrder` the cart, member and reward toggle reset and the order number advances (`result.dailyNo + 1`).
 
 ### Worker `pay` — payment and done
-Owns: `src/app/pos/checkout-actions.ts`, `src/app/pos/_components/{payment-dialog,done-screen,promptpay-qr}.tsx`.
+Owns: `frontend/src/app/pos/checkout-actions.ts`, `frontend/src/app/pos/_components/{payment-dialog,done-screen,promptpay-qr}.tsx`.
 
 ```ts
-// src/app/pos/checkout-actions.ts ("use server"; requirePosStaff() for shopId + staffId)
+// frontend/src/app/pos/checkout-actions.ts ("use server"; requirePosStaff() for shopId + staffId)
 export type CheckoutActionResult = { ok: true; result: CheckoutResult } | { ok: false; message: string }; // Thai message per CheckoutError code
 export async function checkoutAction(input: CheckoutInput): Promise<CheckoutActionResult>;
 export async function promptPayQr(amountSatang: number): Promise<{ svg: string } | { error: string }>; // promptpay-qr payload → qrcode SVG string, uses shop.promptpayId
@@ -64,7 +64,7 @@ export async function sendReceiptToLine(orderId: string): Promise<{ ok: boolean;
 `PaymentDialog` and `DoneScreen` props exactly as above (export both as named exports).
 
 ### Worker `orders` — orders, receipt, login/pair restyle
-Owns: `src/app/pos/orders/**`, `src/app/pos/receipt/**`, `src/app/pos/login/**`, `src/app/pos/pair/**`.
+Owns: `frontend/src/app/pos/orders/**`, `frontend/src/app/pos/receipt/**`, `frontend/src/app/pos/login/**`, `frontend/src/app/pos/pair/**`.
 - `/pos/orders`: per Orders.dc.html; void needs manager PIN via `verifyManagerPin`, then `voidOrder`.
 - `/pos/receipt/[orderId]`: printable 58 mm receipt (`@page { size: 58mm auto; margin: 0 }`), auto-calls `window.print()`
   once on load, a "กลับ" link for screen view. Shows shop name, order no, date/time (Bangkok), items with modifiers,

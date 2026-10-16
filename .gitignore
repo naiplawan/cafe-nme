@@ -2,6 +2,7 @@
 
 # dependencies
 /node_modules
+**/node_modules/
 /.pnp
 .pnp.*
 .yarn/*
@@ -12,13 +13,15 @@
 
 # testing
 /coverage
+**/.react-doctor-report.json
 
 # next.js
-/.next/
-/out/
+**/.next/
+**/out/
 
 # production
-/build
+**/build/
+backend/dist/
 
 # misc
 .DS_Store

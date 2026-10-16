@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+      NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:54321
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder
+      SUPABASE_SERVICE_ROLE_KEY: ci-placeholder
+      APP_SECRET: ci-placeholder-secret-with-at-least-thirty-two-bytes
+      LINE_DEV_MOCK: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.21.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm check:boundaries
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm audit:high
+      - run: pnpm react:doctor
+      - run: pnpm build
+      - run: pnpm build:api
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: react-doctor-report
+          path: frontend/.react-doctor-report.json
+          if-no-files-found: ignore

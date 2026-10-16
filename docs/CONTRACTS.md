@@ -13,15 +13,15 @@ Already provided (do not rewrite):
 
 ---
 
-## POS auth — `src/lib/pin.ts`, `src/server/pos-session.ts` (worker: pos-auth)
+## POS auth — `frontend/src/lib/pin.ts`, `frontend/src/server/pos-session.ts` (worker: pos-auth)
 
 ```ts
-// src/lib/pin.ts  (pure, node:crypto scrypt; PIN = 4–6 digits)
+// frontend/src/lib/pin.ts  (pure, node:crypto scrypt; PIN = 4–6 digits)
 export function isValidPin(pin: string): boolean;
 export async function hashPin(pin: string): Promise<string>;
 export async function verifyPin(pin: string, hash: string): Promise<boolean>;
 
-// src/server/pos-session.ts
+// frontend/src/server/pos-session.ts
 export type PosShop = { id: string; name: string; promptpayId: string | null; stampGoal: number; receiptFooter: string | null };
 export type PosDevice = { deviceId: string; deviceName: string; shop: PosShop };
 export type PosSession = PosDevice & { shopId: string; staff: { id: string; name: string; role: "owner" | "manager" | "barista" } };
@@ -41,11 +41,11 @@ export async function verifyManagerPin(shopId: string, pin: string): Promise<{ s
 ## Catalog, pricing, orders, loyalty (worker: orders)
 
 ```ts
-// src/lib/business-date.ts (pure)
+// frontend/src/lib/business-date.ts (pure)
 export function businessDate(at: Date, timeZone?: string): string;                 // "YYYY-MM-DD", default Asia/Bangkok
 export function businessDayRange(date: string, timeZone?: string): { start: Date; end: Date };
 
-// src/lib/pricing.ts (pure, no DB)
+// frontend/src/lib/pricing.ts (pure, no DB)
 export type PosModifier = { id: string; name: string; priceDeltaSatang: number };
 export type PosModifierGroup = { id: string; name: string; minSelect: number; maxSelect: number; modifiers: PosModifier[] };
 export type PosProduct = { id: string; name: string; categoryId: string | null; basePriceSatang: number; imageUrl: string | null; earnsStamp: boolean; groups: PosModifierGroup[] };
@@ -58,17 +58,17 @@ export function priceCart(lines: CartLineInput[], menu: PosMenu): { lines: Price
 export function rewardDiscount(lines: PricedLine[]): number; // unit price of the cheapest earnsStamp line, 0 if none
 export function stampsForLines(lines: PricedLine[]): number;  // sum of qty for earnsStamp lines
 
-// src/server/catalog.ts
+// frontend/src/server/catalog.ts
 export async function getPosMenu(shopId: string): Promise<PosMenu>; // active products only, groups/modifiers sorted
 
-// src/server/loyalty.ts
+// frontend/src/server/loyalty.ts
 export type MemberSummary = { id: string; displayName: string; phone: string | null; lineLinked: boolean;
   stampBalance: number; stampGoal: number; availableRewards: { id: string; createdAt: Date }[] };
 export async function getMemberSummary(shopId: string, memberId: string): Promise<MemberSummary | null>;
 export async function adjustStamps(shopId: string, memberId: string, delta: number, staffId: string, note?: string): Promise<MemberSummary>; // reason "adjust", writes audit_log
 export async function listLedger(shopId: string, memberId: string, limit?: number): Promise<{ id: string; delta: number; reason: string; orderId: string | null; createdAt: Date }[]>;
 
-// src/server/orders.ts
+// frontend/src/server/orders.ts
 export type CheckoutInput = { lines: CartLineInput[]; memberId?: string | null; redeemRewardId?: string | null;
   payment: { method: "cash"; cashReceivedSatang: number } | { method: "promptpay" } };
 export type CheckoutResult = { orderId: string; dailyNo: number; subtotalSatang: number; discountSatang: number; totalSatang: number;
@@ -98,15 +98,15 @@ export async function voidOrder(shopId: string, orderId: string, managerStaffId:
 ## Members & LINE (worker: line)
 
 ```ts
-// src/lib/crypto.ts (pure; AES-256-GCM, key = sha256(APP_SECRET + ":line"))
+// frontend/src/lib/crypto.ts (pure; AES-256-GCM, key = sha256(APP_SECRET + ":line"))
 export function encryptSecret(plain: string): string;
 export function decryptSecret(enc: string): string;
 
-// src/lib/member-token.ts (pure; uses sign/unsign purpose "member-qr"; 60 s windows)
+// frontend/src/lib/member-token.ts (pure; uses sign/unsign purpose "member-qr"; 60 s windows)
 export function createMemberToken(memberId: string, now?: Date): string;          // "CM1.<memberId>.<window>.<mac>"-style, fits a QR
 export function verifyMemberToken(token: string, now?: Date): string | null;       // accepts current and previous window → memberId
 
-// src/server/members.ts
+// frontend/src/server/members.ts
 export type MemberRow = { id: string; displayName: string; phone: string | null; lineUserId: string | null; createdAt: Date; stampBalance: number };
 export async function findMemberByToken(shopId: string, token: string): Promise<string | null>;  // memberId (not deleted, same shop)
 export async function findMembersByPhone(shopId: string, phoneQuery: string): Promise<MemberRow[]>; // digits only, prefix/exact match, max 10
@@ -114,7 +114,7 @@ export async function createMemberByPhone(shopId: string, phone: string, display
 export async function listMembers(shopId: string, opts?: { search?: string; limit?: number; offset?: number }): Promise<{ rows: MemberRow[]; total: number }>;
 export async function deleteMemberData(shopId: string, memberId: string): Promise<void>; // PDPA: null phone/lineUserId, name "ลบข้อมูลแล้ว", set deletedAt
 
-// src/server/line.ts
+// frontend/src/server/line.ts
 export type LineConfig = { messagingChannelId: string | null; channelSecret: string | null; accessToken: string | null;
   loginChannelId: string | null; liffId: string | null; richMenuId: string | null };
 export async function getLineConfig(shopId: string): Promise<LineConfig>;
@@ -124,13 +124,13 @@ export async function verifyLineIdToken(shopSlug: string, idToken: string): Prom
 //   Dev mock: if process.env.LINE_DEV_MOCK === "1" && NODE_ENV !== "production" and idToken starts with "dev:", returns { lineUserId: idToken.slice(4), name: "Dev User", pictureUrl: null }.
 export async function pushRewardUnlocked(shopId: string, memberId: string): Promise<void>; // no-op if member has no lineUserId or no token; logs, never throws
 export async function pushText(shopId: string, lineUserId: string, text: string): Promise<void>;
-export async function setupRichMenu(shopId: string, liffUrl: string): Promise<string>; // uploads public/assets/rich-menu.png, 6 areas, sets default, stores richMenuId
+export async function setupRichMenu(shopId: string, liffUrl: string): Promise<string>; // uploads frontend/public/assets/rich-menu.png, 6 areas, sets default, stores richMenuId
 ```
 
 ## Reports (worker: reports)
 
 ```ts
-// src/server/reports.ts
+// frontend/src/server/reports.ts
 export type SalesSummary = { orders: number; voided: number; grossSatang: number; discountSatang: number; netSatang: number; cups: number;
   byMethod: { cash: number; promptpay: number }; memberOrders: number; stampsIssued: number; rewardsRedeemed: number; newMembers: number };
 export async function salesSummary(shopId: string, from: string, to: string): Promise<SalesSummary>; // inclusive business dates, paid orders only (voided counted separately)

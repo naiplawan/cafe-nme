@@ -1,6 +1,6 @@
 # Motion & polish guidelines
 
-GSAP 3.15 (all plugins free) is set up in `src/components/motion/gsap.ts`:
+GSAP 3.15 (all plugins free) is set up in `frontend/src/components/motion/gsap.ts`:
 `import { gsap, useGSAP, Flip, DrawSVGPlugin, MOTION, prefersReducedMotion } from "@/components/motion/gsap";`
 Never import from "gsap" directly in components (plugins must be registered once there).
 

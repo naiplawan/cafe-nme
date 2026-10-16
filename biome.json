@@ -1,0 +1,72 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.5.15/schema.json",
+  "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
+  "files": { "includes": ["**/*.{js,jsx,ts,tsx,mjs,cjs,mts,cts}"] },
+  "javascript": { "parser": { "unsafeParameterDecoratorsEnabled": true } },
+  "formatter": { "enabled": false },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "preset": "all",
+      "suspicious": {
+        "noExplicitAny": "error",
+        "noReactSpecificProps": "off",
+        "useAwait": "off",
+        "noUnnecessaryConditions": "off"
+      },
+      "correctness": {
+        "noSolidDestructuredProps": "off",
+        "useQwikValidLexicalScope": "off",
+        "useImportExtensions": "off",
+        "noProcessGlobal": "off",
+        "noNodejsModules": "off",
+        "noUnresolvedImports": "off",
+        "noUndeclaredDependencies": "off"
+      },
+      "performance": {
+        "useSolidForComponent": "off",
+        "noJsxPropsBind": "off",
+        "noBarrelFile": "off",
+        "noDelete": "off",
+        "noNamespaceImport": "off",
+        "noAwaitInLoops": "off"
+      },
+      "style": {
+        "noDefaultExport": "off",
+        "useNamingConvention": "off",
+        "noJsxLiterals": "off",
+        "noProcessEnv": "off",
+        "noTernary": "off",
+        "noMagicNumbers": "off",
+        "noExcessiveLinesPerFile": "off",
+        "noExcessiveClassesPerFile": "off",
+        "useExportsLast": "off",
+        "noImplicitBoolean": "off",
+        "noContinue": "off",
+        "noParameterProperties": "off",
+        "noEnum": "off",
+        "useGlobalThis": "off"
+      },
+      "complexity": {
+        "noExcessiveLinesPerFunction": "off",
+        "noExcessiveCognitiveComplexity": "off",
+        "noVoid": "off",
+        "useSimplifiedLogicExpression": "off",
+        "useMaxParams": "off"
+      }
+    }
+  },
+  "overrides": [
+    {
+      "includes": ["**/__tests__/**", "tests/**", "**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts"],
+      "linter": { "rules": { "performance": { "useTopLevelRegex": "off" }, "suspicious": { "noShadow": "off" } } }
+    },
+    { "includes": ["tests/e2e/**"], "linter": { "rules": { "suspicious": { "noSkippedTests": "off" } } } },
+    {
+      "includes": ["frontend/src/app/**/page.tsx", "frontend/src/app/**/layout.tsx"],
+      "linter": { "rules": { "style": { "useComponentExportOnlyModules": "off" } } }
+    },
+    { "includes": ["frontend/src/lib/logger.ts", "backend/scripts/**"], "linter": { "rules": { "suspicious": { "noConsole": "off" } } }
+    }
+  ]
+}
