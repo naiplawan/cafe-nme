@@ -1,10 +1,13 @@
+
+
+
+
 # Cafe'nMe
 
 A point of sale for Thai cafés with a LINE stamp-card membership. Staff sell on a tablet POS, owners manage the shop and see sales charts in a web admin, and customers collect stamps and redeem free drinks from a LINE Official Account (rich menu + LIFF member card).
 
 <p align="center">
-  <a href="docs/media/cafenme-film.mp4"><img src="docs/media/cafenme-film.jpg" alt="Cafe'nMe film: the back office and the POS tablet, two screens with one menu" width="820"></a><br>
-  <sub>▶ <a href="docs/media/cafenme-film.mp4">Watch the 24-second film</a>: change the menu in the back office and it's already on the counter.</sub>
+ https://github.com/user-attachments/assets/a1b59e8e-ab27-4552-9f1f-6abf433030d1
 </p>
 
 The product scope, decisions and architecture are in [PLAN.md](./PLAN.md).
