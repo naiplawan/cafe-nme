@@ -37,7 +37,6 @@ export const requireStaff = cache(async (): Promise<StaffSession> => {
   if (!session) {
     redirect("/onboarding");
   }
-
   return {
     userId: user.id,
     email: user.email ?? null,

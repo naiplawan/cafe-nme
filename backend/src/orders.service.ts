@@ -7,6 +7,7 @@ import {
 } from "@nestjs/common";
 import type { TransactionSql } from "postgres";
 import { DatabaseService } from "./database.service.js";
+import { clearExpiredSoldOut } from "./sold-out.js";
 
 export interface CheckoutInput {
   lines: { productId: string; qty: number; modifierIds: string[]; note?: string }[];
@@ -159,6 +160,7 @@ export class OrdersService {
         if (!shop) throw new NotFoundException("Shop not found");
         const day = businessDate(new Date(), shop.timezone);
         await tx`select pg_advisory_xact_lock(hashtext(${shopId + day}))`;
+        await clearExpiredSoldOut(tx, shopId);
         const menu = await checkoutMenu(tx, shopId);
         const lineProductIds = new Set(input.lines.map((line) => line.productId));
         if (menu.some((product) => product.soldOut && lineProductIds.has(product.id))) {

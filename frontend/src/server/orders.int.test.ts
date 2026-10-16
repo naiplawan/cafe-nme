@@ -36,9 +36,13 @@ describe("orders integration", () => {
     if (shopId) await db.delete(shops).where(eq(shops.id, shopId));
   });
 
+  it("rejects a client-supplied price instead of trusting it", async () => {
+    await expect(checkout({ shopId, staffId }, { lines: [{ productId, qty: 1, modifierIds: [], unitPriceSatang: 1 } as never],
+      payment: { method: "promptpay" } })).rejects.toThrow("400");
+  });
+
   it("reprices from the database, numbers daily orders, gives change, and earns stamps/reward", async () => {
-    const result = await checkout({ shopId, staffId }, { lines: [{ productId, qty: 3, modifierIds: [modifierId], note: "  ไม่หวาน ",
-      unitPriceSatang: 1 } as never], memberId,
+    const result = await checkout({ shopId, staffId }, { lines: [{ productId, qty: 3, modifierIds: [modifierId], note: "  ไม่หวาน " }], memberId,
       payment: { method: "cash", cashReceivedSatang: 20_000 } });
     expect(result.subtotalSatang).toBe(18_000);
     expect(result.dailyNo).toBeGreaterThan(0);

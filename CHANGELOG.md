@@ -16,6 +16,7 @@ versioning (pre-1.0: minor = features, patch = fixes).
 - Admin dashboard reports now compare the text-based business date column with text date bounds, preventing PostgreSQL type errors.
 - POS pairing now handles invalid or expired codes without crashing, and production has the rate-limit table required by pairing requests.
 - Voiding an order now blocks while its earned reward is still redeemed and reverses the stamp ledger deltas recorded for that order.
+- Checkout now reopens products whose sold-out mark expired on an earlier business day (when auto-reopen is on), so a POS that has not reloaded the menu can still sell them instead of getting a sold-out rejection.
 
 ### Added
 - The admin menu is split into Categories, Products, and POS preview tabs that can be opened in any order; the product form shows every section on one page with jump links (Basics, Modifiers, Image, Sale), creates a category inline, and links to the new product after adding it.
