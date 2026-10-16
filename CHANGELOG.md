@@ -7,6 +7,7 @@ versioning (pre-1.0: minor = features, patch = fixes).
 ## [Unreleased]
 
 ### Changed
+- The README now plays the 24-second product film inline on GitHub.
 - Production demo seeding now requires explicit confirmation and custom owner credentials, and skips when the demo shop or owner already exists.
 
 ### Fixed
