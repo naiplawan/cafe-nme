@@ -6,9 +6,10 @@ const integration = process.env.INTEGRATION === "1";
 export default defineConfig({
   resolve: {
     alias: {
-      "@": fileURLToPath(new URL("./src", import.meta.url)),
-      "@/db": fileURLToPath(new URL("./test/db.ts", import.meta.url)),
+      // Most specific first: Vite uses the first alias whose key prefixes the import.
       "@/db/schema": fileURLToPath(new URL("../backend/src/db/schema.ts", import.meta.url)),
+      "@/db": fileURLToPath(new URL("./test/db.ts", import.meta.url)),
+      "@": fileURLToPath(new URL("./src", import.meta.url)),
       "server-only": fileURLToPath(new URL("./test/server-only-stub.ts", import.meta.url)),
     },
   },
