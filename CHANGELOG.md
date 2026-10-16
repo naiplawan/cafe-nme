@@ -6,6 +6,12 @@ versioning (pre-1.0: minor = features, patch = fixes).
 
 ## [Unreleased]
 
+### Changed
+- Production demo seeding now requires explicit confirmation and custom owner credentials, and skips when the demo shop or owner already exists.
+
+### Fixed
+- Admin dashboard reports now compare the text-based business date column with text date bounds, preventing PostgreSQL type errors.
+
 ### Added
 - Product creation now supports product images and modifier groups; selected products can be reopened for sale in one confirmed bulk action.
 - Added a NestJS backend workspace with an internal API, generated OpenAPI documentation, and database readiness checks.

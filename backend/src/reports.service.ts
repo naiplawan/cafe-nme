@@ -38,17 +38,17 @@ export class ReportsService {
       new_members: number | string;
     }[]>`
       SELECT
-        (SELECT count(*) FROM orders o WHERE o.shop_id = ${shopId}::uuid AND o.business_date BETWEEN ${from}::date AND ${to}::date AND o.status = 'paid') AS orders,
-        (SELECT count(*) FROM orders o WHERE o.shop_id = ${shopId}::uuid AND o.business_date BETWEEN ${from}::date AND ${to}::date AND o.status = 'void') AS voided,
-        (SELECT coalesce(sum(o.subtotal_satang), 0) FROM orders o WHERE o.shop_id = ${shopId}::uuid AND o.business_date BETWEEN ${from}::date AND ${to}::date AND o.status = 'paid') AS gross_satang,
-        (SELECT coalesce(sum(o.discount_satang), 0) FROM orders o WHERE o.shop_id = ${shopId}::uuid AND o.business_date BETWEEN ${from}::date AND ${to}::date AND o.status = 'paid') AS discount_satang,
-        (SELECT coalesce(sum(o.total_satang), 0) FROM orders o WHERE o.shop_id = ${shopId}::uuid AND o.business_date BETWEEN ${from}::date AND ${to}::date AND o.status = 'paid') AS net_satang,
-        (SELECT coalesce(sum(i.qty), 0) FROM order_items i JOIN orders o ON o.id = i.order_id WHERE o.shop_id = ${shopId}::uuid AND o.business_date BETWEEN ${from}::date AND ${to}::date AND o.status = 'paid') AS cups,
-        (SELECT coalesce(sum(p.amount_satang), 0) FROM payments p JOIN orders o ON o.id = p.order_id WHERE o.shop_id = ${shopId}::uuid AND o.business_date BETWEEN ${from}::date AND ${to}::date AND o.status = 'paid' AND p.method = 'cash') AS cash,
-        (SELECT coalesce(sum(p.amount_satang), 0) FROM payments p JOIN orders o ON o.id = p.order_id WHERE o.shop_id = ${shopId}::uuid AND o.business_date BETWEEN ${from}::date AND ${to}::date AND o.status = 'paid' AND p.method = 'promptpay') AS promptpay,
-        (SELECT count(*) FROM orders o WHERE o.shop_id = ${shopId}::uuid AND o.business_date BETWEEN ${from}::date AND ${to}::date AND o.status = 'paid' AND o.member_id IS NOT NULL) AS member_orders,
-        (SELECT coalesce(sum(l.delta), 0) FROM stamp_ledger l JOIN orders o ON o.id = l.order_id WHERE l.shop_id = ${shopId}::uuid AND o.shop_id = ${shopId}::uuid AND o.business_date BETWEEN ${from}::date AND ${to}::date AND l.reason = 'earn' AND l.delta > 0) AS stamps_issued,
-        (SELECT count(*) FROM rewards r JOIN orders o ON o.id = r.redeemed_order_id WHERE r.shop_id = ${shopId}::uuid AND o.shop_id = ${shopId}::uuid AND o.business_date BETWEEN ${from}::date AND ${to}::date AND r.status = 'redeemed') AS rewards_redeemed,
+        (SELECT count(*) FROM orders o WHERE o.shop_id = ${shopId}::uuid AND o.business_date BETWEEN ${from}::text AND ${to}::text AND o.status = 'paid') AS orders,
+        (SELECT count(*) FROM orders o WHERE o.shop_id = ${shopId}::uuid AND o.business_date BETWEEN ${from}::text AND ${to}::text AND o.status = 'void') AS voided,
+        (SELECT coalesce(sum(o.subtotal_satang), 0) FROM orders o WHERE o.shop_id = ${shopId}::uuid AND o.business_date BETWEEN ${from}::text AND ${to}::text AND o.status = 'paid') AS gross_satang,
+        (SELECT coalesce(sum(o.discount_satang), 0) FROM orders o WHERE o.shop_id = ${shopId}::uuid AND o.business_date BETWEEN ${from}::text AND ${to}::text AND o.status = 'paid') AS discount_satang,
+        (SELECT coalesce(sum(o.total_satang), 0) FROM orders o WHERE o.shop_id = ${shopId}::uuid AND o.business_date BETWEEN ${from}::text AND ${to}::text AND o.status = 'paid') AS net_satang,
+        (SELECT coalesce(sum(i.qty), 0) FROM order_items i JOIN orders o ON o.id = i.order_id WHERE o.shop_id = ${shopId}::uuid AND o.business_date BETWEEN ${from}::text AND ${to}::text AND o.status = 'paid') AS cups,
+        (SELECT coalesce(sum(p.amount_satang), 0) FROM payments p JOIN orders o ON o.id = p.order_id WHERE o.shop_id = ${shopId}::uuid AND o.business_date BETWEEN ${from}::text AND ${to}::text AND o.status = 'paid' AND p.method = 'cash') AS cash,
+        (SELECT coalesce(sum(p.amount_satang), 0) FROM payments p JOIN orders o ON o.id = p.order_id WHERE o.shop_id = ${shopId}::uuid AND o.business_date BETWEEN ${from}::text AND ${to}::text AND o.status = 'paid' AND p.method = 'promptpay') AS promptpay,
+        (SELECT count(*) FROM orders o WHERE o.shop_id = ${shopId}::uuid AND o.business_date BETWEEN ${from}::text AND ${to}::text AND o.status = 'paid' AND o.member_id IS NOT NULL) AS member_orders,
+        (SELECT coalesce(sum(l.delta), 0) FROM stamp_ledger l JOIN orders o ON o.id = l.order_id WHERE l.shop_id = ${shopId}::uuid AND o.shop_id = ${shopId}::uuid AND o.business_date BETWEEN ${from}::text AND ${to}::text AND l.reason = 'earn' AND l.delta > 0) AS stamps_issued,
+        (SELECT count(*) FROM rewards r JOIN orders o ON o.id = r.redeemed_order_id WHERE r.shop_id = ${shopId}::uuid AND o.shop_id = ${shopId}::uuid AND o.business_date BETWEEN ${from}::text AND ${to}::text AND r.status = 'redeemed') AS rewards_redeemed,
         (SELECT count(*) FROM members m WHERE m.shop_id = ${shopId}::uuid AND m.deleted_at IS NULL AND m.created_at >= (${from}::date::timestamp AT TIME ZONE 'Asia/Bangkok') AND m.created_at < ((${to}::date + 1)::timestamp AT TIME ZONE 'Asia/Bangkok')) AS new_members
     `;
     return {
@@ -71,7 +71,7 @@ export class ReportsService {
       SELECT i.name_snapshot AS name, sum(i.qty) AS qty,
         sum(i.unit_price_satang * i.qty) AS revenue_satang
       FROM order_items i JOIN orders o ON o.id = i.order_id
-      WHERE o.shop_id = ${shopId}::uuid AND o.business_date BETWEEN ${from}::date AND ${to}::date AND o.status = 'paid'
+      WHERE o.shop_id = ${shopId}::uuid AND o.business_date BETWEEN ${from}::text AND ${to}::text AND o.status = 'paid'
       GROUP BY i.name_snapshot ORDER BY sum(i.qty) DESC, i.name_snapshot ASC
     `;
     return rows.map((row) => ({ name: row.name, qty: asNumber(row.qty), revenueSatang: asNumber(row.revenue_satang) }));
@@ -81,7 +81,7 @@ export class ReportsService {
     const rows = await this.database.connection<{ date: string; orders: number | string; net_satang: number | string }[]>`
       SELECT o.business_date::text AS date, count(*) AS orders, sum(o.total_satang) AS net_satang
       FROM orders o
-      WHERE o.shop_id = ${shopId}::uuid AND o.business_date BETWEEN ${from}::date AND ${to}::date AND o.status = 'paid'
+      WHERE o.shop_id = ${shopId}::uuid AND o.business_date BETWEEN ${from}::text AND ${to}::text AND o.status = 'paid'
       GROUP BY o.business_date ORDER BY o.business_date
     `;
     return rows.map((row) => ({ date: row.date, orders: asNumber(row.orders), netSatang: asNumber(row.net_satang) }));
@@ -92,7 +92,7 @@ export class ReportsService {
       SELECT extract(hour FROM o.paid_at AT TIME ZONE 'Asia/Bangkok') AS hour,
         count(*) AS orders, sum(o.total_satang) AS net_satang
       FROM orders o
-      WHERE o.shop_id = ${shopId}::uuid AND o.business_date BETWEEN ${from}::date AND ${to}::date
+      WHERE o.shop_id = ${shopId}::uuid AND o.business_date BETWEEN ${from}::text AND ${to}::text
         AND o.status = 'paid' AND o.paid_at IS NOT NULL
       GROUP BY extract(hour FROM o.paid_at AT TIME ZONE 'Asia/Bangkok')
     `;
@@ -115,7 +115,7 @@ export class ReportsService {
       JOIN orders o ON o.id = i.order_id
       LEFT JOIN products p ON p.id = i.product_id AND p.shop_id = o.shop_id
       LEFT JOIN categories c ON c.id = p.category_id AND c.shop_id = o.shop_id
-      WHERE o.shop_id = ${shopId}::uuid AND o.business_date BETWEEN ${from}::date AND ${to}::date AND o.status = 'paid'
+      WHERE o.shop_id = ${shopId}::uuid AND o.business_date BETWEEN ${from}::text AND ${to}::text AND o.status = 'paid'
       GROUP BY coalesce(c.name, 'อื่นๆ')
       ORDER BY sum(i.unit_price_satang * i.qty) DESC, coalesce(c.name, 'อื่นๆ') ASC
     `;
@@ -193,7 +193,7 @@ export class ReportsService {
       FROM orders o
       LEFT JOIN members m ON m.id = o.member_id AND m.shop_id = o.shop_id
       LEFT JOIN payments p ON p.order_id = o.id
-      WHERE o.shop_id = ${shopId}::uuid AND o.business_date BETWEEN ${from}::date AND ${to}::date AND o.status = 'paid'
+      WHERE o.shop_id = ${shopId}::uuid AND o.business_date BETWEEN ${from}::text AND ${to}::text AND o.status = 'paid'
       ORDER BY o.business_date, o.daily_no
     `;
     return rows.map((row) => ({

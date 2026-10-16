@@ -16,12 +16,22 @@ import {
   stampLedger,
 } from "../src/db/schema";
 
-config({ path: "../frontend/.env.local" });
+config({ path: [".env.production.local", "../frontend/.env.local"] });
 
-const ownerEmail = "owner@demo.test";
-const ownerPassword = "password123";
+const productionSeed = process.env.SEED_TARGET === "production";
+const ownerEmail = process.env.SEED_OWNER_EMAIL ?? "owner@demo.test";
+const ownerPassword = process.env.SEED_OWNER_PASSWORD ?? "password123";
 
 async function seed() {
+  if (productionSeed) {
+    if (process.env.SEED_CONFIRM_PRODUCTION !== "demo-cafe") {
+      throw new Error("Production seed requires SEED_CONFIRM_PRODUCTION=demo-cafe.");
+    }
+    if (!process.env.SEED_OWNER_EMAIL || !process.env.SEED_OWNER_PASSWORD || ownerPassword === "password123") {
+      throw new Error("Production seed requires a custom SEED_OWNER_EMAIL and non-default SEED_OWNER_PASSWORD.");
+    }
+  }
+
   const databaseUrl = process.env.DATABASE_URL;
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -45,16 +55,7 @@ async function seed() {
   }
 
   let authUserId = await findAuthUserId();
-  if (!authUserId) {
-    const { data, error } = await supabase.auth.admin.createUser({
-      email: ownerEmail,
-      password: ownerPassword,
-      email_confirm: true,
-    });
-    if (error) authUserId = await findAuthUserId(); else authUserId = data.user.id;
-    if (!authUserId) throw error;
-  }
-
+  const existingAuthUser = Boolean(authUserId);
   const client = postgres(databaseUrl, { max: 1 });
   const db = drizzle(client);
 
@@ -68,6 +69,23 @@ async function seed() {
     if (existingStaff) {
       console.info("Demo owner already has a staff account; seed skipped.");
       return;
+    }
+    if (productionSeed && existingAuthUser) {
+      throw new Error("The production owner email already exists without a seeded staff account; use a new email to avoid changing its credentials.");
+    }
+    const [existingShop] = await db.select({ id: shops.id }).from(shops).where(eq(shops.slug, "demo-cafe")).limit(1);
+    if (existingShop) {
+      throw new Error("A shop with slug demo-cafe already exists; seed skipped to protect existing production data.");
+    }
+
+    if (!authUserId) {
+      const { data, error } = await supabase.auth.admin.createUser({
+        email: ownerEmail,
+        password: ownerPassword,
+        email_confirm: true,
+      });
+      if (error) authUserId = await findAuthUserId(); else authUserId = data.user.id;
+      if (!authUserId) throw error;
     }
 
     await db.transaction(async (tx) => {
@@ -167,7 +185,7 @@ async function seed() {
       await tx.insert(productModifierGroups).values(links);
     });
 
-    console.info("Demo café seeded: owner@demo.test / password123, POS PINs owner 1234 and barista 1111, member phone 0814821000.");
+    console.info(`Demo café seeded for ${ownerEmail}; POS PINs owner 1234 and barista 1111, member phone 0814821000.`);
   } finally {
     await client.end();
   }

@@ -68,11 +68,15 @@ Prerequisites: Node.js 20.9+, pnpm, Docker.
 | `DATABASE_URL` | Postgres connection string used by the backend (server only). |
 | `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase Auth for the admin login. |
 | `SUPABASE_SERVICE_ROLE_KEY` | Used by the seed script only. |
+| `SEED_TARGET` / `SEED_CONFIRM_PRODUCTION` | Set to `production` / `demo-cafe` to explicitly allow a live demo seed. |
+| `SEED_OWNER_EMAIL` / `SEED_OWNER_PASSWORD` | Optional local demo credentials; custom credentials are required for a production seed. |
 | `API_BASE_URL` / `API_PORT` | Frontend's backend URL and Nest's listening port. |
 | `APP_SECRET` | Signs POS sessions and member QR tokens; derives the key that encrypts LINE secrets. |
 | `LINE_DEV_MOCK` | `1` only in local development. |
 
 LINE channel IDs, secret and access token are entered per shop in **Admin › เชื่อมต่อ LINE** and stored encrypted.
+
+For a production seed, put the production database and Supabase service-role settings in the ignored `backend/.env.production.local`, then set `SEED_TARGET=production`, `SEED_CONFIRM_PRODUCTION=demo-cafe`, `SEED_OWNER_EMAIL`, and `SEED_OWNER_PASSWORD` when running `pnpm db:seed`. The script refuses the public demo password and skips existing demo data.
 
 ## Scripts
 
