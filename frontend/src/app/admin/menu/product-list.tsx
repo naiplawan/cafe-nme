@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { formatBaht } from "@/lib/money";
 import { bulkUpdateProductsAction, clearSoldOutProductsAction } from "./actions";
+import { DEFAULT_PRODUCT_FILTERS, type ProductFilters as ProductFilterValues, menuQuery, productEditHref } from "./menu-steps";
 
 type Product = {
   id: string;
@@ -59,16 +60,26 @@ export function MenuProductList({
   products,
   categories,
   emptyStateAction,
+  initialFilters = DEFAULT_PRODUCT_FILTERS,
 }: {
   products: Product[];
   categories: Category[];
   emptyStateAction?: ReactNode;
+  initialFilters?: ProductFilterValues;
 }) {
   const [state, action] = useActionState(bulkUpdateProductsAction, { message: null });
   const [soldOutState, clearSoldOut] = useActionState(clearSoldOutProductsAction, { message: null });
-  const [search, setSearch] = useState("");
-  const [category, setCategory] = useState("all");
-  const [status, setStatus] = useState("all");
+  const [filters, setFilters] = useState(initialFilters);
+  const { q: search, category, status } = filters;
+  // Mirror filters into the URL so step hops and the edit page can return to them.
+  const updateFilters = (next: Partial<ProductFilterValues>) => {
+    const merged = { ...filters, ...next };
+    setFilters(merged);
+    window.history.replaceState(null, "", `?${menuQuery("products", merged)}`);
+  };
+  const setSearch = (q: string) => updateFilters({ q });
+  const setCategory = (value: string) => updateFilters({ category: value });
+  const setStatus = (value: string) => updateFilters({ status: value });
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const validSelectedIds = useMemo(() => getValidSelectedProductIds(selectedIds, products.map((product) => product.id)), [products, selectedIds]);
   const selectedSet = useMemo(() => new Set(validSelectedIds), [validSelectedIds]);
@@ -104,11 +115,7 @@ export function MenuProductList({
       <ProductFilters products={products} categories={categories} search={search} setSearch={setSearch} category={category} setCategory={setCategory} status={status} setStatus={setStatus} />
       <Card><CardContent className="space-y-3 py-8 text-center text-sm text-muted-foreground">
         <p>ไม่พบสินค้าตามตัวกรอง</p>
-        {hasActiveProductFilters(search, category, status) && <Button type="button" variant="outline" onClick={() => {
-          setSearch("");
-          setCategory("all");
-          setStatus("all");
-        }}>ล้างตัวกรอง</Button>}
+        {hasActiveProductFilters(search, category, status) && <Button type="button" variant="outline" onClick={() => updateFilters(DEFAULT_PRODUCT_FILTERS)}>ล้างตัวกรอง</Button>}
         {validSelectedIds.length > 0 && <div className="flex flex-wrap items-center justify-center gap-2"><span>ยังเลือกไว้ {validSelectedIds.length} รายการ · ซ่อนจากตัวกรอง {selectionVisibility.hidden} รายการ</span><Button type="button" variant="outline" onClick={() => setSelectedIds([])}>ล้างที่เลือก</Button></div>}
       </CardContent></Card>
     </div>;
@@ -116,11 +123,12 @@ export function MenuProductList({
 
   return (
     <div className="space-y-4">
-      <ConfirmSubmit action={clearSoldOut} className="flex flex-wrap items-center gap-2 rounded-xl border bg-card p-3" shouldConfirm={() => shouldConfirmSoldOutReset(soldOutCount)} message={`ล้างสถานะหมดสำหรับ ${soldOutCount} รายการหรือไม่? สินค้าที่ปิดใช้งานจะยังปิดใช้งานอยู่`} confirmLabel="ล้างสถานะหมด">
-        <Button type="submit" variant="outline" disabled={soldOutCount === 0}>ล้างสถานะหมด</Button>
-        <span className="text-sm text-muted-foreground">หมดชั่วคราว {soldOutCount} รายการ · เริ่มวันใหม่ด้วยการล้างสถานะหมด</span>
-        {soldOutState.message ? <span role="status" className="basis-full text-sm text-muted-foreground">{soldOutState.message}</span> : null}
-      </ConfirmSubmit>
+      {soldOutCount > 0 || soldOutState.message ? (
+        <ConfirmSubmit action={clearSoldOut} className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground" shouldConfirm={() => shouldConfirmSoldOutReset(soldOutCount)} message={`ล้างสถานะหมดสำหรับ ${soldOutCount} รายการหรือไม่? สินค้าที่ปิดใช้งานจะยังปิดใช้งานอยู่`} confirmLabel="ล้างสถานะหมด">
+          {soldOutCount > 0 ? <><span>หมดชั่วคราว {soldOutCount} รายการ</span><Button type="submit" variant="outline" size="sm">ล้างสถานะหมด</Button></> : null}
+          {soldOutState.message ? <span role="status">{soldOutState.message}</span> : null}
+        </ConfirmSubmit>
+      ) : null}
       <ConfirmSubmit action={action} className="space-y-4" shouldConfirm={(form) => shouldConfirmBulkAction(new FormData(form).getAll("productIds").length)} message={(form, submitter) => {
         const count = new FormData(form).getAll("productIds").length;
         if (submitter?.name === "restoreForSale") {
@@ -136,14 +144,16 @@ export function MenuProductList({
       <div className="space-y-4">
         <ProductFilters products={products} categories={categories} search={search} setSearch={setSearch} category={category} setCategory={setCategory} status={status} setStatus={setStatus} />
       </div>
-      <div className="sticky top-[17rem] z-10 flex flex-wrap items-center gap-2 rounded-xl border bg-background/95 p-3 shadow-sm backdrop-blur md:top-2">
-        <span className="mr-auto text-sm text-muted-foreground">พบ {filtered.length} จาก {products.length} รายการ · เลือกแล้ว {selectionVisibility.visible} รายการที่แสดง · ซ่อน {selectionVisibility.hidden}</span>
-        {validSelectedIds.length > 0 && <Button type="button" variant="ghost" onClick={() => setSelectedIds([])}>ล้างที่เลือก</Button>}
-        <Button type="submit" name="isActive" value="true" variant="outline" disabled={validSelectedIds.length === 0}>แสดงบนหน้าขาย</Button>
-        <Button type="submit" name="restoreForSale" value="true" disabled={validSelectedIds.length === 0}>เปิดขายที่เลือก</Button>
-        <Button type="submit" name="isActive" value="false" variant="outline" disabled={validSelectedIds.length === 0}>ซ่อนจากหน้าขาย</Button>
-        <p className="basis-full text-sm" role="status" aria-live="polite">{state.message}</p>
-      </div>
+      {validSelectedIds.length > 0 ? (
+        <div className="sticky top-[17rem] z-10 flex flex-wrap items-center gap-2 rounded-xl border bg-background/95 p-2 pl-4 backdrop-blur md:top-2">
+          <span className="mr-auto text-sm">เลือก {validSelectedIds.length}{selectionVisibility.hidden > 0 ? <span className="text-muted-foreground"> · ซ่อนจากตัวกรอง {selectionVisibility.hidden}</span> : null}</span>
+          <Button type="button" variant="ghost" size="sm" onClick={() => setSelectedIds([])}>ยกเลิก</Button>
+          <Button type="submit" name="isActive" value="true" variant="outline" size="sm">แสดงบนหน้าขาย</Button>
+          <Button type="submit" name="isActive" value="false" variant="outline" size="sm">ซ่อนจากหน้าขาย</Button>
+          <Button type="submit" name="restoreForSale" value="true" size="sm">เปิดขาย</Button>
+        </div>
+      ) : null}
+      <p className="text-sm text-muted-foreground empty:hidden" role="status" aria-live="polite">{state.message}</p>
       {groups.map((group) => (
         <Card key={group.id}>
           <CardHeader><CardTitle>{group.name}</CardTitle></CardHeader>
@@ -165,7 +175,7 @@ export function MenuProductList({
                           {product.soldOut ? <Badge variant="destructive">หมดชั่วคราว</Badge> : null}
                         </div>
                       </div>
-                      <ProductEditLink href={`/admin/menu/${product.id}`} />
+                      <ProductEditLink href={productEditHref(product.id, filters)} />
                     </div>
                   </li>
                 ))}
@@ -198,30 +208,30 @@ function ProductFilters({
   setStatus: (value: string) => void;
 }) {
   const searchId = useId();
-  return <Card><CardContent className="space-y-3 p-4">
-    <div className="space-y-2">
-      <Label htmlFor={searchId}>ค้นหาเมนู</Label>
-      <Input id={searchId} type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="พิมพ์ชื่อสินค้า" />
+  return <div className="space-y-3">
+    <div>
+      <Label htmlFor={searchId} className="sr-only">ค้นหาเมนู</Label>
+      <Input id={searchId} type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="ค้นหาเมนู" />
     </div>
-    <fieldset className="min-w-0 space-y-1">
-      <legend className="mb-1 text-xs font-medium text-muted-foreground">กรองตามหมวดหมู่</legend>
+    <fieldset className="min-w-0">
+      <legend className="sr-only">กรองตามหมวดหมู่</legend>
       <div className="flex gap-2 overflow-x-auto pb-1">
       {[{ id: "all", name: "ทั้งหมด" }, ...categories.map(({ id, name }) => ({ id, name })), { id: "none", name: "ไม่มีหมวดหมู่" }].map((item) => (
         <Button key={item.id} type="button" size="sm" variant={category === item.id ? "default" : "outline"} className="shrink-0" aria-pressed={category === item.id} onClick={() => setCategory(item.id)}>
-          {item.name}{" "}<span className="opacity-75">{products.filter((product) => item.id === "all" || (item.id === "none" ? product.categoryId === null : product.categoryId === item.id)).length}</span>
+          {item.name}
         </Button>
       ))}
       </div>
     </fieldset>
-    <fieldset className="min-w-0 space-y-1">
-      <legend className="mb-1 text-xs font-medium text-muted-foreground">กรองตามสถานะสินค้า</legend>
+    <fieldset className="min-w-0">
+      <legend className="sr-only">กรองตามสถานะสินค้า</legend>
       <div className="flex flex-wrap gap-2">
       {[{ id: "all", name: "ทุกสถานะ" }, { id: "active", name: "แสดงบนหน้าขาย" }, { id: "inactive", name: "ซ่อนจากหน้าขาย" }, { id: "soldOut", name: "หมดชั่วคราว" }].map((item) => (
         <Button key={item.id} type="button" size="sm" variant={status === item.id ? "secondary" : "ghost"} aria-pressed={status === item.id} onClick={() => setStatus(item.id)}>{item.name}</Button>
       ))}
       </div>
     </fieldset>
-  </CardContent></Card>;
+  </div>;
 }
 
 export function PosMenuPreview({ products }: { products: Product[] }) {

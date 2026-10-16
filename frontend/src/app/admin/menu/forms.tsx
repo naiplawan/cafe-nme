@@ -2,10 +2,11 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useActionState, useId } from "react";
-import { useFormStatus } from "react-dom";
+import { useRouter } from "next/navigation";
+import { useActionState, useId, useState, useTransition } from "react";
+import { flushSync, useFormStatus } from "react-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ConfirmSubmit } from "@/components/ui/confirm-dialog";
 import { Input } from "@/components/ui/input";
@@ -47,7 +48,6 @@ export function CategoryManager({ categories }: { categories: Category[] }) {
 
   return (
     <Card>
-      <CardHeader><CardTitle>หมวดหมู่</CardTitle></CardHeader>
       <CardContent className="space-y-4">
         <form action={createAction} className="flex flex-wrap items-end gap-3">
           <div className="min-w-56 flex-1 space-y-2">
@@ -108,20 +108,91 @@ export type ProductFormValues = {
   modifierGroupIds?: string[];
 };
 
+const PRODUCT_FORM_STEPS = [
+  { key: "basics", label: "ข้อมูลหลัก" },
+  { key: "modifiers", label: "ตัวเลือกเสริม" },
+  { key: "image", label: "รูป" },
+  { key: "sale", label: "การขาย" },
+] as const;
+type ProductFormStep = (typeof PRODUCT_FORM_STEPS)[number]["key"];
+
+function ProductSubmitButton({ label, onInvalid }: { label: string; onInvalid: () => void }) {
+  const { pending } = useFormStatus();
+  return <Button type="submit" disabled={pending} onClick={(event) => {
+    // Required fields sit in a hidden step; browsers cannot point at them there.
+    const form = event.currentTarget.form;
+    if (!form || form.checkValidity()) return;
+    event.preventDefault();
+    flushSync(onInvalid);
+    form.reportValidity();
+  }}>{pending ? "กำลังบันทึก…" : label}</Button>;
+}
+
+function InlineCategoryCreator({ onCreated }: { onCreated: (categoryId: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState("");
+  const [message, setMessage] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
+  const inputId = useId();
+  const create = () => startTransition(async () => {
+    const formData = new FormData();
+    formData.set("name", name);
+    const result = await createCategoryAction({ message: null }, formData);
+    if (!result.success || !result.id) {
+      setMessage(result.message ?? "เพิ่มหมวดหมู่ไม่สำเร็จ");
+      return;
+    }
+    onCreated(result.id);
+    setName("");
+    setMessage(null);
+    setOpen(false);
+  });
+
+  if (!open) return <Button type="button" variant="link" size="sm" className="px-0" onClick={() => setOpen(true)}>+ หมวดหมู่ใหม่</Button>;
+  return (
+    <div className="space-y-2 rounded-lg border border-dashed p-3">
+      <Label htmlFor={inputId}>ชื่อหมวดหมู่ใหม่</Label>
+      <div className="flex flex-wrap gap-2">
+        {/* No name attribute: this field is not part of the product form. */}
+        <Input id={inputId} value={name} maxLength={80} className="min-w-40 flex-1" onChange={(event) => setName(event.target.value)} onKeyDown={(event) => {
+          if (event.key !== "Enter") return;
+          event.preventDefault();
+          if (name.trim()) create();
+        }} />
+        <Button type="button" disabled={pending || !name.trim()} onClick={create}>{pending ? "กำลังเพิ่ม…" : "เพิ่ม"}</Button>
+        <Button type="button" variant="ghost" onClick={() => setOpen(false)}>ยกเลิก</Button>
+      </div>
+      <ErrorMessage message={message} />
+    </div>
+  );
+}
+
 export function ProductForm({
   categories,
   modifierGroups = [],
   product,
   action,
   submitLabel,
+  returnHref,
 }: {
   categories: Category[];
   modifierGroups?: ModifierGroup[];
   product?: ProductFormValues;
   action: ProductAction;
   submitLabel: string;
+  returnHref?: string;
 }) {
+  const router = useRouter();
   const [state, formAction] = useActionState(action, { message: null });
+  const [formStep, setFormStep] = useState<ProductFormStep>("basics");
+  const [categoryValue, setCategoryValue] = useState(product?.categoryId ?? categories[0]?.id ?? "__none__");
+  const [handledState, setHandledState] = useState(state);
+  const [refreshing, startRefresh] = useTransition();
+  if (state !== handledState) {
+    setHandledState(state);
+    // A created product resets the form, so start the next one from the first step.
+    if (state.success && !product) setFormStep("basics");
+  }
   const formId = useId();
   const values = state.values;
   const submittedGroupIds = new Set(Array.isArray(values?.modifierGroupIds) ? values.modifierGroupIds : product?.modifierGroupIds ?? []);
@@ -129,69 +200,76 @@ export function ProductForm({
     ? MENU_CATALOG.find((item) => item.name === product.name)
     : undefined;
   return (
-    <form key={JSON.stringify([values ?? state.success ?? "initial", state.revision])} action={formAction} className="space-y-6 pb-20">
-      <Card>
-        <CardHeader><CardTitle>{product ? "ข้อมูลสินค้า" : "เพิ่มสินค้า"}</CardTitle></CardHeader>
-        <CardContent className="grid gap-5 sm:grid-cols-2">
-          <div className="space-y-2">
-            <Label htmlFor={`${formId}-name`}>ชื่อสินค้า</Label>
-            <Input id={`${formId}-name`} name="name" defaultValue={typeof values?.name === "string" ? values.name : product?.name} required maxLength={80} />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor={`${formId}-price`}>ราคา (บาท)</Label>
-            <Input id={`${formId}-price`} name="price" inputMode="decimal" defaultValue={typeof values?.price === "string" ? values.price : product?.basePriceSatang === undefined ? "" : satangToInput(product.basePriceSatang)} required />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor={`${formId}-category`}>หมวดหมู่</Label>
-            <Select name="categoryId" defaultValue={typeof values?.categoryId === "string" ? values.categoryId || "__none__" : product?.categoryId ?? categories[0]?.id ?? "__none__"} itemToStringValue={(value: string | null) => value === "__none__" ? "" : value ?? ""}>
-              <SelectTrigger id={`${formId}-category`}><SelectValue>{(value: string | null) => value === "__none__" ? "ไม่มีหมวดหมู่" : categories.find((category) => category.id === value)?.name ?? "เลือกหมวดหมู่"}</SelectValue></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__none__">ไม่มีหมวดหมู่</SelectItem>
-                {categories.map((category) => <SelectItem key={category.id} value={category.id}>{category.name}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex flex-col justify-center gap-4">
-            <label htmlFor={`${formId}-earns-stamp`} className="flex min-h-11 items-center gap-3 text-sm">
-              <Checkbox id={`${formId}-earns-stamp`} name="earnsStamp" value="on" defaultChecked={typeof values?.earnsStamp === "string" ? values.earnsStamp === "on" : product?.earnsStamp ?? true} />
-              ได้รับแสตมป์
-            </label>
-            <label htmlFor={`${formId}-active`} className="flex min-h-11 items-center gap-3 text-sm">
-              <Checkbox id={`${formId}-active`} name="isActive" value="on" defaultChecked={typeof values?.isActive === "string" ? values.isActive === "on" : product?.isActive ?? true} />
-              แสดงบนหน้าขาย
-            </label>
-          </div>
-          {modifierGroups.length > 0 ? (
-            <fieldset className="space-y-3 sm:col-span-2">
-              <legend className="text-sm font-medium">ตัวเลือกเสริม</legend>
-              <div className="grid gap-3 sm:grid-cols-2">
-                {modifierGroups.map((group) => {
-                  const selectionLabel = group.minSelect === 0
-                    ? "ไม่บังคับ"
-                    : group.minSelect === group.maxSelect
-                      ? `ต้องเลือก ${group.minSelect}`
-                      : `เลือกได้สูงสุด ${group.maxSelect}`;
-                  const hasOptions = group.modifierNames.length > 0;
-                  const selected = submittedGroupIds.has(group.id);
-                  return (
-                    <label key={group.id} htmlFor={`${formId}-modifier-${group.id}`} className={`flex items-start gap-3 rounded-lg border p-3 ${hasOptions ? "cursor-pointer" : "cursor-not-allowed opacity-60"}`}>
-                      <Checkbox id={`${formId}-modifier-${group.id}`} name="modifierGroupIds" value={group.id} defaultChecked={selected} disabled={!hasOptions} />
-                      {!hasOptions && selected ? <input type="hidden" name="modifierGroupIds" value={group.id} /> : null}
-                      <span className="space-y-1">
-                        <span className="block text-sm font-medium">{group.name} <span className="text-muted-foreground">({selectionLabel})</span></span>
-                        <span className="block text-xs text-muted-foreground">{hasOptions ? group.modifierNames.join(" · ") : "ยังไม่มีตัวเลือก"}</span>
-                      </span>
-                    </label>
-                  );
-                })}
+    <form key={JSON.stringify([values ?? state.success ?? "initial", state.revision])} action={formAction} onInvalidCapture={() => setFormStep("basics")} className="space-y-5">
+          <nav aria-label={product ? "ส่วนของข้อมูลสินค้า" : "ขั้นตอนเพิ่มสินค้า"} className="overflow-x-auto">
+            <ol className="flex min-w-max gap-5 border-b">
+              {PRODUCT_FORM_STEPS.map(({ key, label }) => (
+                <li key={key} className="shrink-0">
+                  <button type="button" aria-current={formStep === key ? "step" : undefined} onClick={() => setFormStep(key)} className={`min-h-11 border-b-2 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${formStep === key ? "border-foreground font-medium text-foreground" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
+                    {label}
+                  </button>
+                </li>
+              ))}
+            </ol>
+          </nav>
+          {/* Steps only hide fieldsets; every field still submits with the one form. */}
+          <div hidden={formStep !== "basics"}>
+            <div className="grid gap-5 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor={`${formId}-name`}>ชื่อสินค้า</Label>
+                <Input id={`${formId}-name`} name="name" defaultValue={typeof values?.name === "string" ? values.name : product?.name} required maxLength={80} />
               </div>
-            </fieldset>
-          ) : product ? (
-            <div className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground sm:col-span-2">
-              <Link href="/admin/modifiers" className="underline underline-offset-4">ยังไม่มีตัวเลือกเสริม — ไปสร้างที่หน้าตัวเลือกเสริม</Link>
+              <div className="space-y-2">
+                <Label htmlFor={`${formId}-price`}>ราคา (บาท)</Label>
+                <Input id={`${formId}-price`} name="price" inputMode="decimal" defaultValue={typeof values?.price === "string" ? values.price : product?.basePriceSatang === undefined ? "" : satangToInput(product.basePriceSatang)} required />
+              </div>
+              <div className="space-y-2 sm:col-span-2">
+                <Label htmlFor={`${formId}-category`}>หมวดหมู่</Label>
+                <Select name="categoryId" value={categoryValue} onValueChange={(value) => setCategoryValue(typeof value === "string" ? value : "__none__")} itemToStringValue={(value: string | null) => value === "__none__" ? "" : value ?? ""}>
+                  <SelectTrigger id={`${formId}-category`}><SelectValue>{(value: string | null) => value === "__none__" ? "ไม่มีหมวดหมู่" : categories.find((category) => category.id === value)?.name ?? "เลือกหมวดหมู่"}</SelectValue></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">ไม่มีหมวดหมู่</SelectItem>
+                    {categories.map((category) => <SelectItem key={category.id} value={category.id}>{category.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                <InlineCategoryCreator onCreated={setCategoryValue} />
+              </div>
             </div>
-          ) : null}
-          <fieldset className="space-y-3 sm:col-span-2">
+          </div>
+          <div hidden={formStep !== "modifiers"}>
+            {modifierGroups.length > 0 ? (
+              <fieldset className="space-y-3">
+                <legend className="text-sm font-medium">ตัวเลือกเสริม</legend>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {modifierGroups.map((group) => {
+                    const selectionLabel = group.minSelect === 0
+                      ? "ไม่บังคับ"
+                      : group.minSelect === group.maxSelect
+                        ? `ต้องเลือก ${group.minSelect}`
+                        : `เลือกได้สูงสุด ${group.maxSelect}`;
+                    const hasOptions = group.modifierNames.length > 0;
+                    const selected = submittedGroupIds.has(group.id);
+                    return (
+                      <label key={group.id} htmlFor={`${formId}-modifier-${group.id}`} className={`flex items-start gap-3 rounded-lg border p-3 ${hasOptions ? "cursor-pointer" : "cursor-not-allowed opacity-60"}`}>
+                        <Checkbox id={`${formId}-modifier-${group.id}`} name="modifierGroupIds" value={group.id} defaultChecked={selected} disabled={!hasOptions} />
+                        {!hasOptions && selected ? <input type="hidden" name="modifierGroupIds" value={group.id} /> : null}
+                        <span className="space-y-1">
+                          <span className="block text-sm font-medium">{group.name} <span className="text-muted-foreground">({selectionLabel})</span></span>
+                          <span className="block text-xs text-muted-foreground">{hasOptions ? group.modifierNames.join(" · ") : "ยังไม่มีตัวเลือก"}</span>
+                        </span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </fieldset>
+            ) : <p className="text-sm text-muted-foreground">ยังไม่มีตัวเลือกเสริม</p>}
+            <p className="mt-3 flex flex-wrap items-center gap-x-4 text-sm">
+              <Link href="/admin/modifiers" target="_blank" rel="noopener" className="text-muted-foreground underline underline-offset-4 hover:text-foreground">จัดการตัวเลือกเสริม ↗</Link>
+              <button type="button" disabled={refreshing} onClick={() => startRefresh(() => router.refresh())} className="min-h-11 text-muted-foreground hover:text-foreground disabled:opacity-50">{refreshing ? "กำลังโหลด…" : "โหลดใหม่"}</button>
+            </p>
+          </div>
+          <div hidden={formStep !== "image"}>
+            <fieldset className="space-y-3">
               <legend className="text-sm font-medium">รูปสินค้า</legend>
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
                 <label className="flex cursor-pointer flex-col items-center gap-2 rounded-lg border p-2 text-sm has-[:checked]:border-primary">
@@ -206,13 +284,29 @@ export function ProductForm({
                   </label>
                 ))}
               </div>
-          </fieldset>
-          <ErrorMessage message={state.message} />
-        </CardContent>
-      </Card>
-      {state.success ? <p className="text-sm text-muted-foreground" role="status" aria-live="polite">บันทึกแล้ว</p> : null}
-      <div className="sticky bottom-0 z-20 -mx-4 border-t bg-background/95 px-4 py-3 shadow-[0_-4px_12px_rgba(59,42,32,0.08)] backdrop-blur sm:mx-0 sm:rounded-t-xl sm:px-5">
-        <SubmitButton label={submitLabel} />
+            </fieldset>
+          </div>
+          <div hidden={formStep !== "sale"}>
+            <div className="flex flex-col gap-4">
+              <label htmlFor={`${formId}-earns-stamp`} className="flex min-h-11 items-center gap-3 text-sm">
+                <Checkbox id={`${formId}-earns-stamp`} name="earnsStamp" value="on" defaultChecked={typeof values?.earnsStamp === "string" ? values.earnsStamp === "on" : product?.earnsStamp ?? true} />
+                ได้รับแสตมป์
+              </label>
+              <label htmlFor={`${formId}-active`} className="flex min-h-11 items-center gap-3 text-sm">
+                <Checkbox id={`${formId}-active`} name="isActive" value="on" defaultChecked={typeof values?.isActive === "string" ? values.isActive === "on" : product?.isActive ?? true} />
+                แสดงบนหน้าขาย
+              </label>
+            </div>
+          </div>
+      <div className="sticky bottom-0 z-20 flex flex-wrap items-center justify-end gap-3 border-t bg-card/95 py-3 backdrop-blur">
+        {state.success ? (
+          <p role="status" aria-live="polite" className="mr-auto text-sm text-muted-foreground">
+            {product ? "บันทึกแล้ว" : state.message}
+            {product && returnHref ? <> · <Link href={returnHref} className="underline underline-offset-4 hover:text-foreground">กลับไปรายการ</Link></> : null}
+            {!product && state.id ? <> · <Link href={`/admin/menu/${state.id}`} className="underline underline-offset-4 hover:text-foreground">แก้ไข</Link></> : null}
+          </p>
+        ) : <span className="mr-auto"><ErrorMessage message={state.message} /></span>}
+        <ProductSubmitButton label={submitLabel} onInvalid={() => setFormStep("basics")} />
       </div>
     </form>
   );

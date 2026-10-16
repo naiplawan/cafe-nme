@@ -28,6 +28,8 @@ export type MenuActionState = {
   success?: boolean;
   values?: Record<string, string | boolean | string[]>;
   revision?: string;
+  /** Id of the row a create action just inserted. */
+  id?: string;
 };
 const uuidSchema = z.uuid();
 
@@ -44,9 +46,9 @@ export async function createCategoryAction(
   const parsed = categorySchema.safeParse({ name: textField(formData, "name") });
   if (!parsed.success) return { message: parsed.error.issues[0]?.message ?? "ข้อมูลไม่ถูกต้อง" };
   if (await categoryNameExists(shopId, parsed.data.name)) return { message: "มีหมวดหมู่นี้แล้ว" };
-  await createCategory(shopId, parsed.data.name);
+  const [created] = await createCategory(shopId, parsed.data.name);
   revalidatePath("/admin/menu");
-  return { message: null, success: true };
+  return { message: null, success: true, id: created?.id };
 }
 
 export async function renameCategoryAction(
@@ -97,9 +99,9 @@ export async function createProductAction(
   const parsedModifierGroupIds = modifierGroupIdsSchema.safeParse(modifierGroupIds);
   if (!parsed.success) return { message: parsed.error.issues[0]?.message ?? "ข้อมูลไม่ถูกต้อง", values: { ...values, modifierGroupIds }, revision: crypto.randomUUID() };
   if (!parsedModifierGroupIds.success) return { message: "กลุ่มตัวเลือกไม่ถูกต้อง", values: { ...values, modifierGroupIds }, revision: crypto.randomUUID() };
-  await createProduct(shopId, parsed.data, parsedModifierGroupIds.data);
+  const [created] = await createProduct(shopId, parsed.data, parsedModifierGroupIds.data);
   revalidatePath("/admin/menu");
-  return { message: null, success: true };
+  return { message: `เพิ่ม “${parsed.data.name}” แล้ว`, success: true, id: created?.id };
 }
 
 export async function updateProductAction(
