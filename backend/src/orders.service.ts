@@ -342,23 +342,42 @@ export class OrdersService {
             and role in ('owner', 'manager') and is_active = true limit 1
         `;
         if (!manager) throw new NotFoundException("Manager not found");
+        let earnedRewards: { id: string; status: "available" | "redeemed" | "expired"; redeemedOrderId: string | null }[] = [];
+        if (order.memberId) {
+          earnedRewards = await tx<{ id: string; status: "available" | "redeemed" | "expired"; redeemedOrderId: string | null }[]>`
+            select id::text as id, status, redeemed_order_id::text as "redeemedOrderId"
+            from rewards where shop_id = ${shopId}::uuid and member_id = ${order.memberId}::uuid
+              and earned_order_id = ${orderId}::uuid order by id for update
+          `;
+          const [activeRedemption] = await tx<{ id: string }[]>`
+            select redemption.id::text as id from rewards reward
+            join orders redemption on redemption.id = reward.redeemed_order_id
+              and redemption.shop_id = reward.shop_id and redemption.status = 'paid'
+            where reward.shop_id = ${shopId}::uuid and reward.member_id = ${order.memberId}::uuid
+              and reward.earned_order_id = ${orderId}::uuid and reward.status = 'redeemed'
+            limit 1
+          `;
+          if (activeRedemption) {
+            throw new ConflictException({
+              code: "reward_redemption_active",
+              message: "Void the reward redemption order first",
+            });
+          }
+        }
         const updated = await tx<{ id: string }[]>`
           update orders set status = 'void', voided_at = now(), voided_by = ${managerStaffId}::uuid
           where id = ${orderId}::uuid and shop_id = ${shopId}::uuid and status = 'paid' returning id::text as id
         `;
         if (!updated.length) throw new ConflictException("Paid order not found");
         if (order.memberId) {
-          const [earned] = await tx<{ total: number | string }[]>`
-            select coalesce(sum(delta), 0) as total from stamp_ledger
+          const [stampDeltas] = await tx<{ earned: number | string; redeemed: number | string }[]>`
+            select coalesce(sum(delta) filter (where reason = 'earn'), 0) as earned,
+              coalesce(sum(delta) filter (where reason = 'redeem'), 0) as redeemed from stamp_ledger
             where shop_id = ${shopId}::uuid and member_id = ${order.memberId}::uuid
-              and order_id = ${orderId}::uuid and reason = 'earn'
+              and order_id = ${orderId}::uuid
           `;
-          const availableRewards = await tx<{ id: string }[]>`
-            select id::text as id from rewards where shop_id = ${shopId}::uuid and member_id = ${order.memberId}::uuid
-              and earned_order_id = ${orderId}::uuid and status = 'available'
-          `;
-          const [shop] = await tx<{ stampGoal: number }[]>`select stamp_goal as "stampGoal" from shops where id = ${shopId}::uuid limit 1`;
-          const compensation = -Number(earned?.total ?? 0) + Number(shop?.stampGoal ?? 0) * availableRewards.length;
+          const availableRewards = earnedRewards.filter((reward) => reward.status === "available");
+          const compensation = -Number(stampDeltas?.earned ?? 0) - Number(stampDeltas?.redeemed ?? 0);
           await tx`insert into stamp_ledger (shop_id, member_id, order_id, delta, reason, staff_id)
             values (${shopId}::uuid, ${order.memberId}::uuid, ${orderId}::uuid, ${compensation}, 'adjust', ${managerStaffId}::uuid)`;
           if (availableRewards.length) {

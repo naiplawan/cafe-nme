@@ -35,6 +35,15 @@ export class CheckoutError extends Error {
   }
 }
 
+export class OrderVoidError extends Error {
+  readonly code = "reward_redemption_active";
+
+  constructor() {
+    super("reward_redemption_active");
+    this.name = "OrderVoidError";
+  }
+}
+
 const dateSchema = z.string().datetime({ offset: true }).transform((value) => new Date(value));
 const nullableDateSchema = dateSchema.nullable();
 
@@ -113,6 +122,9 @@ async function request<T>(path: string, schema: z.ZodType<T>, init?: RequestInit
       }
     } catch {
       // Error responses without JSON are reported using their HTTP status.
+    }
+    if (code === "reward_redemption_active") {
+      throw new OrderVoidError();
     }
     if (typeof code === "string") {
       const knownCodes: CheckoutError["code"][] = ["empty_cart", "pricing", "sold_out", "member_not_found", "reward_unavailable", "cash_insufficient"];

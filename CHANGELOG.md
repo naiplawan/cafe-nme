@@ -14,6 +14,7 @@ versioning (pre-1.0: minor = features, patch = fixes).
 - Adding a walk-in member with a phone number that already exists now shows the API's message ("เบอร์โทรนี้มีสมาชิกแล้ว"), and looking up an unknown member token returns no member instead of crashing.
 - Admin dashboard reports now compare the text-based business date column with text date bounds, preventing PostgreSQL type errors.
 - POS pairing now handles invalid or expired codes without crashing, and production has the rate-limit table required by pairing requests.
+- Voiding an order now blocks while its earned reward is still redeemed and reverses the stamp ledger deltas recorded for that order.
 
 ### Added
 - The admin menu is split into Categories, Products, and POS preview tabs that can be opened in any order; the product form shows every section on one page with jump links (Basics, Modifiers, Image, Sale), creates a category inline, and links to the new product after adding it.

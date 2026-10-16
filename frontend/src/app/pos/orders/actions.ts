@@ -1,6 +1,6 @@
 "use server";
 
-import { getOrder, voidOrder, type OrderDetail } from "@/server/orders";
+import { getOrder, OrderVoidError, voidOrder, type OrderDetail } from "@/server/orders";
 import { requirePosStaff, verifyManagerPin } from "@/server/pos-session";
 import { consumeRateLimit } from "@/server/rate-limit";
 
@@ -23,6 +23,9 @@ export async function voidOrderAction(orderId: string, pin: string): Promise<Voi
     await voidOrder(session.shopId, orderId, manager.staffId);
     return { ok: true };
   } catch (error) {
+    if (error instanceof OrderVoidError) {
+      return { ok: false, message: "กรุณายกเลิกบิลที่ใช้รางวัลนี้ก่อน แล้วจึงยกเลิกบิลที่ได้รับรางวัล" };
+    }
     const latest = await getOrder(session.shopId, orderId);
     if (!latest || latest.status !== "paid") return { ok: false, message: "บิลนี้ยกเลิกไปแล้ว" };
     throw error;

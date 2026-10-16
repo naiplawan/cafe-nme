@@ -1,8 +1,8 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { randomUUID } from "node:crypto";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { categories, members, modifierGroups, modifiers, productModifierGroups, products, rewards, shops, staff } from "@/db/schema";
+import { categories, members, modifierGroups, modifiers, productModifierGroups, products, rewards, shops, staff, stampLedger } from "@/db/schema";
 import { checkout, voidOrder, type CheckoutError } from "./orders";
 import { getOrder } from "./orders";
 import { getMemberSummary } from "./loyalty";
@@ -88,5 +88,39 @@ describe("orders integration", () => {
     const [earnedReward] = await db.select({ status: rewards.status }).from(rewards)
       .where(eq(rewards.earnedOrderId, earned.orderId));
     expect(earnedReward.status).toBe("expired");
+  });
+
+  it("keeps an earning order paid while its reward redemption is still paid", async () => {
+    const earned = await checkout({ shopId, staffId }, { lines: [{ productId, qty: 3, modifierIds: [] }], memberId,
+      payment: { method: "promptpay" } });
+    // Earlier tests leave other rewards available; redeem the one this order earned.
+    const [earnedReward] = await db.select({ id: rewards.id }).from(rewards).where(eq(rewards.earnedOrderId, earned.orderId));
+    const rewardId = earnedReward.id;
+    const redemption = await checkout({ shopId, staffId }, { lines: [{ productId, qty: 1, modifierIds: [] }], memberId,
+      redeemRewardId: rewardId, payment: { method: "promptpay" } });
+
+    await expect(voidOrder(shopId, earned.orderId, staffId)).rejects.toMatchObject({ code: "reward_redemption_active" });
+
+    expect((await getOrder(shopId, earned.orderId))?.status).toBe("paid");
+    expect((await getOrder(shopId, redemption.orderId))?.status).toBe("paid");
+    const [reward] = await db.select({ status: rewards.status, redeemedOrderId: rewards.redeemedOrderId }).from(rewards)
+      .where(eq(rewards.id, rewardId));
+    expect(reward).toMatchObject({ status: "redeemed", redeemedOrderId: redemption.orderId });
+  });
+
+  it("reverses the stamp deltas that were recorded even if the stamp goal changed", async () => {
+    const [before] = await db.select({ total: sql<string>`coalesce(sum(${stampLedger.delta}), 0)` }).from(stampLedger)
+      .where(eq(stampLedger.memberId, memberId));
+    const baseline = Number(before.total);
+    const earned = await checkout({ shopId, staffId }, { lines: [{ productId, qty: 3, modifierIds: [] }], memberId,
+      payment: { method: "promptpay" } });
+    await db.update(shops).set({ stampGoal: 5 }).where(eq(shops.id, shopId));
+
+    await voidOrder(shopId, earned.orderId, staffId);
+
+    const [after] = await db.select({ total: sql<string>`coalesce(sum(${stampLedger.delta}), 0)` }).from(stampLedger)
+      .where(eq(stampLedger.memberId, memberId));
+    await db.update(shops).set({ stampGoal: 3 }).where(eq(shops.id, shopId));
+    expect(Number(after.total)).toBe(baseline);
   });
 });
