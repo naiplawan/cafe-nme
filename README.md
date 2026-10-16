@@ -2,6 +2,11 @@
 
 A point of sale for Thai cafés with a LINE stamp-card membership. Staff sell on a tablet POS, owners manage the shop and see sales charts in a web admin, and customers collect stamps and redeem free drinks from a LINE Official Account (rich menu + LIFF member card).
 
+<p align="center">
+  <a href="docs/media/cafenme-film.mp4"><img src="docs/media/cafenme-film.jpg" alt="Cafe'nMe film: the back office and the POS tablet, two screens with one menu" width="820"></a><br>
+  <sub>▶ <a href="docs/media/cafenme-film.mp4">Watch the 24-second film</a>: change the menu in the back office and it's already on the counter.</sub>
+</p>
+
 The product scope, decisions and architecture are in [PLAN.md](./PLAN.md).
 
 The applications live in separate workspace packages:
@@ -18,13 +23,14 @@ docs/      Product and engineering documentation
 
 **POS (tablet, touch)**
 - Pair a tablet with a 6-digit code or QR, staff sign in with a PIN.
-- Photo menu with search and categories, add-ons (sweetness, hot/iced, milk, extra shot), editable cart lines that survive a refresh.
+- Photo menu with search and categories, in the order the owner sets; items without a photo get a coloured tile with their first letter. Add-ons (sweetness, hot/iced, milk, extra shot), editable cart lines that survive a refresh.
 - Cash with smart quick amounts, or PromptPay QR with the amount built in.
 - Scan a member's LINE QR or search by phone; stamps and free-drink rewards apply automatically.
-- One-tap "sold out" toggle, today's orders, voids with a manager PIN, 58 mm receipts, and a live daily summary.
+- One-tap "sold out" toggle that can clear itself on the next business day, today's orders, voids with a manager PIN, 58 mm receipts, and a live daily summary.
 
 **Admin (web)**
 - Setup checklist for new shops, stock menu with 30 photos, standard add-on set, bulk linking of add-ons to products.
+- Menu admin in three tabs (categories, products, POS preview) that open in any order: drag or arrow-key reordering of categories and products, a one-page product form with jump links, inline category creation, a colour picker for photo-less items, bulk show/hide/reopen and add/remove of add-on groups, and filters that survive a trip to the edit page.
 - Dashboard and reports with animated charts (sales trend, hourly sales, categories, best sellers, payment mix, members), CSV export.
 - Members, staff and roles, POS devices, LINE channel settings.
 - Brand kit: shop logo and colour flow into the LINE member card, stamps, receipts and a generated LINE rich menu.

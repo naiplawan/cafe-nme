@@ -21,6 +21,7 @@ versioning (pre-1.0: minor = features, patch = fixes).
 - A modifier group can be added to or removed from many selected products in one confirmed bulk action.
 - Sold-out products can reopen automatically on the shop's next business day; the setting sits next to the sold-out controls and is on by default.
 - Products without a photo show a coloured tile with their first letter on the POS and in admin; owners can pick the colour or leave it automatic.
+- A 24-second product film (`docs/media/cafenme-film.mp4`) is linked from the README.
 - Admin menu filters are kept in the URL, so switching tabs and returning from a product's edit page keeps the current search, category, and status.
 - Product creation now supports product images and modifier groups; selected products can be reopened for sale in one confirmed bulk action.
 - Added a NestJS backend workspace with an internal API, generated OpenAPI documentation, and database readiness checks.
