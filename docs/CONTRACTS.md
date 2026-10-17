@@ -8,7 +8,7 @@ Money is integer satang. Times are stored UTC; business days use the shop timezo
 Already provided (do not rewrite):
 - `@/lib/signing`: `sign(value, purpose)`, `unsign(signed, purpose) → string | null` (HMAC with APP_SECRET)
 - `@/lib/logger`: `logger` (pino). Never use console.* in app code.
-- `@/lib/auth`: `requireStaff()` for /admin (Supabase session).
+- `@/lib/auth`: `requireStaff()` for /admin (PostgreSQL-backed app session).
 - `@/lib/money`, `@/lib/validation/menu`, `@/db`, `@/db/schema`.
 
 ---

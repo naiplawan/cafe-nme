@@ -10,7 +10,7 @@ The applications live in separate workspace packages:
 
 ```text
 frontend/  Next.js app, browser assets, and frontend tests
-backend/   NestJS API, database schema/migrations, seed scripts, and Supabase config
+backend/   NestJS API, PostgreSQL schema/migrations, and seed scripts
 docs/      Product and engineering documentation
 ```
 
@@ -50,36 +50,35 @@ docs/      Product and engineering documentation
 
 ## Stack
 
-Frontend: Next.js 16 (App Router, Cache Components) · React 19 · Tailwind CSS 4 · shadcn/ui (Base UI) · GSAP · Vitest. Backend: NestJS 12 · Postgres · Drizzle ORM · Supabase Auth · LINE Messaging API + LIFF.
+Frontend: Next.js 16 (App Router, Cache Components) · React 19 · Tailwind CSS 4 · shadcn/ui (Base UI) · GSAP · Vitest. Backend: NestJS 12 · PostgreSQL · Drizzle ORM · LINE Messaging API + LIFF.
 
 ## Local setup
 
-Prerequisites: Node.js 20.9+, pnpm, Docker.
+Prerequisites: Node.js 20.9+, pnpm, and PostgreSQL 18 (local or Railway).
 
 1. `pnpm install`
-2. Start local Supabase: `pnpm supabase start -x realtime,storage-api,imgproxy,edge-runtime,logflare,vector,supavisor`
-3. Copy `frontend/.env.example` to `frontend/.env.local` and fill it in from `pnpm supabase status` (plus `APP_SECRET`, e.g. `openssl rand -hex 32`). Backend-only deployments need `DATABASE_URL`, `APP_SECRET`, and `API_PORT` from `backend/.env.example`.
+2. Create a PostgreSQL database locally or use Railway's private `DATABASE_URL`.
+3. Copy `frontend/.env.example` to `frontend/.env.local` and set `DATABASE_URL`, `APP_SECRET` (e.g. `openssl rand -hex 32`), and the shared `INTERNAL_API_SECRET`. Set the same database and secrets in `backend/.env`.
 4. `pnpm db:migrate`
 5. `pnpm db:seed`, then optionally `pnpm db:seed-menu` (30 photo menu items) and `pnpm db:seed-sales` (30 days of demo orders; `--reset` removes them).
 6. `pnpm dev`
-7. Admin: `owner@demo.test` / `password123`. POS PINs: owner `1234`, barista `1111`. With `LINE_DEV_MOCK=1` the LIFF pages work without LINE at `/liff/demo-cafe`.
+7. The local seed creates `owner@demo.test` / `password123`. POS PINs: owner `1234`, barista `1111`. With `LINE_DEV_MOCK=1` the LIFF pages work without LINE at `/liff/demo-cafe`.
 
 ## Environment variables
 
 | Name | Purpose |
 | --- | --- |
 | `DATABASE_URL` | Postgres connection string used by the backend (server only). |
-| `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase Auth for the admin login. |
-| `SUPABASE_SERVICE_ROLE_KEY` | Used by the seed script only. |
 | `SEED_TARGET` / `SEED_CONFIRM_PRODUCTION` | Set to `production` / `demo-cafe` to explicitly allow a live demo seed. |
 | `SEED_OWNER_EMAIL` / `SEED_OWNER_PASSWORD` | Optional local demo credentials; custom credentials are required for a production seed. |
+| `SEED_OWNER_PIN` / `SEED_BARISTA_PIN` | Production seed requires two different six-digit POS PINs. |
 | `API_BASE_URL` / `API_PORT` | Frontend's backend URL and Nest's listening port. |
 | `APP_SECRET` | Signs POS sessions and member QR tokens; derives the key that encrypts LINE secrets. |
 | `LINE_DEV_MOCK` | `1` only in local development. |
 
 LINE channel IDs, secret and access token are entered per shop in **Admin › เชื่อมต่อ LINE** and stored encrypted.
 
-For a production seed, put the production database and Supabase service-role settings in the ignored `backend/.env.production.local`, then set `SEED_TARGET=production`, `SEED_CONFIRM_PRODUCTION=demo-cafe`, `SEED_OWNER_EMAIL`, and `SEED_OWNER_PASSWORD` when running `pnpm db:seed`. The script refuses the public demo password and skips existing demo data.
+For a production seed, put the Railway PostgreSQL `DATABASE_URL` in the ignored `backend/.env.production.local`, then set `SEED_TARGET=production`, `SEED_CONFIRM_PRODUCTION=demo-cafe`, `SEED_OWNER_EMAIL`, a strong `SEED_OWNER_PASSWORD`, and different six-digit `SEED_OWNER_PIN` and `SEED_BARISTA_PIN` values when running `pnpm db:seed`. The script refuses the public demo password and skips existing demo data; rerunning it refreshes the two demo staff PINs without changing the owner password.
 
 ## Scripts
 

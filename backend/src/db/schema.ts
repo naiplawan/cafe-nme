@@ -38,6 +38,21 @@ export const rewardStatus = pgEnum("reward_status", [
   "expired",
 ]);
 
+export const users = pgTable("users", {
+  id: id(),
+  email: text("email").notNull().unique(),
+  passwordHash: text("password_hash").notNull(),
+  createdAt: createdAt(),
+});
+
+export const authSessions = pgTable("auth_sessions", {
+  id: id(),
+  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  tokenHash: text("token_hash").notNull().unique(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  createdAt: createdAt(),
+}, (t) => [index("auth_sessions_user_idx").on(t.userId), index("auth_sessions_expiry_idx").on(t.expiresAt)]);
+
 export const shops = pgTable("shops", {
   id: id(),
   name: text("name").notNull(),
@@ -60,8 +75,8 @@ export const staff = pgTable(
     name: text("name").notNull(),
     role: staffRole("role").notNull().default("barista"),
     pinHash: text("pin_hash"),
-    // Supabase auth.users id; only owners/managers who use /admin have one.
-    authUserId: uuid("auth_user_id").unique(),
+    // App user id; only owners/managers who use /admin have one.
+    authUserId: uuid("auth_user_id").unique().references(() => users.id, { onDelete: "set null" }),
     isActive: boolean("is_active").notNull().default(true),
     createdAt: createdAt(),
   },

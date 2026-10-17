@@ -103,7 +103,7 @@ Today `checkout` creates and pays an order in one transaction. The `open` status
   - `DELETE /orders/:id/items/:itemId` removes an item. A manager PIN is required once the item has been sent to the kitchen.
   - `POST /orders/:id/pay`.
 - The existing `checkout` becomes "open and pay in one step", so the café and retail flows don't change.
-- Concurrency: add an `orders.version` column for optimistic locking, so two tablets editing the same table get a clear conflict. The floor screen polls every 5 seconds; Supabase Realtime can come later.
+- Concurrency: add an `orders.version` column for optimistic locking, so two tablets editing the same table get a clear conflict. The floor screen polls every 5 seconds; PostgreSQL notifications or a managed realtime service can come later.
 - Cancelling an open bill uses the void path, with a manager PIN. Reports already count only `paid` orders.
 
 ### 2.3 Kitchen (D3)

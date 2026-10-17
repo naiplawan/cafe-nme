@@ -8,6 +8,5 @@ export default defineConfig({
   out: "./drizzle",
   dialect: "postgresql",
   dbCredentials: { url: process.env.DATABASE_URL! },
-  // Supabase owns the auth/storage schemas; only manage public.
   schemaFilter: ["public"],
 });

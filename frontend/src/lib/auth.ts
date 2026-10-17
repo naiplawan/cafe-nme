@@ -1,8 +1,8 @@
 import "server-only";
 import { redirect } from "next/navigation";
-import { connection } from "next/server";
+import { cookies } from "next/headers";
 import { cache } from "react";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { AUTH_COOKIE_NAME, requestAuthApi } from "@/server/auth-api";
 import { findStaffSession } from "@/server/staff-session";
 
 export interface StaffSession {
@@ -13,13 +13,14 @@ export interface StaffSession {
   shopId: string;
 }
 
-/** The signed-in Supabase user, or null. */
+/** The signed-in application user, or null. */
 export const getUser = cache(async () => {
-  // Supabase checks session expiry with Date.now(), so never prerender past this point.
-  await connection();
-  const supabase = await createSupabaseServerClient();
-  const { data } = await supabase.auth.getUser();
-  return data.user;
+  const token = (await cookies()).get(AUTH_COOKIE_NAME)?.value;
+  if (!token) return null;
+  const response = await requestAuthApi("/session", { token });
+  if (!response.ok) throw new Error(`Nest auth session API returned ${response.status}`);
+  const result = await response.json() as { user: { id: string; email: string } | null };
+  return result.user;
 });
 
 /**

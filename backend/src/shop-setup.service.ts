@@ -34,7 +34,7 @@ export class ShopSetupService {
 
   async createShop(input: ShopSetupInput): Promise<{ status: "created" | "already_exists" }> {
     return this.database.connection.begin(async (tx) => {
-      // Serialize setup attempts for one Supabase identity, including retries from another app instance.
+      // Serialize setup attempts for one app user, including retries from another app instance.
       await tx`select pg_advisory_xact_lock(hashtext(${input.authUserId}))`;
       const [owner] = await tx<{ id: string }[]>`
         select id::text as id from staff where auth_user_id = ${input.authUserId}::uuid limit 1

@@ -15,7 +15,7 @@ export default defineConfig({
   },
   test: {
     environment: "node",
-    // *.int.test.ts need the local Supabase database: run them with `pnpm test:int`.
+    // *.int.test.ts need the configured PostgreSQL database: run them with `pnpm test:int`.
     include: integration ? ["src/**/*.int.test.ts"] : ["src/**/*.test.ts"],
     exclude: integration ? [] : ["src/**/*.int.test.ts"],
     setupFiles: integration ? ["./test/load-env.ts"] : [],
