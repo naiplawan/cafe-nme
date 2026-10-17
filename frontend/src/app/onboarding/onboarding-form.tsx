@@ -42,6 +42,7 @@ export function OnboardingForm() {
       <div data-auth-field className="space-y-2">
         <Label htmlFor={`${id}-promptpayId`}>PromptPay ID <span className="text-muted-foreground">(ไม่บังคับ)</span></Label>
         <Input id={`${id}-promptpayId`} name="promptpayId" inputMode="numeric" placeholder="เบอร์โทรศัพท์หรือเลขประจำตัว" defaultValue={state.values?.promptpayId ?? ""} />
+        <p className="text-xs text-muted-foreground">ใช้หมายเลขที่ลงทะเบียนพร้อมเพย์กับบัญชีธนาคารของร้าน คุณเพิ่มหรือเปลี่ยนภายหลังได้</p>
         {state.errors?.promptpayId?.[0] && <p className="text-sm text-destructive">{state.errors.promptpayId[0]}</p>}
       </div>
       <div data-auth-field className="space-y-2">

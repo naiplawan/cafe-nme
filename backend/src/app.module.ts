@@ -14,6 +14,7 @@ import { MenuService } from "./menu.service.js";
 import { MembersModule } from "./members.module.js";
 import { ModifiersModule } from "./modifiers.module.js";
 import { OrdersModule } from "./orders.module.js";
+import { PaymentSettingsModule } from "./payment-settings.module.js";
 import { PosAccessModule } from "./pos-access.module.js";
 import { RateLimitModule } from "./rate-limit.module.js";
 import { ReportsModule } from "./reports.module.js";
@@ -39,6 +40,7 @@ import { validateEnvironment } from "./config/validate-env.js";
     MembersModule,
     ModifiersModule,
     OrdersModule,
+    PaymentSettingsModule,
     PosAccessModule,
     RateLimitModule,
     ReportsModule,

@@ -79,7 +79,7 @@ async function seed() {
       }).returning({ id: users.id }))[0].id;
       const [shop] = await tx
         .insert(shops)
-        .values({ name: "Cafe'nMe", slug: "demo-cafe", promptpayId: "0812345678" })
+        .values({ name: "Cafe'nMe", slug: "demo-cafe", promptpayId: null })
         .returning({ id: shops.id });
 
       const [owner] = await tx

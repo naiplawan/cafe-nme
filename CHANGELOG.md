@@ -12,6 +12,8 @@ versioning (pre-1.0: minor = features, patch = fixes).
 ### Added
 - PostgreSQL-backed admin accounts with scrypt password hashes, hashed revocable session tokens, and HttpOnly session cookies.
 - Production demo seeding now requires distinct six-digit owner and barista POS PINs; rerunning the seed refreshes these PINs without changing the existing owner password.
+- Owners can set, replace, or disable a shop's PromptPay ID in admin payment settings; the saved ID is masked in the UI and protected by owner checks in Next.js and NestJS.
+- The POS PromptPay option remains disabled until an owner configures a receiving ID; setup guidance reminds owners to register it with their bank and check the recipient name before accepting payments.
 
 ### Removed
 - Supabase client dependencies, local Supabase configuration, and the Supabase CLI workspace command.
@@ -20,6 +22,7 @@ versioning (pre-1.0: minor = features, patch = fixes).
 - Login and signup attempts are rate-limited; passwords and session tokens are stored as hashes.
 
 ### Changed
+- New demo shops start with PromptPay disabled. Run `pnpm --filter @cafenme/backend db:migrate` to apply migration `0011_clear_demo_promptpay`, which clears only the seeded `demo-cafe` placeholder.
 - The README now plays the 24-second product film inline on GitHub.
 - Production demo seeding now requires explicit confirmation and custom owner credentials, and skips when the demo shop or owner already exists.
 
