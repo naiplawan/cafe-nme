@@ -7,6 +7,7 @@ import {
   MessageCircle,
   Package,
   Palette,
+  QrCode,
   SlidersHorizontal,
   Tablet,
   UserRound,
@@ -30,6 +31,7 @@ const sections = [
     { href: "/admin/devices", label: "เครื่อง POS", icon: Tablet },
   ] },
   { label: "ตั้งค่าร้าน", links: [
+    { href: "/admin/payment", label: "การชำระเงิน", icon: QrCode },
     { href: "/admin/line", label: "เชื่อมต่อ LINE", icon: MessageCircle },
     { href: "/admin/brand", label: "แบรนด์", icon: Palette },
   ] },
@@ -38,10 +40,13 @@ const sections = [
 export type AdminRole = "owner" | "manager" | "barista";
 
 export function adminNavigationForRole(role: AdminRole) {
-  if (role !== "barista") return sections;
   return sections.map((section) => ({
     ...section,
-    links: section.links.filter((link) => !["/admin/staff", "/admin/devices", "/admin/line", "/admin/brand"].includes(link.href)),
+    links: section.links.filter((link) => {
+      if (role === "barista" && ["/admin/staff", "/admin/devices", "/admin/line", "/admin/brand", "/admin/payment"].includes(link.href)) return false;
+      if (role === "manager" && link.href === "/admin/payment") return false;
+      return true;
+    }),
   })).filter((section) => section.links.length > 0);
 }
 

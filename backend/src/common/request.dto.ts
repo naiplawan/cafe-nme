@@ -125,6 +125,10 @@ export class ActorDto {
   @ApiProperty({ type: String }) @Allow() actorStaffId!: string;
 }
 
+export class PromptPaySettingsDto extends ActorDto {
+  @ApiProperty({ type: String, nullable: true }) @Allow() promptpayId!: string | null;
+}
+
 export class DeviceCreateDto extends ActorDto {
   @ApiProperty({ type: String }) @Allow() name!: string;
 }

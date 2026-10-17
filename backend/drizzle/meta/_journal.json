@@ -78,6 +78,13 @@
       "when": 1792196959665,
       "tag": "0010_auth_staff_fk",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1792198715217,
+      "tag": "0011_clear_demo_promptpay",
+      "breakpoints": true
     }
   ]
 }
