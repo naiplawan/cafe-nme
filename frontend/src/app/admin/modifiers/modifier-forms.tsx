@@ -49,7 +49,7 @@ export function ModifierGroupForm({
   return (
     <form action={formAction} className="space-y-3">
       {group && <input type="hidden" name="groupId" value={group.id} />}
-      <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_minmax(130px,0.55fr)_minmax(130px,0.55fr)_auto] sm:items-end">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(130px,0.55fr)_minmax(130px,0.55fr)_auto] lg:items-end">
         <div className="space-y-1.5">
           <Label htmlFor={`group-name-${prefix}`}>ชื่อกลุ่ม</Label>
           <Input
@@ -213,7 +213,7 @@ export function AddModifierForm({
   return (
     <form action={formAction} className="space-y-2">
       <input type="hidden" name="groupId" value={groupId} />
-      <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(180px,0.4fr)_auto] sm:items-end">
+      <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(180px,0.4fr)_auto] lg:items-end">
         <div className="space-y-1.5">
           <Label htmlFor={`modifier-name-${groupId}`}>ชื่อตัวเลือก</Label>
           <Input

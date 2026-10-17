@@ -33,8 +33,6 @@ type CartPanelProps = {
 export function CartPanel({ lines, pricedLines, subtotalSatang, discountSatang, totalSatang, menu, member, redeemRewardId, online,
   onQuantity, onEdit, onScan, onPhone, onRemoveMember, onToggleReward, onPay, memberLoading = false, memberLookupError }: CartPanelProps) {
   const panelRef = useRef<HTMLElement>(null);
-  const totalRef = useRef<HTMLSpanElement>(null);
-  const previousTotalRef = useRef(totalSatang);
   const payRef = useRef<HTMLButtonElement>(null);
   const removeLineWithMotionRef = useRef<(index: number) => void>(() => {});
   const wasEmptyRef = useRef(lines.length === 0);
@@ -65,16 +63,6 @@ export function CartPanel({ lines, pricedLines, subtotalSatang, discountSatang, 
       onQuantity(index, -1);
     });
   }, { scope: panelRef, dependencies: [lines] });
-
-  useGSAP(() => {
-    const element = totalRef.current;
-    if (!element) return;
-    const previous = previousTotalRef.current;
-    previousTotalRef.current = totalSatang;
-    if (prefersReducedMotion()) { element.textContent = formatBaht(totalSatang); return; }
-    const value = { amount: previous };
-    gsap.to(value, { amount: totalSatang, duration: MOTION.base, ease: MOTION.ease, onUpdate: () => { element.textContent = formatBaht(Math.round(value.amount)); } });
-  }, { scope: panelRef, dependencies: [totalSatang] });
 
   useGSAP(() => {
     const becameNonEmpty = wasEmptyRef.current && lines.length > 0;
@@ -109,7 +97,7 @@ export function CartPanel({ lines, pricedLines, subtotalSatang, discountSatang, 
     <footer className="flex shrink-0 flex-col gap-1.5 border-t border-[#E4D6C6] p-[14px_16px_16px]">
       <div className="flex justify-between text-[15px] text-[#6B5547]"><span>รวม {itemCount} รายการ</span><span className="tabular-nums">{formatBaht(subtotalSatang)}</span></div>
       {discountSatang > 0 && <div className="flex justify-between text-[15px] font-semibold text-[#2F6B3F]"><span>ส่วนลดรางวัลสมาชิก</span><span className="tabular-nums">−{formatBaht(discountSatang)}</span></div>}
-      <div className="mt-0.5 flex items-baseline justify-between"><span className="text-lg font-semibold">ยอดชำระ</span><span ref={totalRef} className="text-[32px] font-bold tabular-nums">{formatBaht(totalSatang)}</span></div>
+      <div className="mt-0.5 flex items-baseline justify-between"><span className="text-lg font-semibold">ยอดชำระ</span><span className="text-[32px] font-bold tabular-nums">{formatBaht(totalSatang)}</span></div>
       <button ref={payRef} type="button" disabled={!lines.length || !online} onClick={onPay} className="relative mt-1.5 h-[72px] overflow-hidden rounded-2xl bg-[#B4441C] text-[22px] font-bold text-white shadow-[0_5px_12px_rgba(180,68,28,0.18)] transition-transform active:scale-[0.99] motion-reduce:transform-none motion-reduce:transition-none disabled:bg-[#C9B6A4]">
         <span aria-hidden="true" data-pay-shine className="pointer-events-none absolute inset-y-0 left-0 w-1/3 -skew-x-12 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0" />
         <span className="relative">{online ? `ชำระเงิน ${formatBaht(totalSatang)}` : "ออฟไลน์ — ชำระเงินไม่ได้"}</span></button>

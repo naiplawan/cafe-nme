@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
-import { ChevronDown, Plus, SlidersHorizontal } from "lucide-react";
+import { ArrowRight, ChevronDown, Plus, SlidersHorizontal } from "lucide-react";
 import Link from "next/link";
 import { requireStaff } from "@/lib/auth";
 import { formatBaht } from "@/lib/money";
@@ -40,6 +40,19 @@ function selectedRule(minSelect: number, maxSelect: number) {
   return ruleText(minSelect, maxSelect);
 }
 
+function SetupFlow() {
+  const steps = ["ตั้งกติกา", "เพิ่มตัวเลือก", "ผูกกับเมนู"];
+  return <section aria-label="ขั้นตอนตั้งค่าตัวเลือกเสริม" className="flex flex-col gap-2 rounded-xl border bg-card p-3 sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:px-5">
+    {steps.map((step, index) => <div key={step} className="contents">
+      <div className="flex items-center gap-3">
+        <span className="grid size-8 shrink-0 place-items-center rounded-full bg-primary/10 text-sm font-semibold text-primary">{index + 1}</span>
+        <span className="text-sm font-medium">{step}</span>
+      </div>
+      {index < steps.length - 1 && <ArrowRight aria-hidden="true" className="hidden size-4 shrink-0 text-muted-foreground sm:block" />}
+    </div>)}
+  </section>;
+}
+
 export default async function ModifiersPage() {
   const newGroupId = "new-modifier-group";
   const { shopId } = await requireStaff();
@@ -61,6 +74,8 @@ export default async function ModifiersPage() {
   return (
     <div className="space-y-7">
       <AdminPageHeader section="สินค้า" title="ตัวเลือกเสริม" description="กำหนดสิ่งที่พนักงานเลือกเพิ่มตอนรับออเดอร์ เช่น ความหวาน ขนาดแก้ว หรือนม" action={<Link href={`#${newGroupId}`} className={buttonVariants()}><Plus aria-hidden="true" />เพิ่มกลุ่มตัวเลือก</Link>} />
+
+      <SetupFlow />
 
       <section id={newGroupId} className="scroll-mt-6">
         <Card className="border-primary/20 bg-primary/[0.025]">
@@ -97,16 +112,29 @@ export default async function ModifiersPage() {
             {groups.map((group) => (
               <Card key={group.id} className="overflow-hidden">
                 <details className="group">
-                  <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 outline-none transition-colors hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
-                    <span className="min-w-0">
-                      <span className="block truncate text-base font-semibold">{group.name}</span>
-                      <span className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-                        <span>{selectedRule(group.minSelect, group.maxSelect)}</span><span aria-hidden="true">·</span>
-                        <span>{group.modifiers.length} ตัวเลือก</span><span aria-hidden="true">·</span>
-                        <span>{group.productNames.length ? `ผูกกับ ${group.productNames.length} สินค้า` : "ยังไม่ผูกกับสินค้า"}</span>
+                  <summary className="flex cursor-pointer list-none items-start justify-between gap-4 px-5 py-4 outline-none transition-colors hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
+                    <span className="min-w-0 flex-1 space-y-3">
+                      <span className="block">
+                        <span className="block truncate text-base font-semibold">{group.name}</span>
+                        <span className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
+                          <span>{selectedRule(group.minSelect, group.maxSelect)}</span><span aria-hidden="true">·</span>
+                          <span>{group.modifiers.length} ตัวเลือก</span><span aria-hidden="true">·</span>
+                          <span>{group.productNames.length ? `ใช้กับ ${group.productNames.length} เมนู` : "ยังไม่ใช้กับเมนู"}</span>
+                        </span>
+                      </span>
+                      <span aria-hidden="true" className="block rounded-lg bg-muted/40 p-3">
+                        <span className="mb-2 block text-xs font-medium text-muted-foreground">ตัวอย่างตัวเลือกบนหน้าขาย</span>
+                        {group.modifiers.length ? <span className="flex flex-wrap gap-2">
+                          {group.modifiers.slice(0, 5).map((modifier) => <span key={modifier.id} className="inline-flex min-h-9 items-center gap-2 rounded-lg border bg-card px-3 py-1.5 text-sm shadow-sm">
+                            <span className="size-3.5 shrink-0 rounded-full border-2 border-muted-foreground/60" />
+                            <span className="max-w-36 truncate font-medium">{modifier.name}</span>
+                            <span className="text-xs tabular-nums text-muted-foreground">{deltaText(modifier.priceDeltaSatang)}</span>
+                          </span>)}
+                          {group.modifiers.length > 5 && <span className="inline-flex min-h-9 items-center rounded-lg border border-dashed px-3 text-sm text-muted-foreground">+{group.modifiers.length - 5} ตัวเลือก</span>}
+                        </span> : <span className="text-sm text-muted-foreground">ยังไม่มีตัวเลือก · เปิดเพื่อเพิ่มตัวเลือกแรก</span>}
                       </span>
                     </span>
-                    <ChevronDown aria-hidden="true" className="size-5 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" />
+                    <ChevronDown aria-hidden="true" className="mt-1 size-5 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" />
                   </summary>
                   <div className="space-y-5 border-t px-5 py-5">
                     <GroupProductsForm groupId={group.id} selectedProductIds={group.productIds} productsByCategory={productsByCategory} />

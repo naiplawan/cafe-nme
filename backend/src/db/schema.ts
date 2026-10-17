@@ -42,6 +42,7 @@ export const users = pgTable("users", {
   id: id(),
   email: text("email").notNull().unique(),
   passwordHash: text("password_hash").notNull(),
+  emailVerifiedAt: timestamp("email_verified_at", { withTimezone: true }).defaultNow(),
   createdAt: createdAt(),
 });
 
@@ -52,6 +53,22 @@ export const authSessions = pgTable("auth_sessions", {
   expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
   createdAt: createdAt(),
 }, (t) => [index("auth_sessions_user_idx").on(t.userId), index("auth_sessions_expiry_idx").on(t.expiresAt)]);
+
+export const passwordResetTokens = pgTable("password_reset_tokens", {
+  id: id(),
+  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  tokenHash: text("token_hash").notNull().unique(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  createdAt: createdAt(),
+}, (t) => [index("password_reset_tokens_user_idx").on(t.userId), index("password_reset_tokens_expiry_idx").on(t.expiresAt)]);
+
+export const emailVerificationTokens = pgTable("email_verification_tokens", {
+  id: id(),
+  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  tokenHash: text("token_hash").notNull().unique(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  createdAt: createdAt(),
+}, (t) => [index("email_verification_tokens_user_idx").on(t.userId), index("email_verification_tokens_expiry_idx").on(t.expiresAt)]);
 
 export const shops = pgTable("shops", {
   id: id(),

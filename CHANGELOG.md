@@ -7,6 +7,21 @@ versioning (pre-1.0: minor = features, patch = fixes).
 ## [Unreleased]
 
 ### Added
+- Email verification and password recovery flows backed by Resend, including token storage, verification/reset pages, and email delivery templates.
+- Loading states for admin brand, members, modifiers, and staff pages.
+- A matching Cafe'nMe email icon asset for account messages.
+
+### Changed
+- Refined the brand and modifier admin forms and POS cart interactions for clearer workflows.
+- Signup now requires email verification before an account can be used; configure `RESEND_API_KEY`, `EMAIL_FROM_EMAIL`, and `APP_URL` as documented in `docs/railway-release.md`.
+
+### Removed
+- Removed the obsolete Supabase agent skill files.
+
+### Operations
+- Apply migrations `0013_password_reset` and `0014_email_verification` before deploying the auth email flows.
+
+### Added
 - Owners can preview a one-baht QR from their saved PromptPay identifier to inspect the recipient in a banking app without making a transfer.
 - Checkout accepts an optional UUID request key and stores the original receipt atomically; identical retries return that receipt without repeating payment or loyalty writes.
 - The POS preserves unresolved payments across reloads and recovers the original request before allowing another sale; failed browser storage blocks submission before it reaches the API.

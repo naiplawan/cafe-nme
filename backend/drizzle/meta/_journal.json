@@ -92,6 +92,20 @@
       "when": 1792214050998,
       "tag": "0012_checkout_idempotency",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1792215000000,
+      "tag": "0013_password_reset",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1792216000000,
+      "tag": "0014_email_verification",
+      "breakpoints": true
     }
   ]
 }

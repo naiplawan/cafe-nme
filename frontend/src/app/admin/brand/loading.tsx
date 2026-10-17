@@ -1,0 +1,5 @@
+import { AdminPageLoading } from "../_components/page-loading";
+
+export default function Loading() {
+  return <AdminPageLoading label="แบรนด์ร้าน" />;
+}
