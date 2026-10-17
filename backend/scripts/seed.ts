@@ -1,9 +1,9 @@
 import { config } from "dotenv";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
-import { createClient } from "@supabase/supabase-js";
 import postgres from "postgres";
 import { hashPin } from "../../frontend/src/lib/pin";
+import { hashPassword } from "../src/auth-crypto";
 import {
   categories,
   members,
@@ -14,6 +14,7 @@ import {
   shops,
   staff,
   stampLedger,
+  users,
 } from "../src/db/schema";
 
 config({ path: [".env.production.local", "../frontend/.env.local"] });
@@ -21,6 +22,8 @@ config({ path: [".env.production.local", "../frontend/.env.local"] });
 const productionSeed = process.env.SEED_TARGET === "production";
 const ownerEmail = process.env.SEED_OWNER_EMAIL ?? "owner@demo.test";
 const ownerPassword = process.env.SEED_OWNER_PASSWORD ?? "password123";
+const ownerPin = process.env.SEED_OWNER_PIN ?? "1234";
+const baristaPin = process.env.SEED_BARISTA_PIN ?? "1111";
 
 async function seed() {
   if (productionSeed) {
@@ -30,47 +33,38 @@ async function seed() {
     if (!process.env.SEED_OWNER_EMAIL || !process.env.SEED_OWNER_PASSWORD || ownerPassword === "password123") {
       throw new Error("Production seed requires a custom SEED_OWNER_EMAIL and non-default SEED_OWNER_PASSWORD.");
     }
-  }
-
-  const databaseUrl = process.env.DATABASE_URL;
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!databaseUrl || !supabaseUrl || !serviceRoleKey) {
-    throw new Error("Set DATABASE_URL, NEXT_PUBLIC_SUPABASE_URL, and SUPABASE_SERVICE_ROLE_KEY in .env.local.");
-  }
-
-  const supabase = createClient(supabaseUrl, serviceRoleKey, {
-    auth: { autoRefreshToken: false, persistSession: false },
-  });
-  async function findAuthUserId() {
-    const perPage = 100;
-    for (let page = 1; ; page += 1) {
-      const { data, error } = await supabase.auth.admin.listUsers({ page, perPage });
-      if (error) throw error;
-
-      const user = data.users.find((candidate) => candidate.email === ownerEmail);
-      if (user) return user.id;
-      if (data.users.length < perPage) return null;
+    if (!/^\d{6}$/.test(ownerPin) || !/^\d{6}$/.test(baristaPin) || ownerPin === baristaPin) {
+      throw new Error("Production seed requires different six-digit SEED_OWNER_PIN and SEED_BARISTA_PIN values.");
     }
   }
 
-  let authUserId = await findAuthUserId();
-  const existingAuthUser = Boolean(authUserId);
+  const databaseUrl = process.env.DATABASE_URL;
+  if (!databaseUrl) {
+    throw new Error("Set DATABASE_URL in backend/.env.production.local or frontend/.env.local.");
+  }
   const client = postgres(databaseUrl, { max: 1 });
   const db = drizzle(client);
 
   try {
-    const [existingStaff] = await db
-      .select({ id: staff.id })
-      .from(staff)
-      .where(eq(staff.authUserId, authUserId))
-      .limit(1);
+    const [existingUser] = await db.select({ id: users.id }).from(users).where(eq(users.email, ownerEmail.toLowerCase())).limit(1);
+    const authUserId = existingUser?.id;
+    const [existingStaff] = authUserId
+      ? await db.select({ id: staff.id, shopId: staff.shopId }).from(staff).where(eq(staff.authUserId, authUserId)).limit(1)
+      : [];
 
     if (existingStaff) {
-      console.info("Demo owner already has a staff account; seed skipped.");
+      if (productionSeed) {
+        await db.update(staff).set({ pinHash: await hashPin(ownerPin) }).where(eq(staff.id, existingStaff.id));
+        await db.update(staff)
+          .set({ pinHash: await hashPin(baristaPin) })
+          .where(and(eq(staff.shopId, existingStaff.shopId), eq(staff.role, "barista")));
+      }
+      console.info(productionSeed
+        ? "Demo staff account exists; production PINs refreshed."
+        : "Demo owner already has a staff account; seed skipped.");
       return;
     }
-    if (productionSeed && existingAuthUser) {
+    if (productionSeed && existingUser) {
       throw new Error("The production owner email already exists without a seeded staff account; use a new email to avoid changing its credentials.");
     }
     const [existingShop] = await db.select({ id: shops.id }).from(shops).where(eq(shops.slug, "demo-cafe")).limit(1);
@@ -78,28 +72,21 @@ async function seed() {
       throw new Error("A shop with slug demo-cafe already exists; seed skipped to protect existing production data.");
     }
 
-    if (!authUserId) {
-      const { data, error } = await supabase.auth.admin.createUser({
-        email: ownerEmail,
-        password: ownerPassword,
-        email_confirm: true,
-      });
-      if (error) authUserId = await findAuthUserId(); else authUserId = data.user.id;
-      if (!authUserId) throw error;
-    }
-
     await db.transaction(async (tx) => {
+      const userId = authUserId ?? (await tx.insert(users).values({
+        email: ownerEmail.toLowerCase(),
+        passwordHash: await hashPassword(ownerPassword),
+      }).returning({ id: users.id }))[0].id;
       const [shop] = await tx
         .insert(shops)
         .values({ name: "Cafe'nMe", slug: "demo-cafe", promptpayId: "0812345678" })
         .returning({ id: shops.id });
 
-      // Demo POS PINs: owner 1234, barista 1111.
       const [owner] = await tx
         .insert(staff)
         .values([
-          { shopId: shop.id, name: "เจ้าของร้าน", role: "owner" as const, authUserId, pinHash: await hashPin("1234") },
-          { shopId: shop.id, name: "มินท์", role: "barista" as const, pinHash: await hashPin("1111") },
+          { shopId: shop.id, name: "เจ้าของร้าน", role: "owner" as const, authUserId: userId, pinHash: await hashPin(ownerPin) },
+          { shopId: shop.id, name: "มินท์", role: "barista" as const, pinHash: await hashPin(baristaPin) },
         ])
         .returning({ id: staff.id });
 
@@ -185,7 +172,7 @@ async function seed() {
       await tx.insert(productModifierGroups).values(links);
     });
 
-    console.info(`Demo café seeded for ${ownerEmail}; POS PINs owner 1234 and barista 1111, member phone 0814821000.`);
+    console.info(`Demo café seeded for ${ownerEmail}; owner and barista PINs set, member phone 0814821000.`);
   } finally {
     await client.end();
   }

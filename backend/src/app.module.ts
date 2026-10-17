@@ -4,6 +4,7 @@ import { CatalogController } from "./catalog.controller.js";
 import { CatalogService } from "./catalog.service.js";
 import { BrandModule } from "./brand.module.js";
 import { AdminDataModule } from "./admin-data.module.js";
+import { AuthModule } from "./auth.module.js";
 import { DatabaseModule } from "./database.module.js";
 import { HealthController } from "./health.controller.js";
 import { LiffModule } from "./liff.module.js";
@@ -30,6 +31,7 @@ import { validateEnvironment } from "./config/validate-env.js";
       validate: validateEnvironment,
     }),
     AdminDataModule,
+    AuthModule,
     BrandModule,
     DatabaseModule,
     LiffModule,

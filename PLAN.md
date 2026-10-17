@@ -31,16 +31,16 @@ A POS for Thai coffee shops and cafés, with a stamp-card membership that lives 
 │ Server Actions → service layer → Drizzle → Postgres        │
 └────────────────────────────────────────────────────────────┘
         │                    │                    │
-   Supabase Postgres   LINE Messaging API     LINE Login / LIFF
+   Railway PostgreSQL  LINE Messaging API     LINE Login / LIFF
    (+ Realtime later)  (push, rich menu)      (member identity)
 ```
 
-**Stack:** Next.js 15 with TypeScript, Supabase (Postgres and Auth), Drizzle ORM, shadcn/ui with Tailwind, Zod, `@line/bot-sdk`, `@line/liff`, `promptpay-qr` with `qrcode`, `@zxing/browser` for camera QR scanning, Vitest and Playwright.
+**Stack:** Next.js 16 with TypeScript, NestJS, Railway PostgreSQL, Drizzle ORM, database-backed app sessions, shadcn/ui with Tailwind, Zod, `@line/bot-sdk`, `@line/liff`, `promptpay-qr` with `qrcode`, `@zxing/browser` for camera QR scanning, Vitest and Playwright.
 
 **Conventions**
 - Money is stored as integers in **satang**, never floats.
 - All times use the Asia/Bangkok timezone; daily order numbers reset each day (#001, #002…).
-- Every query goes through a service layer that requires `shopId`. Drizzle bypasses Supabase row-level security, so the code enforces the shop scope.
+- Every query goes through a service layer that requires `shopId`; the app enforces shop scope in its services.
 - Order lines store a **snapshot** of names and prices, so menu edits never change past receipts.
 - LINE channel secrets and tokens are encrypted at rest.
 
@@ -114,7 +114,7 @@ Registration (LINE profile, phone, PDPA consent), member card (rotating QR, stam
 
 | Week | Deliverable | Done when |
 |---|---|---|
-| 1 | Project setup, Supabase, Drizzle schema, admin login, menu and add-on CRUD | Owner can build the menu from a real café |
+| 1 | Project setup, PostgreSQL, Drizzle schema, admin login, menu and add-on CRUD | Owner can build the menu from a real café |
 | 2 | POS: pairing, PIN, order screen, add-ons, cart, cash payment | You can ring up 20 orders without errors |
 | 3 | PromptPay QR, order history, void, receipt (Bluetooth print as a spike) | Correct QR amount; voids are logged |
 | 4 | LINE OA and Login channels, webhook, LIFF registration, PDPA, member card QR | Your own phone registers and shows a rotating QR |
@@ -130,7 +130,7 @@ Registration (LINE profile, phone, PDPA consent), member card (rotating QR, stam
 
 ## 8. Costs (pilot)
 
-- **Supabase:** free tier is enough for the pilot.
+- **Railway PostgreSQL:** deploy the app database alongside the API.
 - **Vercel:** Hobby works during development, but its terms forbid commercial use, so move to **Pro (about $20 a month)** before charging anyone.
 - **LINE OA:** the free plan should be enough with pushes only on rewards. Check the current Thai message quota.
 - **Domain:** about 400 baht a year. LIFF needs HTTPS.
@@ -148,4 +148,4 @@ Registration (LINE profile, phone, PDPA consent), member card (rotating QR, stam
 
 ## 10. After the MVP
 
-Points per baht and tiers, birthday rewards, promotions to member segments, PromptPay confirmation through a payment gateway or slip check, offline mode, kitchen and bar display (Supabase Realtime), multiple branches, ingredient stock, VAT-registered shops (RD-approved POS), self-signup for shops and billing.
+Points per baht and tiers, birthday rewards, promotions to member segments, PromptPay confirmation through a payment gateway or slip check, offline mode, kitchen and bar display (managed PostgreSQL change feed), multiple branches, ingredient stock, VAT-registered shops (RD-approved POS), self-signup for shops and billing.

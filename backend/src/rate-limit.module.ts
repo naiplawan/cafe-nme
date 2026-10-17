@@ -7,5 +7,6 @@ import { RateLimitService } from "./rate-limit.service.js";
   imports: [DatabaseModule],
   controllers: [RateLimitController],
   providers: [RateLimitService],
+  exports: [RateLimitService],
 })
 export class RateLimitModule {}

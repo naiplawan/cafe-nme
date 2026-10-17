@@ -64,6 +64,20 @@
       "when": 1792137946927,
       "tag": "0008_product_tile_color",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1792196616211,
+      "tag": "0009_postgres_auth",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1792196959665,
+      "tag": "0010_auth_staff_fk",
+      "breakpoints": true
     }
   ]
 }

@@ -24,8 +24,7 @@
     "db:migrate": "pnpm --filter @cafenme/backend db:migrate",
     "db:seed": "pnpm --filter @cafenme/backend db:seed",
     "db:seed-menu": "pnpm --filter @cafenme/backend db:seed-menu",
-    "db:seed-sales": "pnpm --filter @cafenme/backend db:seed-sales",
-    "supabase": "pnpm --filter @cafenme/backend exec supabase"
+    "db:seed-sales": "pnpm --filter @cafenme/backend db:seed-sales"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.15",

@@ -6,6 +6,19 @@ versioning (pre-1.0: minor = features, patch = fixes).
 
 ## [Unreleased]
 
+### Breaking changes
+- Admin authentication now uses Railway PostgreSQL accounts and sessions instead of Supabase Auth. Apply migrations `0009` and `0010`, configure `API_BASE_URL`, `APP_SECRET`, and the shared `INTERNAL_API_SECRET`; existing Supabase Auth users are not migrated and must be recreated or seeded.
+
+### Added
+- PostgreSQL-backed admin accounts with scrypt password hashes, hashed revocable session tokens, and HttpOnly session cookies.
+- Production demo seeding now requires distinct six-digit owner and barista POS PINs; rerunning the seed refreshes these PINs without changing the existing owner password.
+
+### Removed
+- Supabase client dependencies, local Supabase configuration, and the Supabase CLI workspace command.
+
+### Security
+- Login and signup attempts are rate-limited; passwords and session tokens are stored as hashes.
+
 ### Changed
 - The README now plays the 24-second product film inline on GitHub.
 - Production demo seeding now requires explicit confirmation and custom owner credentials, and skips when the demo shop or owner already exists.
