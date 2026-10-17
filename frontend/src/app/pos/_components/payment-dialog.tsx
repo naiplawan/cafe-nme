@@ -9,6 +9,7 @@ import { gsap, MOTION, prefersReducedMotion, useGSAP } from "@/components/motion
 import { Keypad } from "./keypad";
 import { PromptPayQr } from "./promptpay-qr";
 import { trapDialogTab } from "@/lib/dialog-focus";
+import { checkoutAttempt, submitPendingCheckout, type CheckoutAttempt, type CheckoutSessionScope } from "@/lib/checkout-attempt";
 
 type PaymentLine = { key: string; name: string; qty: number; modifiersText: string; lineTotalSatang: number };
 type PaymentDialogProps = {
@@ -18,6 +19,8 @@ type PaymentDialogProps = {
   discountSatang: number;
   totalSatang: number;
   checkoutInput: Omit<CheckoutInput, "payment">;
+  cartStorageKey: string | null;
+  expectedScope: CheckoutSessionScope;
   promptpayEnabled: boolean;
   shopName: string;
   onClose: () => void;
@@ -52,10 +55,11 @@ function AnimatedBaht({ satang, className }: { satang: number; className?: strin
 }
 
 export function PaymentDialog({ orderLabel, lines, subtotalSatang, discountSatang, totalSatang,
-  checkoutInput, promptpayEnabled, shopName, onClose, onPaid }: PaymentDialogProps) {
+  checkoutInput, cartStorageKey, expectedScope, promptpayEnabled, shopName, onClose, onPaid }: PaymentDialogProps) {
   const [method, setMethod] = useState<PaymentMethod>("cash");
   const [cashInput, setCashInput] = useState("");
   const [pending, setPending] = useState(false);
+  const [recovering, setRecovering] = useState(false);
   const [closing, setClosing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const id = useId();
@@ -64,10 +68,20 @@ export function PaymentDialog({ orderLabel, lines, subtotalSatang, discountSatan
   const indicatorRef = useRef<HTMLSpanElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const progressRef = useRef<SVGLineElement>(null);
+  const attemptRef = useRef<CheckoutAttempt | null>(null);
+  const submittingRef = useRef(false);
   const receivedSatang = Number.parseInt(cashInput || "0", 10) * 100;
   const changeSatang = receivedSatang - totalSatang;
   const shortBySatang = Math.max(0, -changeSatang);
   const quickAmounts = useMemo(() => suggestCashAmounts(totalSatang), [totalSatang]);
+
+  function getSessionStorage(): Storage | null {
+    try {
+      return window.sessionStorage;
+    } catch {
+      return null;
+    }
+  }
 
   useGSAP(() => {
     if (prefersReducedMotion()) return;
@@ -99,7 +113,7 @@ export function PaymentDialog({ orderLabel, lines, subtotalSatang, discountSatan
       .to(root, { opacity: 0, duration: MOTION.base, ease: "power1.in" }, 0);
   });
   const requestClose = useCallback(() => {
-    if (closing) return;
+    if (closing || pending || recovering) return;
     if (prefersReducedMotion()) {
       onClose();
       return;
@@ -110,7 +124,7 @@ export function PaymentDialog({ orderLabel, lines, subtotalSatang, discountSatan
     root.style.pointerEvents = "none";
     setClosing(true);
     animateClose(root, dialog, onClose);
-  }, [animateClose, closing, onClose]);
+  }, [animateClose, closing, onClose, pending, recovering]);
 
   useEffect(() => {
     dialogRef.current?.focus();
@@ -122,22 +136,36 @@ export function PaymentDialog({ orderLabel, lines, subtotalSatang, discountSatan
   }, [pending, requestClose]);
 
   async function confirm() {
-    if (pending || (method === "cash" && receivedSatang < totalSatang)) return;
+    if (submittingRef.current || (method === "cash" && receivedSatang < totalSatang)) return;
+    submittingRef.current = true;
     setPending(true);
     setError(null);
     const payment: CheckoutInput["payment"] = method === "cash"
       ? { method: "cash", cashReceivedSatang: receivedSatang }
       : { method: "promptpay" };
     try {
-      const response = await checkoutAction({ ...checkoutInput, payment });
-      if (!response.ok) {
+      const input = { ...checkoutInput, payment };
+      const attempt = checkoutAttempt(input, attemptRef.current);
+      attemptRef.current = attempt;
+      const pendingInput = { ...input, requestId: attempt.requestId, expectedScope };
+      const response = await submitPendingCheckout(pendingInput, getSessionStorage(), cartStorageKey, checkoutAction);
+      if (response.kind !== "completed") {
         setError(response.message);
-        setPending(false);
+        if (response.kind === "uncertain") {
+          setRecovering(true);
+        } else if (response.kind === "rejected") {
+          attemptRef.current = null;
+          setRecovering(false);
+        }
         return;
       }
+      attemptRef.current = null;
       onPaid(response.result, method);
     } catch {
-      setError("บันทึกไม่สำเร็จ กรุณาลองใหม่");
+      setRecovering(true);
+      setError("ยังไม่ทราบผลการบันทึก กรุณาตรวจสอบรายการเดิมอีกครั้งก่อนรับออเดอร์ใหม่");
+    } finally {
+      submittingRef.current = false;
       setPending(false);
     }
   }
@@ -148,7 +176,8 @@ export function PaymentDialog({ orderLabel, lines, subtotalSatang, discountSatan
 
   return (
     <div ref={rootRef} className="fixed inset-0 z-40 flex items-center justify-center bg-[rgba(43,30,22,0.55)] p-3 sm:p-6">
-      <div ref={dialogRef} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby={`${id}-payment-title`} onKeyDown={trapDialogTab}
+      {/* biome-ignore lint/a11y/noNoninteractiveElementInteractions: the dialog container owns the keyboard focus trap. */}
+      <div ref={dialogRef} tabIndex={-1} role="dialog" aria-modal="true" aria-busy={pending} aria-labelledby={`${id}-payment-title`} onKeyDown={trapDialogTab}
         className="flex h-[min(680px,calc(100dvh-24px))] w-full max-w-[1000px] overflow-hidden rounded-[24px] border border-white/60 bg-[#FFFBF6] shadow-[0_24px_80px_rgba(43,30,22,0.25)] outline-none">
         <aside className="flex w-[36%] min-w-[260px] shrink-0 flex-col gap-3 bg-gradient-to-b from-[#F7F0E7] to-[#F0E4D7] p-7">
         <h2 id={`${id}-payment-title`} className="text-base text-[#6B5547]">ออเดอร์ {orderLabel}</h2>
@@ -173,6 +202,8 @@ export function PaymentDialog({ orderLabel, lines, subtotalSatang, discountSatan
         </aside>
 
         <section className="flex min-w-0 flex-1 flex-col gap-4 p-6 sm:p-7">
+          <fieldset disabled={pending || recovering} className="contents">
+          <legend className="sr-only">วิธีชำระและจำนวนเงินที่รับ</legend>
           <div role="tablist" aria-label="วิธีชำระ" className="relative grid grid-cols-2 rounded-[18px] bg-[#F1E7DC] p-1.5">
             <span ref={indicatorRef} aria-hidden="true" className="absolute inset-y-1.5 left-1.5 w-[calc(50%-6px)] rounded-[14px] bg-[#3B2A20] shadow-sm" />
             <button type="button" role="tab" aria-selected={isCash} onClick={() => { setMethod("cash"); setError(null); }}
@@ -205,13 +236,14 @@ export function PaymentDialog({ orderLabel, lines, subtotalSatang, discountSatan
             </div> : <PromptPayQr amountSatang={totalSatang} shopName={shopName} />}
           </div>
 
+          </fieldset>
           <div className="flex gap-3">
-            <button type="button" disabled={pending || closing} onClick={requestClose}
+            <button type="button" disabled={pending || closing || recovering} onClick={requestClose}
               className="h-[72px] w-36 shrink-0 rounded-2xl border border-[#D9C5B0] bg-[#FFFBF6] text-lg font-semibold shadow-sm disabled:opacity-60">กลับ</button>
             <button type="button" disabled={blocked} onClick={() => void confirm()}
               className="relative h-[72px] min-w-0 flex-1 overflow-hidden rounded-2xl bg-[#2F6B3F] px-3 text-lg font-bold text-white shadow-[0_7px_16px_rgba(47,107,63,0.18)] transition-colors disabled:bg-[#C9B6A4]">
               {pending && <svg className="absolute inset-x-4 bottom-0 h-1.5 w-[calc(100%-2rem)]" viewBox="0 0 100 4" preserveAspectRatio="none" aria-hidden="true"><line ref={progressRef} x1="0" y1="2" x2="100" y2="2" stroke="#D7E8D9" strokeWidth="3" strokeLinecap="round" /></svg>}
-              {pending ? "กำลังบันทึก…" : isCash ? (shortBySatang ? "ใส่จำนวนเงินที่รับ" : `รับเงิน · ทอน ${formatBaht(changeSatang)}`) : "ได้รับเงินแล้ว"}
+              {pending ? "กำลังบันทึก…" : recovering ? "ตรวจสอบรายการเดิมอีกครั้ง" : isCash ? (shortBySatang ? "ใส่จำนวนเงินที่รับ" : `รับเงิน · ทอน ${formatBaht(changeSatang)}`) : "ได้รับเงินแล้ว"}
             </button>
           </div>
           {error && <p className="-mt-3 text-sm font-semibold text-[#8E3415]" role="alert">{error}</p>}

@@ -16,11 +16,38 @@ import {
   updateModifierGroup,
 } from "@/server/modifiers";
 
-export type ModifierFormState = { error?: string; success?: boolean; createdGroupId?: string; message?: string };
+export interface ModifierFormValues {
+  name?: string;
+  minSelect?: string;
+  maxSelect?: string;
+  priceDelta?: string;
+}
+export interface ModifierFormState {
+  error?: string;
+  success?: boolean;
+  createdGroupId?: string;
+  message?: string;
+  values?: ModifierFormValues;
+}
 
 function field(formData: FormData, name: string) {
   const value = formData.get(name);
-  return typeof value === "string" ? value : "";
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function groupValues(formData: FormData): ModifierFormValues {
+  return {
+    name: field(formData, "name"),
+    minSelect: field(formData, "minSelect"),
+    maxSelect: field(formData, "maxSelect"),
+  };
+}
+
+function modifierValues(formData: FormData): ModifierFormValues {
+  return {
+    name: field(formData, "name"),
+    priceDelta: field(formData, "priceDelta"),
+  };
 }
 
 export async function createModifierGroupAction(
@@ -28,14 +55,20 @@ export async function createModifierGroupAction(
   formData: FormData,
 ): Promise<ModifierFormState> {
   const session = await requireStaff();
+  const values = groupValues(formData);
   const parsed = modifierGroupSchema.safeParse({
-    name: field(formData, "name"),
-    minSelect: field(formData, "minSelect"),
-    maxSelect: field(formData, "maxSelect"),
+    ...values,
   });
-  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "ข้อมูลไม่ถูกต้อง" };
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "ข้อมูลไม่ถูกต้อง", values };
+  }
 
-  const group = await createModifierGroup(session.shopId, parsed.data);
+  let group: Awaited<ReturnType<typeof createModifierGroup>>;
+  try {
+    group = await createModifierGroup(session.shopId, parsed.data);
+  } catch {
+    return { error: "เพิ่มกลุ่มตัวเลือกไม่สำเร็จ กรุณาลองใหม่", values };
+  }
   revalidatePath("/admin/modifiers");
   revalidatePath("/admin");
   return { success: true, createdGroupId: group.id };
@@ -69,14 +102,19 @@ export async function updateModifierGroupAction(
   formData: FormData,
 ): Promise<ModifierFormState> {
   const session = await requireStaff();
+  const values = groupValues(formData);
   const parsed = modifierGroupSchema.safeParse({
-    name: field(formData, "name"),
-    minSelect: field(formData, "minSelect"),
-    maxSelect: field(formData, "maxSelect"),
+    ...values,
   });
-  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "ข้อมูลไม่ถูกต้อง" };
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "ข้อมูลไม่ถูกต้อง", values };
+  }
 
-  await updateModifierGroup(session.shopId, field(formData, "groupId"), parsed.data);
+  try {
+    await updateModifierGroup(session.shopId, field(formData, "groupId"), parsed.data);
+  } catch {
+    return { error: "บันทึกกลุ่มตัวเลือกไม่สำเร็จ กรุณาลองใหม่", values };
+  }
   revalidatePath("/admin/modifiers");
   return { success: true };
 }
@@ -93,15 +131,21 @@ export async function createModifierAction(
   formData: FormData,
 ): Promise<ModifierFormState> {
   const { shopId } = await requireStaff();
+  const values = modifierValues(formData);
   const parsed = modifierSchema.safeParse({
     groupId: field(formData, "groupId"),
-    name: field(formData, "name"),
-    priceDelta: field(formData, "priceDelta"),
+    ...values,
   });
-  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "ข้อมูลไม่ถูกต้อง" };
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "ข้อมูลไม่ถูกต้อง", values };
+  }
 
   const { groupId, name, priceDelta } = parsed.data;
-  await createModifier(shopId, groupId, { name, priceDeltaSatang: priceDelta });
+  try {
+    await createModifier(shopId, groupId, { name, priceDeltaSatang: priceDelta });
+  } catch {
+    return { error: "เพิ่มตัวเลือกไม่สำเร็จ กรุณาลองใหม่", values };
+  }
   revalidatePath("/admin/modifiers");
   return { success: true };
 }

@@ -7,6 +7,7 @@ import { getMemberSummary, type MemberSummary } from "@/server/loyalty";
 import { pushRewardUnlocked } from "@/server/line";
 
 export interface CheckoutInput {
+  requestId?: string;
   lines: CartLineInput[];
   memberId?: string | null;
   redeemRewardId?: string | null;
@@ -14,6 +15,7 @@ export interface CheckoutInput {
 }
 
 export interface CheckoutResult {
+  replayed?: boolean;
   orderId: string;
   dailyNo: number;
   subtotalSatang: number;
@@ -26,7 +28,7 @@ export interface CheckoutResult {
 }
 
 export class CheckoutError extends Error {
-  readonly code: "empty_cart" | "pricing" | "sold_out" | "member_not_found" | "reward_unavailable" | "cash_insufficient";
+  readonly code: "empty_cart" | "pricing" | "sold_out" | "member_not_found" | "reward_unavailable" | "cash_insufficient" | "promptpay_not_configured" | "idempotency_key_reused";
 
   constructor(code: CheckoutError["code"]) {
     super(code);
@@ -48,6 +50,7 @@ const dateSchema = z.string().datetime({ offset: true }).transform((value) => ne
 const nullableDateSchema = dateSchema.nullable();
 
 const checkoutResultSchema = z.object({
+  replayed: z.boolean().optional().default(false),
   orderId: z.uuid(),
   dailyNo: z.number().int(),
   subtotalSatang: z.number().int(),
@@ -127,7 +130,7 @@ async function request<T>(path: string, schema: z.ZodType<T>, init?: RequestInit
       throw new OrderVoidError();
     }
     if (typeof code === "string") {
-      const knownCodes: CheckoutError["code"][] = ["empty_cart", "pricing", "sold_out", "member_not_found", "reward_unavailable", "cash_insufficient"];
+      const knownCodes: CheckoutError["code"][] = ["empty_cart", "pricing", "sold_out", "member_not_found", "reward_unavailable", "cash_insufficient", "promptpay_not_configured", "idempotency_key_reused"];
       if (knownCodes.includes(code as CheckoutError["code"])) {
         throw new CheckoutError(code as CheckoutError["code"]);
       }
@@ -154,7 +157,7 @@ export async function checkout(
     },
   );
   const member = input.memberId ? await getMemberSummary(session.shopId, input.memberId) : null;
-  if (member && result.rewardsCreated > 0) {
+  if (!result.replayed && member && result.rewardsCreated > 0) {
     for (let i = 0; i < result.rewardsCreated; i += 1) {
       void pushRewardUnlocked(session.shopId, member.id).catch((err) => logger.error(
         { err, shopId: session.shopId, memberId: member.id }, "Reward notification failed",

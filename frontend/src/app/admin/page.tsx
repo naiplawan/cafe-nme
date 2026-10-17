@@ -1,12 +1,13 @@
+import { ArrowDown, ArrowRight, ArrowUp } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowDown, ArrowRight, ArrowUp } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
 import { AreaChart, BarChart, ChartCard, CountUp, DonutChart, HBarList } from "@/components/charts";
+import { Card, CardContent } from "@/components/ui/card";
 import { requireStaff } from "@/lib/auth";
 import { businessDate } from "@/lib/business-date";
 import { formatBaht } from "@/lib/money";
 import { getAdminDashboardData } from "@/server/admin-data";
+import { getPromptPaySettings } from "@/server/payment-settings";
 import { dailySales, hourlySales, salesByItem, salesSummary } from "@/server/reports";
 import { AdminPageHeader } from "./_components/page-header";
 import { SetupChecklist } from "./_components/setup-checklist";
@@ -33,7 +34,10 @@ export default async function AdminDashboardPage() {
   const previousWeekStart = shiftDate(weekStart, -7);
   const previousWeekEnd = shiftDate(weekStart, -1);
   const currentHour = bangkokHour(now);
-  const [dashboard, todaySales, weeklySales, previousWeeklySales, daily, hourly, items] = await Promise.all([
+  const promptpaySetupPromise = currentStaff.role === "owner"
+    ? getPromptPaySettings(shopId, currentStaff.id).then(({ promptpayId }) => Boolean(promptpayId)).catch(() => false)
+    : Promise.resolve(false);
+  const [dashboard, todaySales, weeklySales, previousWeeklySales, daily, hourly, items, promptpaySetup] = await Promise.all([
     getAdminDashboardData(shopId),
     salesSummary(shopId, today, today),
     salesSummary(shopId, weekStart, today),
@@ -41,6 +45,7 @@ export default async function AdminDashboardPage() {
     dailySales(shopId, weekStart, today),
     hourlySales(shopId, today, today),
     salesByItem(shopId, weekStart, today),
+    promptpaySetupPromise,
   ]);
 
   const dailyByDate = new Map(daily.map((day) => [day.date, day.netSatang]));
@@ -73,6 +78,7 @@ export default async function AdminDashboardPage() {
         device: dashboard.deviceSetup,
         line: dashboard.lineSetup,
         brand: dashboard.brandSetup,
+        promptpay: promptpaySetup,
       }} role={currentStaff.role} />
 
       <section aria-label="สรุปข้อมูลร้าน" className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">

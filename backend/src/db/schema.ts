@@ -205,8 +205,12 @@ export const orders = pgTable(
     paidAt: timestamp("paid_at", { withTimezone: true }),
     voidedAt: timestamp("voided_at", { withTimezone: true }),
     voidedBy: uuid("voided_by").references(() => staff.id),
+    checkoutKey: uuid("checkout_key"),
+    checkoutFingerprint: text("checkout_fingerprint"),
+    checkoutResult: jsonb("checkout_result"),
   },
   (t) => [
+    uniqueIndex("orders_shop_checkout_key_uidx").on(t.shopId, t.checkoutKey),
     uniqueIndex("orders_shop_day_no_uidx").on(
       t.shopId,
       t.businessDate,

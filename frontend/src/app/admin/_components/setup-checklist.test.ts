@@ -8,7 +8,12 @@ describe("setup checklist by role", () => {
   });
 
   it("shows the full setup plan to managers and owners", () => {
-    expect(setupChecklist.setupStepKeysForRole("owner")).toEqual(["menu", "modifiers", "ownerPin", "device", "line", "brand"]);
+    expect(setupChecklist.setupStepKeysForRole("owner")).toEqual(["menu", "modifiers", "ownerPin", "device", "line", "brand", "promptpay"]);
     expect(setupChecklist.setupStepKeysForRole("manager")).toEqual(["menu", "modifiers", "ownerPin", "device", "line", "brand"]);
+  });
+
+  it("keeps the owner-only PromptPay link out of manager and barista checklists", () => {
+    expect(setupChecklist.setupStepKeysForRole("manager")).not.toContain("promptpay");
+    expect(setupChecklist.setupStepKeysForRole("barista")).not.toContain("promptpay");
   });
 });

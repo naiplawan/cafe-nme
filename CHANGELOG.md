@@ -6,6 +6,24 @@ versioning (pre-1.0: minor = features, patch = fixes).
 
 ## [Unreleased]
 
+### Added
+- Owners can preview a one-baht QR from their saved PromptPay identifier to inspect the recipient in a banking app without making a transfer.
+- Checkout accepts an optional UUID request key and stores the original receipt atomically; identical retries return that receipt without repeating payment or loyalty writes.
+- The POS preserves unresolved payments across reloads and recovers the original request before allowing another sale; failed browser storage blocks submission before it reaches the API.
+- CI now applies migrations to disposable PostgreSQL and runs backend and frontend integration tests alongside the existing quality checks.
+
+### Fixed
+- Pending checkout stays tied to the original shop, staff, and device when another tab changes the login; reload and conflict recovery retain the original sale key.
+- Nest rejects new PromptPay sales when the shop has no receiving identifier, including configuration changes concurrent with checkout.
+- Modifier group editing preserves selection minimums greater than one, and failed modifier submissions retain entered values.
+- Staff PIN changes show explicit success or failure feedback and explain why owner and current-user accounts cannot be deactivated.
+- Menu creation links preserve their URL state; product edit links identify the product for assistive technology.
+- Member searches distinguish filtered empty results from first-time setup; available rewards show their earned dates and POS redemption guidance.
+- Invalid report date ranges display a correction message instead of silently showing today's sales; report loading and retry states are explicit.
+
+### Operations
+- API readiness now checks the deployed migration head and SQL hash. Apply migration `0012_checkout_idempotency` before starting the new API; configure Railway's API pre-deploy migration command and `/health/ready` healthcheck as described in `docs/railway-release.md`.
+
 ### Breaking changes
 - Admin authentication now uses Railway PostgreSQL accounts and sessions instead of Supabase Auth. Apply migrations `0009` and `0010`, configure `API_BASE_URL`, `APP_SECRET`, and the shared `INTERNAL_API_SECRET`; existing Supabase Auth users are not migrated and must be recreated or seeded.
 

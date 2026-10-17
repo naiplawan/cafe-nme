@@ -4,8 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { useActionState, useId, useMemo, useState, useTransition } from "react";
-import { Badge } from "@/components/ui/badge";
 import { ProductTile } from "@/components/product-tile";
+import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -14,8 +14,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { formatBaht } from "@/lib/money";
 import { bulkUpdateProductsAction, clearSoldOutProductsAction, reorderProductsAction, setAutoClearSoldOutAction } from "./actions";
+import { bulkActionConfirmation, DEFAULT_PRODUCT_FILTERS, menuQuery, type ProductFilters as ProductFilterValues, productEditHref } from "./menu-steps";
 import { ReorderActions, SortableList } from "./sortable-list";
-import { DEFAULT_PRODUCT_FILTERS, type ProductFilters as ProductFilterValues, bulkActionConfirmation, menuQuery, productEditHref } from "./menu-steps";
 
 type Product = {
   id: string;
@@ -33,8 +33,8 @@ type Product = {
 type Category = { id: string; name: string };
 type ModifierGroupOption = { id: string; name: string; modifierNames: string[] };
 
-export function ProductEditLink({ href }: { href: string }) {
-  return <Link href={href} className={buttonVariants({ variant: "outline", size: "sm" })}>แก้ไข</Link>;
+export function ProductEditLink({ href, name }: { href: string; name: string }) {
+  return <Link href={href} aria-label={`แก้ไข ${name}`} className={buttonVariants({ variant: "outline", size: "sm" })}>แก้ไข</Link>;
 }
 
 export function getValidSelectedProductIds(selectedIds: readonly string[], productIds: readonly string[]): string[] {
@@ -169,7 +169,7 @@ export function MenuProductList({
                           {product.soldOut ? <Badge variant="destructive">หมดชั่วคราว</Badge> : null}
                         </div>
                       </div>
-                      <ProductEditLink href={productEditHref(product.id, filters)} />
+                      <ProductEditLink href={productEditHref(product.id, filters)} name={product.name} />
                     </div>
                   </li>
                 ))}

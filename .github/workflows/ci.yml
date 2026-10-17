@@ -11,13 +11,28 @@ permissions:
 jobs:
   quality:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: cafe-ci-password
+          POSTGRES_DB: cafe_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres -d cafe_ci"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
     env:
-      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
-      NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:54321
-      NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder
-      SUPABASE_SERVICE_ROLE_KEY: ci-placeholder
-      APP_SECRET: ci-placeholder-secret-with-at-least-thirty-two-bytes
-      LINE_DEV_MOCK: "1"
+      DATABASE_URL: postgresql://postgres:cafe-ci-password@127.0.0.1:5432/cafe_ci
+      TEST_DATABASE_URL: postgresql://postgres:cafe-ci-password@127.0.0.1:5432/cafe_ci
+      API_BASE_URL: http://127.0.0.1:3101
+      API_PORT: '3101'
+      APP_SECRET: ci-app-secret-with-at-least-thirty-two-bytes
+      INTERNAL_API_SECRET: ci-internal-api-secret-with-at-least-thirty-two-bytes
+      LINE_DEV_MOCK: '0'
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -28,14 +43,49 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - name: Check migration metadata and schema drift
+        run: |
+          pnpm --filter @cafenme/backend exec drizzle-kit check
+          pnpm --filter @cafenme/backend db:generate
+          migration_changes=$(git status --porcelain -- backend/drizzle)
+          if [ -n "$migration_changes" ]; then
+            printf '%s\n' "$migration_changes"
+            exit 1
+          fi
+      - name: Apply database migrations
+        run: pnpm --filter @cafenme/backend db:migrate
       - run: pnpm lint
       - run: pnpm check:boundaries
       - run: pnpm typecheck
       - run: pnpm test
+      - name: Run backend tests
+        run: pnpm --filter @cafenme/backend test
       - run: pnpm audit:high
       - run: pnpm react:doctor
       - run: pnpm build
       - run: pnpm build:api
+      - name: Start API
+        run: |
+          nohup pnpm --filter @cafenme/backend start > "$RUNNER_TEMP/cafe-api.log" 2>&1 &
+          echo $! > "$RUNNER_TEMP/cafe-api.pid"
+      - name: Wait for API readiness
+        run: |
+          for attempt in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:3101/health/ready; then
+              exit 0
+            fi
+            sleep 2
+          done
+          cat "$RUNNER_TEMP/cafe-api.log"
+          exit 1
+      - name: Run frontend integration tests
+        run: pnpm test:int
+      - name: Stop API
+        if: always()
+        run: |
+          if [ -f "$RUNNER_TEMP/cafe-api.pid" ]; then
+            kill "$(cat "$RUNNER_TEMP/cafe-api.pid")" || true
+          fi
       - uses: actions/upload-artifact@v4
         if: always()
         with:
