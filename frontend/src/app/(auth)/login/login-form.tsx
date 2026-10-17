@@ -6,7 +6,6 @@ import { signIn, type AuthActionState } from "@/server/auth-actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import Link from "next/link";
 import { gsap, MOTION, prefersReducedMotion, useGSAP } from "@/components/motion/gsap";
 
 const initialState: AuthActionState = {};
@@ -46,10 +45,8 @@ export function LoginForm() {
           </Button>
         </div>
         {state.errors?.password?.[0] && <p className="text-sm text-destructive">{state.errors.password[0]}</p>}
-        <p className="text-right text-sm"><Link href="/forgot-password" className="font-medium text-primary underline underline-offset-4">ลืมรหัสผ่าน?</Link></p>
       </div>
       {state.message && <p role="status" className="text-sm text-destructive">{state.message}</p>}
-      {state.emailNotVerified && <p className="text-sm"><Link href="/verify-email" className="font-medium text-primary underline underline-offset-4">ส่งอีเมลยืนยันอีกครั้ง</Link></p>}
       <Button data-auth-field type="submit" className="w-full" disabled={pending}>
         {pending ? "กำลังเข้าสู่ระบบ…" : "เข้าสู่ระบบ"}
       </Button>

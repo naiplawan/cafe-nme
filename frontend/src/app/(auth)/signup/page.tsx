@@ -9,7 +9,7 @@ export default function SignupPage() {
         <div className="mb-6 flex flex-col items-center text-center">
           <Image src="/assets/logo-mark.png" alt="Cafe'nMe" width={56} height={56} className="mb-4 size-14" />
           <h1 className="text-2xl font-semibold">สร้างบัญชี</h1>
-          <p className="mt-2 text-sm text-muted-foreground">เราจะส่งอีเมลให้ท่านยืนยันก่อนเปิดใช้งานบัญชี</p>
+          <p className="mt-2 text-sm text-muted-foreground">สร้างบัญชีเพื่อเริ่มจัดการร้านและเมนูของคุณ</p>
           <svg aria-hidden="true" className="mx-auto mt-2 h-2 w-20 text-[#C69C72]" viewBox="0 0 80 4" fill="none"><path data-logo-line d="M1 2H79" stroke="currentColor" strokeWidth="3" strokeLinecap="round" /></svg>
         </div>
         <SignupForm />

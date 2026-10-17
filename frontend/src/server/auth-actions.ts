@@ -12,8 +12,6 @@ export type AuthActionState = {
   message?: string;
   errors?: Record<string, string[]>;
   email?: string;
-  emailNotVerified?: boolean;
-  verificationHelp?: boolean;
   values?: Record<string, string>;
 };
 
@@ -25,21 +23,6 @@ const signInSchema = z.object({
 const signUpSchema = z.object({
   email: z.email("กรุณากรอกอีเมลให้ถูกต้อง"),
   password: z.string().min(8, "รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร").max(128),
-});
-
-const passwordResetRequestSchema = z.object({
-  email: z.email("กรุณากรอกอีเมลให้ถูกต้อง"),
-});
-
-const emailVerificationTokenSchema = z.object({ token: z.string().min(32) });
-
-const passwordResetSchema = z.object({
-  token: z.string().min(32),
-  password: z.string().min(8, "รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร").max(128),
-  confirmPassword: z.string(),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "รหัสผ่านไม่ตรงกัน",
-  path: ["confirmPassword"],
 });
 
 const shopSchema = z.object({
@@ -80,9 +63,13 @@ export async function signIn(
     };
   }
 
-  const response = await requestAuthApi("/login", { method: "POST", body: parsed.data });
+  let response: Response;
+  try {
+    response = await requestAuthApi("/login", { method: "POST", body: parsed.data });
+  } catch {
+    return { email: parsed.data.email, message: "เชื่อมต่อระบบไม่ได้ กรุณาลองอีกครั้ง" };
+  }
   if (response.status === 401) return { email: parsed.data.email, message: "อีเมลหรือรหัสผ่านไม่ถูกต้อง" };
-  if (response.status === 403) return { email: parsed.data.email, emailNotVerified: true, message: "กรุณายืนยันที่อยู่อีเมลก่อนเข้าสู่ระบบ" };
   if (response.status === 429) return { email: parsed.data.email, message: "ลองเข้าสู่ระบบใหม่อีกครั้งใน 15 นาที" };
   if (!response.ok) return { email: parsed.data.email, message: "ระบบเข้าสู่ระบบขัดข้อง กรุณาลองอีกครั้ง" };
   const result = await response.json() as { token: string };
@@ -96,101 +83,6 @@ export async function signIn(
   });
 
   redirect("/admin");
-}
-
-export async function requestPasswordReset(
-  _prevState: AuthActionState,
-  formData: FormData,
-): Promise<AuthActionState> {
-  const parsed = passwordResetRequestSchema.safeParse(readFormData(formData, ["email"]));
-  if (!parsed.success) {
-    return {
-      email: String(formData.get("email") ?? ""),
-      errors: parsed.error.flatten().fieldErrors as Record<string, string[]>,
-    };
-  }
-
-  try {
-    const response = await requestAuthApi("/password-reset", { method: "POST", body: parsed.data });
-    if (response.status === 429) {
-      return { email: parsed.data.email, message: "ส่งคำขอบ่อยเกินไป กรุณาลองใหม่ภายหลัง" };
-    }
-    if (!response.ok) {
-      return { email: parsed.data.email, message: "ระบบส่งอีเมลขัดข้อง กรุณาลองอีกครั้ง" };
-    }
-    return { email: parsed.data.email, message: "หากอีเมลนี้มีบัญชีอยู่ เราจะส่งลิงก์ตั้งรหัสผ่านใหม่ให้ กรุณาตรวจสอบกล่องจดหมาย" };
-  } catch {
-    return { email: parsed.data.email, message: "เชื่อมต่อระบบไม่ได้ กรุณาลองอีกครั้ง" };
-  }
-}
-
-export async function resendEmailVerification(
-  _prevState: AuthActionState,
-  formData: FormData,
-): Promise<AuthActionState> {
-  const parsed = passwordResetRequestSchema.safeParse(readFormData(formData, ["email"]));
-  if (!parsed.success) {
-    return {
-      email: String(formData.get("email") ?? ""),
-      errors: parsed.error.flatten().fieldErrors as Record<string, string[]>,
-    };
-  }
-
-  try {
-    const response = await requestAuthApi("/email-verification", { method: "POST", body: parsed.data });
-    if (response.status === 429) return { email: parsed.data.email, message: "ส่งคำขอบ่อยเกินไป กรุณาลองใหม่ภายหลัง" };
-    if (!response.ok) return { email: parsed.data.email, message: "ระบบส่งอีเมลขัดข้อง กรุณาลองอีกครั้ง" };
-    return { email: parsed.data.email, message: "หากบัญชีนี้ยังไม่ได้ยืนยัน เราจะส่งอีเมลยืนยันให้ กรุณาตรวจสอบกล่องจดหมาย" };
-  } catch {
-    return { email: parsed.data.email, message: "เชื่อมต่อระบบไม่ได้ กรุณาลองอีกครั้ง" };
-  }
-}
-
-export async function confirmEmailVerification(
-  _prevState: AuthActionState,
-  formData: FormData,
-): Promise<AuthActionState> {
-  const parsed = emailVerificationTokenSchema.safeParse(readFormData(formData, ["token"]));
-  if (!parsed.success) return { message: "ลิงก์ยืนยันไม่ถูกต้องหรือหมดอายุแล้ว" };
-
-  try {
-    const response = await requestAuthApi("/email-verification/confirm", { method: "POST", body: parsed.data });
-    if (response.status === 401) return { message: "ลิงก์ยืนยันไม่ถูกต้องหรือหมดอายุแล้ว กรุณาขอลิงก์ใหม่" };
-    if (!response.ok) return { message: "ไม่สามารถยืนยันอีเมลได้ กรุณาลองอีกครั้ง" };
-    redirect("/login?verified=1");
-  } catch (error) {
-    if (error && typeof error === "object" && "digest" in error) throw error;
-    return { message: "เชื่อมต่อระบบไม่ได้ กรุณาลองอีกครั้ง" };
-  }
-}
-
-export async function resetPassword(
-  _prevState: AuthActionState,
-  formData: FormData,
-): Promise<AuthActionState> {
-  const parsed = passwordResetSchema.safeParse(readFormData(formData, ["token", "password", "confirmPassword"]));
-  if (!parsed.success) {
-    return { errors: parsed.error.flatten().fieldErrors as Record<string, string[]> };
-  }
-
-  try {
-    const response = await requestAuthApi("/password-reset/confirm", {
-      method: "POST",
-      body: { token: parsed.data.token, password: parsed.data.password },
-    });
-    if (response.status === 401) {
-      return { message: "ลิงก์นี้หมดอายุหรือถูกใช้ไปแล้ว กรุณาขอลิงก์ใหม่" };
-    }
-    if (!response.ok) {
-      return { message: "ไม่สามารถเปลี่ยนรหัสผ่านได้ กรุณาลองอีกครั้ง" };
-    }
-    redirect("/login?passwordReset=1");
-  } catch (error) {
-    if (error && typeof error === "object" && "digest" in error) {
-      throw error;
-    }
-    return { message: "เชื่อมต่อระบบไม่ได้ กรุณาลองอีกครั้ง" };
-  }
 }
 
 export async function signUp(
@@ -210,21 +102,17 @@ export async function signUp(
   const response = await requestAuthApi("/signup", { method: "POST", body: parsed.data });
   if (response.status === 409) return { email: parsed.data.email, message: "อีเมลนี้มีบัญชีแล้ว กรุณาเข้าสู่ระบบ" };
   if (response.status === 429) return { email: parsed.data.email, message: "สมัครบัญชีมากเกินไป กรุณาลองอีกครั้งใน 1 ชั่วโมง" };
-  if (response.status === 503) return { email: parsed.data.email, verificationHelp: true, message: "ยังไม่สามารถส่งอีเมลยืนยันได้ กรุณาลองอีกครั้งหรือขอลิงก์ยืนยันใหม่" };
   if (!response.ok) return { email: parsed.data.email, message: "ไม่สามารถสมัครบัญชีได้ กรุณาลองอีกครั้ง" };
-  const result = await response.json() as { token?: string };
-  if (result.token) {
-    const cookieStore = await cookies();
-    cookieStore.set(AUTH_COOKIE_NAME, result.token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      path: "/",
-      maxAge: 60 * 60 * 24 * 30,
-    });
-    redirect("/onboarding");
-  }
-  redirect("/verify-email?sent=1");
+  const result = await response.json() as { token: string };
+  const cookieStore = await cookies();
+  cookieStore.set(AUTH_COOKIE_NAME, result.token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: 60 * 60 * 24 * 30,
+  });
+  redirect("/onboarding");
 }
 
 export async function signOut() {

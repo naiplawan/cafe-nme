@@ -17,29 +17,15 @@ The image must retain `backend/drizzle`, its metadata, and the dependencies for 
 
 References: [Railway pre-deploy commands](https://docs.railway.com/deployments/pre-deploy-command), [Railway healthchecks](https://docs.railway.com/deployments/healthchecks).
 
-## Account email
+## Account identity
 
-The API sends formal Thai registration-verification, welcome, password-reset, and password-changed emails through Resend's HTTPS API. New production accounts cannot log in until the 24-hour verification link is confirmed. The API returns a generic response when a verification link is resent, whether or not the address has an unverified account. Reset links expire after 30 minutes and can be used once. A successful password reset also verifies the address. If sending a welcome or password-changed notice fails, the completed operation remains successful and the API logs the delivery error. A signup or reset request returns an error when its required email cannot be sent.
-
-Migration `0014_email_verification` marks existing users verified by default and adds single-use verification tokens. New signups explicitly start unverified. During local development, signups remain usable without an email API key by being marked verified. Production signup requires all three email variables below.
-
-Resend uses HTTPS and works on Railway Hobby, which blocks outbound SMTP. Verify a sender domain in Resend and configure its recommended DNS records before sending to customer addresses. See [Railway's email delivery requirements](https://docs.railway.com/networking/outbound-networking) and [Resend's email API](https://resend.com/docs/api-reference/emails/send-email).
-
-Configure these variables on the API service:
-
-| Variable           | Value                                                     |
-| ------------------ | --------------------------------------------------------- |
-| `APP_URL`          | Public frontend origin used to build authentication links |
-| `RESEND_API_KEY`   | Resend API key stored as a Railway secret                |
-| `EMAIL_FROM_EMAIL` | Verified sender, such as `Cafe'nMe <no-reply@example.com>` |
-
-Keep the API key in Railway's service variables, not in the repository. Resend's test sender is restricted to verified test recipients; use a verified domain for real customer email.
+Email addresses remain the account identifier and login credential. The API does not send email, verify addresses, or provide password recovery. Users who forget a password cannot recover it through the app; an operator must handle recovery using the existing database access procedure.
 
 ## Release sequence
 
 1. Review the complete change and its verification evidence. Confirm the exact API and frontend commits to deploy.
 2. Before a schema change, confirm the PostgreSQL backup/recovery configuration and take a restorable backup using existing authorized database access. Record its identifier and retention without logging connection strings.
-3. Apply additive migrations in the API pre-deploy step. Migrations `0013_password_reset` and `0014_email_verification` add the password-reset and verification token tables; `0014` defaults existing and old-code-created accounts to verified while new code explicitly inserts unverified accounts. Migration `0012_checkout_idempotency` adds nullable columns and a unique index. Migration `0011_clear_demo_promptpay` changes only the known demo shop placeholder; it intentionally has no schema snapshot.
+3. Apply migrations in the API pre-deploy step. Migration `0015_remove_email_auth_state` removes email-verification and password-reset state after the backup in step 2. Historical migrations `0013_password_reset` and `0014_email_verification` remain unchanged. Migration `0012_checkout_idempotency` adds nullable columns and a unique index. Migration `0011_clear_demo_promptpay` changes only the known demo shop placeholder; it intentionally has no schema snapshot.
 4. Wait for API deployment success and `/health/ready`. Only then deploy the frontend that uses the new API behavior.
 5. Inspect owner settings, cash checkout, PromptPay availability, and an identical-key retry with disposable fixtures before accepting the release. Do not test transfers or create paid production orders as a smoke check.
 6. Record deployment IDs, commit IDs, migration evidence, and any environment-specific limitations.

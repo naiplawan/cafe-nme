@@ -16,31 +16,6 @@ class CredentialsDto {
   password!: string;
 }
 
-class PasswordResetRequestDto {
-  @IsEmail()
-  @MaxLength(254)
-  email!: string;
-}
-
-class PasswordResetDto {
-  @IsString()
-  @MinLength(32)
-  @MaxLength(128)
-  token!: string;
-
-  @IsString()
-  @MinLength(8)
-  @MaxLength(128)
-  password!: string;
-}
-
-class EmailVerificationDto {
-  @IsString()
-  @MinLength(32)
-  @MaxLength(128)
-  token!: string;
-}
-
 @ApiStandardErrors()
 @ApiTags("auth")
 @ApiSecurity("internal-api-token")
@@ -57,26 +32,6 @@ export class AuthController {
   @Post("login")
   signIn(@Body() body: CredentialsDto) {
     return this.auth.signIn(body.email, body.password);
-  }
-
-  @Post("email-verification")
-  resendEmailVerification(@Body() body: PasswordResetRequestDto) {
-    return this.auth.resendEmailVerification(body.email);
-  }
-
-  @Post("email-verification/confirm")
-  confirmEmailVerification(@Body() body: EmailVerificationDto) {
-    return this.auth.confirmEmailVerification(body.token);
-  }
-
-  @Post("password-reset")
-  requestPasswordReset(@Body() body: PasswordResetRequestDto) {
-    return this.auth.requestPasswordReset(body.email);
-  }
-
-  @Post("password-reset/confirm")
-  resetPassword(@Body() body: PasswordResetDto) {
-    return this.auth.resetPassword(body.token, body.password);
   }
 
   @Get("session")
