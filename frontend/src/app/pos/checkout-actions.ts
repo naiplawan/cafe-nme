@@ -9,8 +9,9 @@ import { getPosPromptPayConfig, getPosReceiptRecipient } from "@/server/pos-oper
 import { CheckoutError, checkout, getOrder, type CheckoutInput, type CheckoutResult } from "@/server/orders";
 import { requirePosStaff } from "@/server/pos-session";
 import { pushText } from "@/server/line";
+import type { CheckoutSessionScope } from "@/lib/checkout-attempt";
 
-export type CheckoutActionResult = { ok: true; result: CheckoutResult } | { ok: false; message: string };
+export type CheckoutActionResult = { ok: true; result: CheckoutResult } | { ok: false; message: string; retryable?: boolean };
 
 const CHECKOUT_MESSAGES: Record<CheckoutError["code"], string> = {
   empty_cart: "ยังไม่มีรายการ",
@@ -19,21 +20,37 @@ const CHECKOUT_MESSAGES: Record<CheckoutError["code"], string> = {
   member_not_found: "ไม่พบสมาชิก",
   reward_unavailable: "รางวัลนี้ใช้ไปแล้ว",
   cash_insufficient: "รับเงินไม่พอ",
+  promptpay_not_configured: "ร้านยังไม่ได้ตั้งค่าพร้อมเพย์ในหลังร้าน",
+  idempotency_key_reused: "รายการชำระเงินเปลี่ยนไป กรุณากลับไปตรวจสอบออเดอร์",
 };
 
-export async function checkoutAction(input: CheckoutInput): Promise<CheckoutActionResult> {
+const ORIGINAL_SESSION_MESSAGE = "กรุณาเข้าสู่ระบบด้วยพนักงานและอุปกรณ์เดิมเพื่อดำเนินการต่อ";
+
+export async function checkoutAction(input: CheckoutInput & { expectedScope?: CheckoutSessionScope }): Promise<CheckoutActionResult> {
   const session = await requirePosStaff();
+  const { expectedScope, ...checkoutInput } = input;
+  if (
+    !expectedScope
+    || expectedScope.shopId !== session.shopId
+    || expectedScope.staffId !== session.staff.id
+    || expectedScope.deviceId !== session.deviceId
+  ) {
+    return { ok: false, message: ORIGINAL_SESSION_MESSAGE, retryable: true };
+  }
+
   try {
-    if (input.payment.method === "promptpay") {
-      const shop = await getPosPromptPayConfig(session.shopId);
-      if (!shop?.promptpayId) return { ok: false, message: "ร้านยังไม่ได้ตั้งค่าพร้อมเพย์ในหลังร้าน" };
-    }
-    const result = await checkout({ shopId: session.shopId, staffId: session.staff.id }, input);
+    const result = await checkout({ shopId: session.shopId, staffId: session.staff.id }, checkoutInput);
     return { ok: true, result };
   } catch (error) {
-    if (error instanceof CheckoutError) return { ok: false, message: CHECKOUT_MESSAGES[error.code] };
+    if (error instanceof CheckoutError) {
+      return {
+        ok: false,
+        message: CHECKOUT_MESSAGES[error.code],
+        ...(error.code === "idempotency_key_reused" ? { retryable: true } : {}),
+      };
+    }
     logger.error({ err: error, shopId: session.shopId }, "POS checkout failed");
-    return { ok: false, message: "บันทึกไม่สำเร็จ กรุณาลองใหม่" };
+    return { ok: false, message: "ยังไม่ทราบผลการบันทึก กรุณาลองตรวจสอบรายการเดิมอีกครั้ง", retryable: true };
   }
 }
 

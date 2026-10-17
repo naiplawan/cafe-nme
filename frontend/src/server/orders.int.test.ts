@@ -17,7 +17,7 @@ describe("orders integration", () => {
   let unlockedRewardId: string;
 
   beforeAll(async () => {
-    const [shop] = await db.insert(shops).values({ name: "Orders Test", slug, stampGoal: 3, receiptFooter: "ขอบคุณ" }).returning();
+    const [shop] = await db.insert(shops).values({ name: "Orders Test", slug, promptpayId: "0812345678", stampGoal: 3, receiptFooter: "ขอบคุณ" }).returning();
     shopId = shop.id;
     const [staffRow] = await db.insert(staff).values({ shopId, name: "Tester", role: "manager" }).returning();
     staffId = staffRow.id;

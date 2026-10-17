@@ -11,6 +11,8 @@ import { AdjustStampsForm, DeleteMemberForm } from "../forms";
 import { AdminPageHeader } from "../../_components/page-header";
 
 const dateFormat = new Intl.DateTimeFormat("th-TH", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Bangkok" });
+const rewardDateFormat = new Intl.DateTimeFormat("th-TH", { dateStyle: "medium", timeZone: "Asia/Bangkok" });
+const POS_REDEMPTION_GUIDANCE = "การแลกรางวัลทำที่หน้าขาย (POS) เท่านั้น: เลือกสมาชิก แล้วเลือกรางวัลที่พร้อมใช้ก่อนชำระเงิน";
 const ledgerLabels: Record<string, string> = {
   earn: "รับแสตมป์",
   redeem: "แลกรางวัล",
@@ -41,6 +43,13 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ m
         </CardContent></Card>
         {canManage && <Card><CardHeader><CardTitle>ปรับแสตมป์</CardTitle></CardHeader><CardContent><AdjustStampsForm memberId={member.id} currentBalance={member.stampBalance} /></CardContent></Card>}
       </section>
+
+      <Card><CardHeader><CardTitle>รางวัลพร้อมใช้</CardTitle></CardHeader><CardContent className="space-y-4">
+        {member.availableRewards.length > 0 ? <ul className="space-y-2 text-sm">
+          {member.availableRewards.map((reward, index) => <li key={reward.id} className="rounded-lg border px-3 py-2"><span className="font-medium">รางวัลที่ {index + 1}</span><span className="ml-2 text-muted-foreground">ได้รับวันที่ {rewardDateFormat.format(reward.createdAt)}</span></li>)}
+        </ul> : <p className="text-sm text-muted-foreground">ยังไม่มีรางวัลพร้อมใช้</p>}
+        <p className="text-sm text-muted-foreground">{POS_REDEMPTION_GUIDANCE}</p>
+      </CardContent></Card>
 
       <section className="space-y-3">
         <h2 className="text-xl font-semibold">ประวัติแสตมป์</h2>

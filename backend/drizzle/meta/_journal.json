@@ -85,6 +85,13 @@
       "when": 1792198715217,
       "tag": "0011_clear_demo_promptpay",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1792214050998,
+      "tag": "0012_checkout_idempotency",
+      "breakpoints": true
     }
   ]
 }

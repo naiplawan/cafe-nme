@@ -42,34 +42,39 @@ export function ModifierGroupForm({
     input?.focus();
   }, [state.createdGroupId]);
 
+  const nameValue = state.values?.name ?? group?.name;
+  const minValue = state.values?.minSelect ?? String(group?.minSelect ?? 0);
+  const maxValue = state.values?.maxSelect ?? String(group?.maxSelect ?? 1);
+
   return (
     <form action={formAction} className="space-y-3">
       {group && <input type="hidden" name="groupId" value={group.id} />}
-      <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_minmax(190px,0.65fr)_minmax(130px,0.35fr)_auto] sm:items-end">
+      <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_minmax(130px,0.55fr)_minmax(130px,0.55fr)_auto] sm:items-end">
         <div className="space-y-1.5">
           <Label htmlFor={`group-name-${prefix}`}>ชื่อกลุ่ม</Label>
           <Input
             id={`group-name-${prefix}`}
             name="name"
             placeholder="เช่น ความหวาน"
-            defaultValue={group?.name}
+            defaultValue={nameValue}
             required
             maxLength={80}
           />
         </div>
-        <fieldset className="min-w-0 space-y-1.5">
-          <legend className="text-sm font-medium">ลูกค้าต้องเลือกหรือไม่</legend>
-          <div className="grid grid-cols-2 gap-2">
-            <label htmlFor={`group-optional-${prefix}`} className="flex min-h-11 cursor-pointer items-center gap-2 rounded-lg border bg-background px-2.5 text-sm has-[:checked]:border-primary has-[:checked]:bg-primary/5">
-              <input id={`group-optional-${prefix}`} className="size-4 shrink-0 accent-primary" type="radio" name="minSelect" value="0" defaultChecked={(group?.minSelect ?? 0) === 0} />
-              <span>ไม่บังคับ</span>
-            </label>
-            <label htmlFor={`group-required-${prefix}`} className="flex min-h-11 cursor-pointer items-center gap-2 rounded-lg border bg-background px-2.5 text-sm has-[:checked]:border-primary has-[:checked]:bg-primary/5">
-              <input id={`group-required-${prefix}`} className="size-4 shrink-0 accent-primary" type="radio" name="minSelect" value="1" defaultChecked={(group?.minSelect ?? 0) > 0} />
-              <span>ต้องเลือก</span>
-            </label>
-          </div>
-        </fieldset>
+        <div className="space-y-1.5">
+          <Label htmlFor={`group-min-${prefix}`}>ต้องเลือกอย่างน้อย</Label>
+          <Input
+            id={`group-min-${prefix}`}
+            name="minSelect"
+            type="number"
+            min={0}
+            max={20}
+            step={1}
+            defaultValue={minValue}
+            required
+          />
+          <p className="text-xs text-muted-foreground">0 = ไม่บังคับ</p>
+        </div>
         <div className="space-y-1.5">
           <Label htmlFor={`group-max-${prefix}`}>เลือกได้สูงสุด</Label>
           <Input
@@ -78,7 +83,8 @@ export function ModifierGroupForm({
             type="number"
             min={1}
             max={20}
-            defaultValue={group?.maxSelect ?? 1}
+            step={1}
+            defaultValue={maxValue}
             required
           />
           <p className="text-xs text-muted-foreground">จำนวนตัวเลือกสูงสุด</p>
@@ -214,6 +220,7 @@ export function AddModifierForm({
             id={`modifier-name-${groupId}`}
             name="name"
             placeholder="เช่น 50%"
+            defaultValue={state.values?.name}
             required
           />
         </div>
@@ -224,6 +231,7 @@ export function AddModifierForm({
             name="priceDelta"
             inputMode="decimal"
             placeholder="เช่น 15 หรือ -5 บาท"
+            defaultValue={state.values?.priceDelta}
             required
           />
         </div>

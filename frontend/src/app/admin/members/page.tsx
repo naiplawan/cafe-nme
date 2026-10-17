@@ -47,6 +47,7 @@ export default async function MembersPage({ searchParams }: { searchParams: Sear
     memberGrowth(shopId, from, today),
   ]);
   const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const hasFilters = search.length > 0 || availableReward;
   const memberStats = [
     { label: "สมาชิกทั้งหมด", value: overview.total },
     { label: "เชื่อม LINE", value: overview.lineLinked },
@@ -67,7 +68,11 @@ export default async function MembersPage({ searchParams }: { searchParams: Sear
           {availableReward && <input type="hidden" name="reward" value="available" />}
           <Button type="submit" className="shrink-0 px-5">ค้นหา</Button>
         </form>
-        {availableReward && <div className="flex items-center gap-2 text-sm"><Badge variant="secondary">สมาชิกที่มีรางวัลพร้อมใช้</Badge><Link href="/admin/members" className={buttonVariants({ variant: "link", className: "h-auto p-0" })}>ล้างตัวกรอง</Link></div>}
+        {hasFilters ? <div className="flex flex-wrap items-center gap-2 text-sm">
+          {availableReward ? <Badge variant="secondary">สมาชิกที่มีรางวัลพร้อมใช้</Badge> : null}
+          {search ? <Badge variant="outline">ค้นหา: {search}</Badge> : null}
+          <Link href="/admin/members" className={buttonVariants({ variant: "link", className: "h-auto p-0" })}>ล้างตัวกรอง</Link>
+        </div> : null}
       </div>
       <section aria-label="ภาพรวมสมาชิก" className="space-y-4">
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -87,13 +92,21 @@ export default async function MembersPage({ searchParams }: { searchParams: Sear
           <AreaChart data={growthChart} format="number" ariaLabel="จำนวนสมาชิกสะสมรายวันใน 30 วันล่าสุด" />
         </ChartCard>
       </section>
-      {rows.length === 0 ? (
+      {rows.length === 0 && hasFilters ? (
+        <Card><CardContent className="flex flex-col items-center px-6 py-10 text-center">
+          <h2 className="text-lg font-semibold">ไม่พบสมาชิกตามตัวกรอง</h2>
+          <p className="mt-1 text-sm text-muted-foreground">ลองเปลี่ยนคำค้นหาหรือปิดตัวกรองรางวัลพร้อมใช้</p>
+          <Link href="/admin/members" className={buttonVariants({ variant: "outline", className: "mt-4" })}>ล้างตัวกรอง</Link>
+        </CardContent></Card>
+      ) : null}
+      {rows.length === 0 && !hasFilters ? (
         <Card><CardContent className="flex flex-col items-center px-6 py-10 text-center">
           <Image src="/assets/empty-members.png" alt="ภาพประกอบที่ยังไม่มีสมาชิก" width={180} height={160} className="mb-4" />
           <h2 className="text-lg font-semibold">ยังไม่พบสมาชิก</h2>
           <p className="mt-1 text-sm text-muted-foreground">สมาชิกที่สมัครผ่าน LINE หรือ POS จะแสดงที่นี่</p>
         </CardContent></Card>
-      ) : (
+      ) : null}
+      {rows.length > 0 ? (
         <>
           <section aria-label="รายชื่อสมาชิก" className="grid gap-3 md:grid-cols-2 lg:hidden">
             {rows.map((member) => <Card key={member.id}><CardContent className="space-y-3 p-4">
@@ -125,7 +138,7 @@ export default async function MembersPage({ searchParams }: { searchParams: Sear
             </div>
           </div>
         </>
-      )}
+      ) : null}
     </div>
   );
 }

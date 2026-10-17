@@ -69,19 +69,27 @@ export async function adjustStamps(shopId: string, memberId: string, delta: numb
 export async function listLedger(shopId: string, memberId: string, limit?: number): Promise<{ id: string; delta: number; reason: string; orderId: string | null; createdAt: Date }[]>;
 
 // frontend/src/server/orders.ts
-export type CheckoutInput = { lines: CartLineInput[]; memberId?: string | null; redeemRewardId?: string | null;
+export type CheckoutInput = { requestId?: string; lines: CartLineInput[]; memberId?: string | null; redeemRewardId?: string | null;
   payment: { method: "cash"; cashReceivedSatang: number } | { method: "promptpay" } };
-export type CheckoutResult = { orderId: string; dailyNo: number; subtotalSatang: number; discountSatang: number; totalSatang: number;
+export type CheckoutResult = { replayed?: boolean; orderId: string; dailyNo: number; subtotalSatang: number; discountSatang: number; totalSatang: number;
   changeSatang: number; stampsEarned: number; rewardsCreated: number; member: MemberSummary | null };
-export class CheckoutError extends Error { code: "empty_cart" | "pricing" | "member_not_found" | "reward_unavailable" | "cash_insufficient" }
+export class CheckoutError extends Error { code: "empty_cart" | "pricing" | "sold_out" | "member_not_found" | "reward_unavailable" | "cash_insufficient" | "promptpay_not_configured" | "idempotency_key_reused" }
 export async function checkout(session: { shopId: string; staffId: string }, input: CheckoutInput): Promise<CheckoutResult>;
-//   Re-prices from DB (never trust client prices). One transaction:
-//   pg_advisory_xact_lock(hashtext(shop_id || business_date)) then daily_no = max+1;
+//   requestId is an optional UUID for legacy compatibility; updated POS clients always supply one.
+//   With no key, each submission is a new sale and has no retry guarantee.
+//   One transaction locks the shop row FOR SHARE, validates active staff, then locks the
+//   canonical shop/request identity and looks up its stored fingerprint and original receipt.
+//   Identical committed retries return replayed:true before current price, availability,
+//   reward or receiving-setting checks; different input with that key returns a conflict.
+//   New sales re-price from DB (never trust client prices), require a configured PromptPay
+//   identifier for that method, and lock the shop/business date before daily_no = max+1;
 //   insert order (status "paid", paidAt now), items + modifier snapshots, payment;
 //   redeem reward (must be available & belong to member) → discount = rewardDiscount, reward.status "redeemed";
 //   earn stamps if member: ledger +stamps (reason "earn"), then while balance >= goal: ledger -goal (reason "redeem")
-//   and insert reward {earnedOrderId}. After commit, for each reward created call
-//   pushRewardUnlocked(shopId, memberId) from "@/server/line" (fire-and-forget, log errors).
+//   and insert reward {earnedOrderId}. Store the checkout fingerprint and original totals
+//   atomically with the sale. After commit, fresh responses call pushRewardUnlocked for
+//   rewards created; replay responses suppress duplicate notifications. Notifications remain
+//   best-effort (fire-and-forget, log errors), not a durable settlement or notification queue.
 export type OrderSummary = { id: string; dailyNo: number; status: "open" | "paid" | "void"; totalSatang: number;
   paymentMethod: "cash" | "promptpay" | null; memberName: string | null; staffName: string | null; itemCount: number; paidAt: Date | null };
 export async function listOrdersForDay(shopId: string, date: string): Promise<OrderSummary[]>; // newest first
@@ -138,3 +146,6 @@ export async function salesByItem(shopId: string, from: string, to: string): Pro
 export async function dailySales(shopId: string, from: string, to: string): Promise<{ date: string; orders: number; netSatang: number }[]>;
 export async function ordersForExport(shopId: string, from: string, to: string): Promise<Record<string, string | number>[]>;
 ```
+
+### POS recovery session binding
+The frontend pending-checkout envelope retains the original shop, staff and device IDs alongside the exact request ID and checkout input. The Server Action compares that scope with the current authenticated session before forwarding to Nest; it never uses the client envelope as authentication and strips it from the API payload. Missing/mismatched scope and idempotency conflicts remain unresolved. A tab-local sessionStorage pointer finds the original device/staff-scoped pending record after shared-cookie login changes; storage failure blocks POST. The original staff can sign in again through /pos/login to recover the same request.

@@ -1,3 +1,4 @@
+import { createHash, randomUUID } from "node:crypto";
 import {
   BadRequestException,
   ConflictException,
@@ -10,10 +11,23 @@ import { DatabaseService } from "./database.service.js";
 import { clearExpiredSoldOut } from "./sold-out.js";
 
 export interface CheckoutInput {
+  requestId?: string;
   lines: { productId: string; qty: number; modifierIds: string[]; note?: string }[];
   memberId?: string | null;
   redeemRewardId?: string | null;
   payment: { method: "cash"; cashReceivedSatang: number } | { method: "promptpay" };
+}
+
+export interface CheckoutReceipt {
+  orderId: string;
+  dailyNo: number;
+  subtotalSatang: number;
+  discountSatang: number;
+  totalSatang: number;
+  changeSatang: number;
+  stampsEarned: number;
+  rewardsCreated: number;
+  replayed: boolean;
 }
 
 interface PricedLine {
@@ -27,7 +41,7 @@ interface PricedLine {
   lineTotalSatang: number;
 }
 
-type CheckoutFailure = "empty_cart" | "pricing" | "sold_out" | "member_not_found" | "reward_unavailable" | "cash_insufficient";
+type CheckoutFailure = "empty_cart" | "pricing" | "sold_out" | "member_not_found" | "reward_unavailable" | "cash_insufficient" | "promptpay_not_configured";
 
 class CheckoutDomainError extends Error {
   constructor(readonly code: CheckoutFailure) { super(code); }
@@ -125,6 +139,47 @@ function productsType() {
 
 function asNumber(value: number | string | null): number { return Number(value ?? 0); }
 
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function requestIdForCheckout(input: CheckoutInput): string {
+  if (input.requestId === undefined) {
+    return randomUUID();
+  }
+  if (!UUID_PATTERN.test(input.requestId)) {
+    throw new BadRequestException("requestId must be a valid UUID");
+  }
+  return input.requestId.toLowerCase();
+}
+
+function checkoutFingerprint(staffId: string, input: CheckoutInput): string {
+  const canonical = {
+    staffId: staffId.toLowerCase(),
+    lines: input.lines.map((line) => ({
+      productId: line.productId.toLowerCase(),
+      qty: line.qty,
+      modifierIds: line.modifierIds.map((modifierId) => modifierId.toLowerCase()).sort(),
+      note: line.note?.trim().slice(0, 120) || null,
+    })),
+    memberId: input.memberId?.toLowerCase() ?? null,
+    redeemRewardId: input.redeemRewardId?.toLowerCase() ?? null,
+    payment: input.payment.method === "cash"
+      ? { method: "cash", cashReceivedSatang: input.payment.cashReceivedSatang }
+      : { method: "promptpay" },
+  };
+  return createHash("sha256").update(JSON.stringify(canonical)).digest("hex");
+}
+
+function parseCheckoutResult(value: unknown): CheckoutReceipt | null {
+  if (typeof value === "string") {
+    try {
+      value = JSON.parse(value) as unknown;
+    } catch {
+      return null;
+    }
+  }
+  return value && typeof value === "object" ? value as CheckoutReceipt : null;
+}
+
 @Injectable()
 export class OrdersService {
   constructor(@Inject(DatabaseService) private readonly database: DatabaseService) {}
@@ -149,17 +204,44 @@ export class OrdersService {
     return recipient ?? null;
   }
 
-  async checkout(shopId: string, staffId: string, input: CheckoutInput) {
-    if (!input.lines.length) throw new BadRequestException({ code: "empty_cart" });
-    let subtotalSatang = 0;
-    let stampsEarned = 0;
-    let rewardsCreated = 0;
+  async checkout(shopId: string, staffId: string, input: CheckoutInput): Promise<CheckoutReceipt> {
+    if (input.lines.length === 0) throw new BadRequestException({ code: "empty_cart" });
+    const requestId = requestIdForCheckout(input);
+    const fingerprint = checkoutFingerprint(staffId, input);
+    const lockShopId = shopId.toLowerCase();
     try {
-      const result = await this.database.connection.begin(async (tx) => {
-        const [shop] = await tx<{ timezone: string }[]>`select timezone from shops where id = ${shopId}::uuid limit 1`;
+      return await this.database.connection.begin(async (tx): Promise<CheckoutReceipt> => {
+        // Checkout and PromptPay settings updates use the shop row in this order:
+        // checkout takes FOR SHARE first, while an owner update takes the UPDATE lock.
+        const [shop] = await tx<{ timezone: string; promptpayId: string | null }[]>`
+          select timezone, promptpay_id as "promptpayId"
+          from shops where id = ${shopId}::uuid limit 1 for share
+        `;
         if (!shop) throw new NotFoundException("Shop not found");
+
+        const [actor] = await tx<{ id: string }[]>`
+          select id::text as id from staff where id = ${staffId}::uuid and shop_id = ${shopId}::uuid and is_active = true limit 1
+        `;
+        if (!actor) throw new NotFoundException("Staff not found");
+
         const day = businessDate(new Date(), shop.timezone);
-        await tx`select pg_advisory_xact_lock(hashtext(${shopId + day}))`;
+        await tx`select pg_advisory_xact_lock(hashtextextended(${`${lockShopId}:${requestId}`}, 0))`;
+        const [existing] = await tx<{
+          checkoutFingerprint: string | null;
+          checkoutResult: unknown;
+        }[]>`
+          select checkout_fingerprint as "checkoutFingerprint", checkout_result as "checkoutResult"
+          from orders where shop_id = ${shopId}::uuid and checkout_key = ${requestId}::uuid limit 1
+        `;
+        if (existing) {
+          const stored = parseCheckoutResult(existing.checkoutResult);
+          if (existing.checkoutFingerprint !== fingerprint || !stored) {
+            throw new ConflictException({ code: "idempotency_key_reused" });
+          }
+          return { ...stored, replayed: true };
+        }
+
+        await tx`select pg_advisory_xact_lock(hashtext(${lockShopId + day}))`;
         await clearExpiredSoldOut(tx, shopId);
         const menu = await checkoutMenu(tx, shopId);
         const lineProductIds = new Set(input.lines.map((line) => line.productId));
@@ -167,13 +249,9 @@ export class OrdersService {
           throw new CheckoutDomainError("sold_out");
         }
         const priced = calculatePrice(input.lines, menu);
-        subtotalSatang = priced.subtotalSatang;
-        stampsEarned = stampsForLines(priced.lines);
-
-        const [actor] = await tx<{ id: string }[]>`
-          select id::text as id from staff where id = ${staffId}::uuid and shop_id = ${shopId}::uuid and is_active = true limit 1
-        `;
-        if (!actor) throw new NotFoundException("Staff not found");
+        const { subtotalSatang } = priced;
+        const stampsEarned = stampsForLines(priced.lines);
+        let rewardsCreated = 0;
         let member: { id: string; stampGoal: number } | null = null;
         if (input.memberId) {
           const [row] = await tx<{ id: string; stampGoal: number }[]>`
@@ -199,6 +277,9 @@ export class OrdersService {
         if (input.payment.method === "cash" && input.payment.cashReceivedSatang < totalSatang) {
           throw new CheckoutDomainError("cash_insufficient");
         }
+        if (input.payment.method === "promptpay" && !shop.promptpayId) {
+          throw new CheckoutDomainError("promptpay_not_configured");
+        }
         const [numberRow] = await tx<{ max: number | string }[]>`
           select coalesce(max(daily_no), 0) as max from orders
           where shop_id = ${shopId}::uuid and business_date = ${day}
@@ -206,9 +287,10 @@ export class OrdersService {
         const dailyNo = Number(numberRow?.max ?? 0) + 1;
         const [order] = await tx<{ id: string }[]>`
           insert into orders (shop_id, daily_no, business_date, status, member_id, staff_id,
-            subtotal_satang, discount_satang, total_satang, paid_at)
+            subtotal_satang, discount_satang, total_satang, paid_at, checkout_key, checkout_fingerprint)
           values (${shopId}::uuid, ${dailyNo}, ${day}, 'paid', ${member?.id ?? null}::uuid,
-            ${staffId}::uuid, ${subtotalSatang}, ${discountSatang}, ${totalSatang}, now())
+            ${staffId}::uuid, ${subtotalSatang}, ${discountSatang}, ${totalSatang}, now(),
+            ${requestId}::uuid, ${fingerprint})
           returning id::text as id
         `;
         if (input.redeemRewardId && member) {
@@ -217,7 +299,7 @@ export class OrdersService {
             where id = ${input.redeemRewardId}::uuid and shop_id = ${shopId}::uuid
               and member_id = ${member.id}::uuid and status = 'available' returning id::text as id
           `;
-          if (!redeemed.length) throw new CheckoutDomainError("reward_unavailable");
+          if (redeemed.length === 0) throw new CheckoutDomainError("reward_unavailable");
         }
         for (const line of priced.lines) {
           const [product] = await tx<{ id: string }[]>`
@@ -250,15 +332,19 @@ export class OrdersService {
               values (${shopId}::uuid, ${member.id}::uuid, ${order.id}::uuid, ${-member.stampGoal}, 'redeem', ${staffId}::uuid)`;
             await tx`insert into rewards (shop_id, member_id, earned_order_id) values (${shopId}::uuid, ${member.id}::uuid, ${order.id}::uuid)`;
             stampBalance -= member.stampGoal;
-            rewardsCreated++;
+            rewardsCreated += 1;
           }
         }
-        return {
+        const receipt: CheckoutReceipt = {
           orderId: order.id, dailyNo, subtotalSatang, discountSatang, totalSatang,
           changeSatang: input.payment.method === "cash" ? input.payment.cashReceivedSatang - totalSatang : 0,
+          stampsEarned: member ? stampsEarned : 0,
+          rewardsCreated,
+          replayed: false,
         };
+        await tx`update orders set checkout_result = ${JSON.stringify(receipt)}::jsonb where id = ${order.id}::uuid`;
+        return receipt;
       });
-      return { ...result, stampsEarned: input.memberId ? stampsEarned : 0, rewardsCreated };
     } catch (error) {
       if (error instanceof CheckoutDomainError) throw new BadRequestException({ code: error.code });
       throw error;

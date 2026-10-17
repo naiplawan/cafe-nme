@@ -28,7 +28,7 @@
             "description": "Database is unavailable"
           }
         },
-        "summary": "Check database readiness",
+        "summary": "Check database connectivity and required migration readiness",
         "tags": [
           "health"
         ]
@@ -6088,6 +6088,7 @@
     },
     "/v1/shops/{shopId}/orders": {
       "post": {
+        "description": "Returns the committed receipt. A request key replay returns the stored receipt with replayed=true.",
         "operationId": "OrdersController_checkout",
         "parameters": [
           {
@@ -6111,10 +6112,17 @@
         },
         "responses": {
           "201": {
-            "description": ""
+            "description": "Committed checkout receipt; replayed identifies an idempotent retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckoutReceiptDto"
+                }
+              }
+            }
           },
           "400": {
-            "description": "Invalid request",
+            "description": "Invalid checkout or PromptPay is not configured (code: promptpay_not_configured).",
             "content": {
               "application/json": {
                 "schema": {
@@ -6154,7 +6162,7 @@
             }
           },
           "409": {
-            "description": "Conflict",
+            "description": "The idempotency key was reused with a different checkout (code: idempotency_key_reused).",
             "content": {
               "application/json": {
                 "schema": {
@@ -6189,6 +6197,7 @@
             "internal-api-token": []
           }
         ],
+        "summary": "Create or replay a checkout",
         "tags": [
           "orders"
         ]
@@ -10096,6 +10105,10 @@
       "CheckoutDto": {
         "type": "object",
         "properties": {
+          "requestId": {
+            "type": "string",
+            "format": "uuid"
+          },
           "lines": {
             "type": "array",
             "items": {
@@ -10121,6 +10134,59 @@
           "lines",
           "payment",
           "staffId"
+        ]
+      },
+      "CheckoutReceiptDto": {
+        "type": "object",
+        "properties": {
+          "orderId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Committed order ID."
+          },
+          "dailyNo": {
+            "type": "number",
+            "description": "Shop-local daily order number."
+          },
+          "subtotalSatang": {
+            "type": "number",
+            "description": "Subtotal in satang."
+          },
+          "discountSatang": {
+            "type": "number",
+            "description": "Member reward discount in satang."
+          },
+          "totalSatang": {
+            "type": "number",
+            "description": "Amount due in satang."
+          },
+          "changeSatang": {
+            "type": "number",
+            "description": "Cash change in satang; zero for PromptPay."
+          },
+          "stampsEarned": {
+            "type": "number",
+            "description": "Stamps earned by this checkout."
+          },
+          "rewardsCreated": {
+            "type": "number",
+            "description": "Rewards created by this checkout."
+          },
+          "replayed": {
+            "type": "boolean",
+            "description": "True when the request key replayed the committed receipt; false for a newly committed checkout."
+          }
+        },
+        "required": [
+          "orderId",
+          "dailyNo",
+          "subtotalSatang",
+          "discountSatang",
+          "totalSatang",
+          "changeSatang",
+          "stampsEarned",
+          "rewardsCreated",
+          "replayed"
         ]
       },
       "VoidOrderDto": {

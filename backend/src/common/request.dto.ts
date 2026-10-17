@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { Allow, ValidateNested } from "class-validator";
 import { Type } from "class-transformer";
+import { Allow, ValidateNested } from "class-validator";
 
 export class CreateCategoryDto {
   @ApiProperty({ type: String }) @Allow() name!: string;
@@ -98,6 +98,7 @@ export class CheckoutPaymentDto {
 }
 
 export class CheckoutDto {
+  @ApiPropertyOptional({ type: String, format: "uuid" }) @Allow() requestId?: string;
   @ApiProperty({ type: [CheckoutLineDto] }) @Allow() @ValidateNested({ each: true }) @Type(() => CheckoutLineDto) lines!: CheckoutLineDto[];
   @ApiProperty({ type: CheckoutPaymentDto }) @Allow() @ValidateNested() @Type(() => CheckoutPaymentDto) payment!: CheckoutPaymentDto;
   @ApiProperty({ type: String }) @Allow() staffId!: string;

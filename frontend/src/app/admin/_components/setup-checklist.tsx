@@ -1,8 +1,8 @@
-import Link from "next/link";
 import { Check } from "lucide-react";
+import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-type SetupStepKey = "menu" | "modifiers" | "ownerPin" | "device" | "line" | "brand";
+type SetupStepKey = "menu" | "modifiers" | "ownerPin" | "device" | "line" | "brand" | "promptpay";
 
 const setupSteps: { key: SetupStepKey; title: string; description: string; href: string; action: string; optional?: boolean }[] = [
   { key: "menu", title: "เพิ่มเมนู", description: "เพิ่มเมนูที่เปิดขายอย่างน้อย 1 รายการ", href: "/admin/menu", action: "จัดการเมนู" },
@@ -11,12 +11,14 @@ const setupSteps: { key: SetupStepKey; title: string; description: string; href:
   { key: "device", title: "จับคู่แท็บเล็ต POS", description: "เชื่อมต่อแท็บเล็ตสำหรับรับออเดอร์", href: "/admin/devices", action: "จับคู่อุปกรณ์" },
   { key: "line", title: "เชื่อมต่อ LINE", description: "ตั้งค่า LINE เพื่อให้สมาชิกใช้บัตรสะสมแต้ม", href: "/admin/line", action: "ตั้งค่า LINE" },
   { key: "brand", title: "ตั้งค่าแบรนด์", description: "เพิ่มโลโก้หรือสีประจำร้าน", href: "/admin/brand", action: "ตั้งค่าแบรนด์", optional: true },
+  { key: "promptpay", title: "ตั้งค่าพร้อมเพย์", description: "ลงทะเบียนหมายเลขรับเงิน บันทึก และตรวจชื่อผู้รับจาก QR 1 บาท", href: "/admin/payment", action: "ตั้งค่าพร้อมเพย์", optional: true },
 ];
 
 export type AdminSetupRole = "owner" | "manager" | "barista";
 
 export function setupStepKeysForRole(role: AdminSetupRole): SetupStepKey[] {
-  return role === "barista" ? ["menu", "modifiers"] : setupSteps.map(({ key }) => key);
+  if (role === "barista") return ["menu", "modifiers"];
+  return setupSteps.filter(({ key }) => role === "owner" || key !== "promptpay").map(({ key }) => key);
 }
 
 export function SetupChecklist({ steps, role }: { steps: Record<SetupStepKey, boolean>; role: AdminSetupRole }) {

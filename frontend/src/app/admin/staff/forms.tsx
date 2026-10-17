@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useId, useState } from "react";
+import { useActionState, useEffect, useId, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,8 +17,12 @@ function Submit({ children, variant = "default" }: { children: string; variant?:
   return <Button type="submit" variant={variant} disabled={pending}>{pending ? "กำลังบันทึก…" : children}</Button>;
 }
 
-function Message({ state }: { state: StaffActionState }) {
-  return state.message ? <p role="alert" className="text-sm text-destructive">{state.message}</p> : null;
+export function StaffActionMessage({ state }: { state: StaffActionState }) {
+  if (!state.message) {
+    return null;
+  }
+  const success = state.success === true;
+  return <p role={success ? "status" : "alert"} className={`text-sm ${success ? "text-emerald-700" : "text-destructive"}`}>{state.message}</p>;
 }
 
 export function AddStaffForm() {
@@ -30,7 +34,7 @@ export function AddStaffForm() {
       <div className="space-y-2"><Label htmlFor={`${id}-role`}>บทบาท</Label><StaffRoleSelect id={`${id}-role`} /><p className="text-xs text-muted-foreground">บาริสต้าใช้หน้าขาย ส่วนผู้จัดการและเจ้าของจัดการพนักงานและอุปกรณ์ได้</p></div>
       <div className="space-y-2"><Label htmlFor={`${id}-pin`}>PIN (4–6 หลัก)</Label><Input id={`${id}-pin`} name="pin" inputMode="numeric" pattern="[0-9]{4,6}" required /></div>
       <div className="flex items-end"><Submit>เพิ่มพนักงาน</Submit></div>
-      <div className="sm:col-span-2 xl:col-span-4"><Message state={state} /></div>
+      <div className="sm:col-span-2 xl:col-span-4"><StaffActionMessage state={state} /></div>
     </form>
   </CardContent></Card>;
 }
@@ -50,8 +54,20 @@ function StaffRoleSelect({ id }: { id: string }) {
 export function StaffRow({ row, currentStaffId }: { row: { id: string; name: string; role: string; hasPin: boolean; isActive: boolean }; currentStaffId: string }) {
   const pinAction = setStaffPinAction.bind(null, row.id);
   const [pinState, savePin] = useActionState(pinAction, { message: null });
+  const [pin, setPin] = useState("");
   const activeAction = setStaffActiveAction.bind(null, row.id, !row.isActive);
   const [activeState, toggleActive] = useActionState(activeAction, { message: null });
+  useEffect(() => {
+    if (pinState.success) {
+      setPin("");
+    }
+  }, [pinState]);
+  let deactivationMessage: string | null = null;
+  if (row.role === "owner") {
+    deactivationMessage = "บัญชีเจ้าของร้านไม่สามารถปิดใช้งานได้";
+  } else if (row.id === currentStaffId) {
+    deactivationMessage = "บัญชีที่กำลังใช้งานอยู่ไม่สามารถปิดใช้งานได้";
+  }
   return <Card>
     <CardHeader className="gap-3 pb-3">
       <div className="flex min-w-0 items-start justify-between gap-3">
@@ -69,18 +85,18 @@ export function StaffRow({ row, currentStaffId }: { row: { id: string; name: str
       <section aria-label={`จัดการ PIN ของ ${row.name}`} className="space-y-2">
         <p className="text-xs font-medium text-muted-foreground">PIN สำหรับเข้าใช้งาน POS</p>
         <form action={savePin} className="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
-          <Input name="pin" aria-label={`PIN ใหม่ของ ${row.name}`} placeholder="กรอก PIN 4–6 หลัก" inputMode="numeric" pattern="[0-9]{4,6}" required />
+          <Input name="pin" aria-label={`PIN ใหม่ของ ${row.name}`} placeholder="กรอก PIN 4–6 หลัก" inputMode="numeric" pattern="[0-9]{4,6}" required value={pin} onChange={(event) => setPin(event.currentTarget.value)} />
           <Submit>{row.hasPin ? "เปลี่ยน PIN" : "ตั้ง PIN"}</Submit>
         </form>
-        <Message state={pinState} />
+        <StaffActionMessage state={pinState} />
       </section>
-      {row.role !== "owner" && row.id !== currentStaffId && <div className="flex items-center justify-between gap-3 border-t pt-3">
+      {deactivationMessage ? <p className="border-t pt-3 text-xs text-muted-foreground">{deactivationMessage}</p> : <div className="flex items-center justify-between gap-3 border-t pt-3">
         <p className="text-xs text-muted-foreground">สิทธิ์เข้าใช้งานบัญชี</p>
         <ConfirmSubmit className="shrink-0" action={toggleActive} shouldConfirm={(_, submitter) => row.isActive && submitter?.value !== "false"} message={`ปิดใช้งานบัญชีของ ${row.name} หรือไม่?`} confirmLabel="ปิดใช้งาน" destructive>
           <Submit variant={row.isActive ? "destructive" : "outline"}>{row.isActive ? "ปิดใช้งาน" : "เปิดใช้งาน"}</Submit>
         </ConfirmSubmit>
       </div>}
-      <Message state={activeState} />
+      <StaffActionMessage state={activeState} />
     </CardContent>
   </Card>;
 }

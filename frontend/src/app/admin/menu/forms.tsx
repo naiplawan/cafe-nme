@@ -2,8 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import type { ReactNode } from "react";
 import { useRouter } from "next/navigation";
+import type { ReactNode } from "react";
 import { useActionState, useEffect, useId, useState, useTransition } from "react";
 import { useFormStatus } from "react-dom";
 import { Button } from "@/components/ui/button";
@@ -16,17 +16,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { MENU_CATALOG, menuImageSrc } from "@/lib/menu-catalog";
 import { satangToInput } from "@/lib/money";
 import { thaiInitial } from "@/lib/thai";
-import { TILE_COLORS, TILE_COLOR_LABELS, isTileColor, tileClasses, tileColorOf } from "@/lib/tile-colors";
+import { isTileColor, TILE_COLOR_LABELS, TILE_COLORS, tileClasses, tileColorOf } from "@/lib/tile-colors";
 import type { MenuActionState } from "./actions";
-import { ReorderActions, SortableList } from "./sortable-list";
 import {
   createCategoryAction,
   deleteCategoryAction,
-  reorderCategoriesAction,
   deleteProductAction,
   importStockMenuAction,
   renameCategoryAction,
+  reorderCategoriesAction,
 } from "./actions";
+import { menuHref, parseProductFilters } from "./menu-steps";
+import { ReorderActions, SortableList } from "./sortable-list";
 
 type Category = { id: string; name: string };
 type ModifierGroup = {
@@ -479,12 +480,18 @@ export function OpenProductSectionButton({
   label?: string;
   variant?: "default" | "outline";
 } = {}) {
+  const router = useRouter();
   return <Button type="button" onClick={() => {
+    router.push(addProductHref(window.location.search), { scroll: false });
     const section = document.querySelector<HTMLDetailsElement>("[data-add-product-section]");
     if (!section) return;
     section.open = true;
     section.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
   }} variant={variant}>{label}</Button>;
+}
+
+export function addProductHref(search: string) {
+  return `${menuHref("products", parseProductFilters(new URLSearchParams(search)))}&add=1`;
 }
 
 export function DeleteProductForm({ productId, name }: { productId: string; name: string }) {
