@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { ChevronDown } from "lucide-react";
 import { selectShop, signOut } from "@/server/auth-actions";
 import { requireStaff, type StaffSession } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
@@ -19,22 +20,31 @@ const roleLabels = {
 function BranchSwitcher({ staff, shop, shops }: Pick<StaffSession, "staff" | "shop" | "shops">) {
   if (shops.length < 2 && staff.role !== "owner") return null;
   return (
-    <div className="mb-5 rounded-2xl border border-sidebar-border bg-background/60 p-3">
-      {shops.length > 1 && <p className="mb-2 px-1 text-xs text-muted-foreground">สลับสาขา</p>}
+    <div className="mb-5 space-y-2 rounded-2xl border border-sidebar-border bg-background/60 p-3">
       {shops.length > 1 && (
-        <div className="space-y-1">
-          {shops.filter((membership) => membership.shopId !== shop.id).map((membership) => (
-            <form key={membership.shopId} action={selectShop}>
-              <input type="hidden" name="shopId" value={membership.shopId} />
-              <Button type="submit" variant="ghost" className="h-9 w-full justify-start truncate px-2 text-sm">
-                {membership.shop.name}
-              </Button>
-            </form>
-          ))}
-        </div>
+        <details className="group">
+          <summary aria-label={`สาขาปัจจุบัน ${shop.name} กดเพื่อสลับสาขา`} className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 rounded-lg px-2 py-1 outline-none transition-colors hover:bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
+            <span className="min-w-0">
+              <span className="block text-xs text-muted-foreground">สาขาปัจจุบัน · กดเพื่อสลับ</span>
+              <span className="mt-0.5 block truncate text-sm font-medium">{shop.name}</span>
+            </span>
+            <ChevronDown aria-hidden="true" className="size-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" />
+          </summary>
+          <div className="mt-2 space-y-1 border-t border-sidebar-border pt-2">
+            <p className="px-2 pb-1 text-xs text-muted-foreground">เลือกสาขาอื่น</p>
+            {shops.filter((membership) => membership.shopId !== shop.id).map((membership) => (
+              <form key={membership.shopId} action={selectShop}>
+                <input type="hidden" name="shopId" value={membership.shopId} />
+                <Button type="submit" variant="ghost" className="h-10 w-full justify-start truncate px-2 text-sm">
+                  {membership.shop.name}
+                </Button>
+              </form>
+            ))}
+          </div>
+        </details>
       )}
       {staff.role === "owner" && (
-        <Link href="/admin/branches/new" className="mt-2 block rounded-lg px-2 py-2 text-sm font-medium text-primary hover:bg-sidebar-accent">
+        <Link href="/admin/branches/new" className="flex min-h-10 items-center rounded-lg px-2 text-sm font-medium text-primary transition-colors hover:bg-sidebar-accent">
           + เพิ่มสาขา
         </Link>
       )}

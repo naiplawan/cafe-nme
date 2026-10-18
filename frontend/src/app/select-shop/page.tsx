@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { redirect } from "next/navigation";
+import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getUser } from "@/lib/auth";
 import { findStaffShops } from "@/server/staff-session";
@@ -20,18 +21,20 @@ export default async function SelectShopPage() {
         <div className="mb-6 text-center">
           <Image src="/assets/logo-mark.png" alt="Cafe'nMe" width={56} height={56} className="mx-auto mb-4 size-14" />
           <h1 className="text-2xl font-semibold">เลือกสาขาที่ต้องการจัดการ</h1>
-          <p className="mt-2 text-sm text-muted-foreground">ข้อมูลของแต่ละสาขาจะแยกจากกัน</p>
+          <p className="mt-2 text-sm leading-6 text-muted-foreground">เมนู พนักงาน และยอดขายจะแยกกันในแต่ละสาขา</p>
         </div>
         <div className="space-y-3">
           {shops.map(({ shop, shopId, staff }) => (
             <form key={shopId} action={selectShop}>
               <input type="hidden" name="shopId" value={shopId} />
-              <Button type="submit" variant="outline" className="h-auto w-full justify-between rounded-xl px-4 py-4 text-left">
-                <span>
+              <Button type="submit" variant="outline" className="group h-auto w-full justify-between gap-3 rounded-xl px-4 py-4 text-left transition-colors hover:border-primary/40 hover:bg-primary/5">
+                <span className="min-w-0">
                   <span className="block font-semibold">{shop.name}</span>
-                  <span className="mt-1 block text-xs text-muted-foreground">{roleLabels[staff.role]}</span>
+                  <span className="mt-2 inline-flex rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">{roleLabels[staff.role]}</span>
                 </span>
-                <span aria-hidden="true" className="text-muted-foreground">เลือก →</span>
+                <span className="flex shrink-0 items-center gap-1 text-sm font-medium text-primary">
+                  เปิดสาขา <ArrowRight aria-hidden="true" className="size-4 transition-transform group-hover:translate-x-0.5" />
+                </span>
               </Button>
             </form>
           ))}

@@ -19,7 +19,7 @@ versioning (pre-1.0: minor = features, patch = fixes).
 
 ### Added
 - Menu catalog and legacy product photos now use Railway's private storage bucket through signed asset links.
-- Business owners can create branches, choose a branch after login, and switch branches from the admin shell; each branch keeps its own shop data.
+- Business owners can create branches, choose a branch after login, and switch branches from a compact admin control; branch-specific POS setup and isolated data are explained during creation.
 - Added the multi-branch design and rollout plan in `docs/multi-branch-admin-plan.md`.
 - Loading states for admin brand, members, modifiers, and staff pages.
 

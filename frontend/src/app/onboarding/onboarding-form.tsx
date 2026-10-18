@@ -35,8 +35,9 @@ export function OnboardingForm({ variant = "shop" }: { variant?: "shop" | "branc
         {state.errors?.shopName?.[0] && <p className="text-sm text-destructive">{state.errors.shopName[0]}</p>}
       </div>
       <div data-auth-field className="space-y-2">
-        <Label htmlFor={`${id}-ownerName`}>ชื่อของคุณ</Label>
+        <Label htmlFor={`${id}-ownerName`}>{variant === "branch" ? "ชื่อที่แสดงในสาขานี้" : "ชื่อของคุณ"}</Label>
         <Input id={`${id}-ownerName`} name="ownerName" autoComplete="name" maxLength={80} defaultValue={state.values?.ownerName ?? ""} required />
+        {variant === "branch" && <p className="text-xs leading-5 text-muted-foreground">ชื่อนี้จะแสดงในทีมและ POS ของสาขานี้ ส่วนบัญชีแอดมินยังเป็นบัญชีเดิม</p>}
         {state.errors?.ownerName?.[0] && <p className="text-sm text-destructive">{state.errors.ownerName[0]}</p>}
       </div>
       <div data-auth-field className="space-y-2">
@@ -48,7 +49,7 @@ export function OnboardingForm({ variant = "shop" }: { variant?: "shop" | "branc
       <div data-auth-field className="space-y-2">
         <Label htmlFor={`${id}-pin`}>PIN สำหรับเข้า POS (4–6 หลัก)</Label>
         <Input id={`${id}-pin`} name="pin" type="password" inputMode="numeric" autoComplete="new-password" required />
-        <p className="text-sm text-muted-foreground">ใช้ PIN นี้เข้าหน้าขายบนแท็บเล็ต</p>
+        <p className="text-sm leading-5 text-muted-foreground">{variant === "branch" ? "ตั้ง PIN POS สำหรับพนักงานเจ้าของในสาขานี้" : "ใช้ PIN นี้เข้าหน้าขายบนแท็บเล็ต"}</p>
         {state.errors?.pin?.[0] && <p className="text-sm text-destructive">{state.errors.pin[0]}</p>}
       </div>
       <div data-auth-field className="space-y-2">
