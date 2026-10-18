@@ -1,7 +1,16 @@
 import Image from "next/image";
+import { redirect } from "next/navigation";
+import { getUser } from "@/lib/auth";
+import { findStaffShops } from "@/server/staff-session";
 import { OnboardingForm } from "./onboarding-form";
 
-export default function OnboardingPage() {
+export default async function OnboardingPage() {
+  const user = await getUser();
+  if (!user) redirect("/login");
+  const shops = await findStaffShops(user.id);
+  if (shops.length === 1) redirect("/admin");
+  if (shops.length > 1) redirect("/select-shop");
+
   return (
     <main className="flex min-h-screen items-center justify-center bg-muted/40 px-4 py-10">
       <section data-auth-card className="w-full max-w-lg rounded-2xl bg-background p-6 shadow-[0_18px_44px_rgba(59,42,32,0.10)] ring-1 ring-foreground/10 sm:p-8">

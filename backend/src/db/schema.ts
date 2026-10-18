@@ -85,11 +85,11 @@ export const staff = pgTable(
     role: staffRole("role").notNull().default("barista"),
     pinHash: text("pin_hash"),
     // App user id; only owners/managers who use /admin have one.
-    authUserId: uuid("auth_user_id").unique().references(() => users.id, { onDelete: "set null" }),
+    authUserId: uuid("auth_user_id").references(() => users.id, { onDelete: "set null" }),
     isActive: boolean("is_active").notNull().default(true),
     createdAt: createdAt(),
   },
-  (t) => [index("staff_shop_idx").on(t.shopId)],
+  (t) => [index("staff_shop_idx").on(t.shopId), uniqueIndex("staff_shop_auth_user_uidx").on(t.shopId, t.authUserId)],
 );
 
 export const posDevices = pgTable("pos_devices", {

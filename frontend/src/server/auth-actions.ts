@@ -5,9 +5,10 @@ import { isIP } from "node:net";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { getUser } from "@/lib/auth";
+import { ACTIVE_SHOP_COOKIE_NAME, getUser, requireStaff } from "@/lib/auth";
 import { AUTH_COOKIE_NAME, requestAuthApi } from "@/server/auth-api";
-import { createShopInApi, ownerShopExists } from "@/server/shop-setup";
+import { createShopInApi } from "@/server/shop-setup";
+import { findStaffSession, findStaffShops } from "@/server/staff-session";
 
 export type AuthActionState = {
   message?: string;
@@ -130,8 +131,30 @@ export async function signOut() {
     await requestAuthApi("/logout", { method: "POST", token });
   } finally {
     cookieStore.delete(AUTH_COOKIE_NAME);
+    cookieStore.set(ACTIVE_SHOP_COOKIE_NAME, "", { path: "/admin", maxAge: 0 });
   }
   redirect("/login");
+}
+
+export async function selectShop(formData: FormData) {
+  const user = await getUser();
+  if (!user) redirect("/login");
+
+  const shopId = z.uuid().safeParse(formData.get("shopId"));
+  if (!shopId.success) redirect("/select-shop");
+
+  const membership = await findStaffSession(user.id, shopId.data);
+  if (!membership) redirect("/select-shop");
+
+  const cookieStore = await cookies();
+  cookieStore.set(ACTIVE_SHOP_COOKIE_NAME, membership.shopId, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/admin",
+    maxAge: 60 * 60 * 24 * 30,
+  });
+  redirect("/admin");
 }
 
 export async function createShop(
@@ -140,8 +163,10 @@ export async function createShop(
 ): Promise<AuthActionState> {
   const user = await getUser();
   if (!user) redirect("/login");
-
-  if (await ownerShopExists(user.id)) redirect("/admin");
+  if ((await findStaffShops(user.id)).length > 0) {
+    const currentMembership = await requireStaff();
+    if (currentMembership.staff.role !== "owner") redirect("/admin");
+  }
 
   const parsed = shopSchema.safeParse(
     readFormData(formData, ["shopName", "ownerName", "promptpayId", "pin", "confirmPin"]),
@@ -158,13 +183,22 @@ export async function createShop(
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "") || "shop";
   const slug = `${normalizedSlug}-${randomBytes(3).toString("hex")}`;
-  await createShopInApi({
+  const shopId = await createShopInApi({
     authUserId: user.id,
     shopName: parsed.data.shopName,
     slug,
     ownerName: parsed.data.ownerName,
     promptpayId: parsed.data.promptpayId || null,
     pin: parsed.data.pin,
+  });
+
+  const cookieStore = await cookies();
+  cookieStore.set(ACTIVE_SHOP_COOKIE_NAME, shopId, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/admin",
+    maxAge: 60 * 60 * 24 * 30,
   });
 
   redirect("/admin");

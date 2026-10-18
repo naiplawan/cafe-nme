@@ -4,7 +4,7 @@ import { createInternalApiToken } from "@/lib/internal-api-token";
 
 const TRAILING_SLASH = /\/$/;
 const ownerExistsSchema = z.object({ exists: z.boolean() });
-const createShopSchema = z.object({ status: z.enum(["created", "already_exists"]) });
+const createShopSchema = z.object({ status: z.literal("created"), shopId: z.uuid() });
 
 function apiUrl(path: string) {
   const baseUrl = process.env.API_BASE_URL ?? (
@@ -51,10 +51,10 @@ export async function createShopInApi(input: {
   ownerName: string;
   promptpayId: string | null;
   pin: string;
-}): Promise<"created" | "already_exists"> {
+}): Promise<string> {
   const result = await request("/v1/shops/setup", createShopSchema, {
     method: "POST",
     body: JSON.stringify(input),
   });
-  return result.status;
+  return result.shopId;
 }

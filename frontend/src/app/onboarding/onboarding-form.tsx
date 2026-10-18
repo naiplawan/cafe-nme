@@ -9,7 +9,7 @@ import { gsap, MOTION, prefersReducedMotion, useGSAP } from "@/components/motion
 
 const initialState: AuthActionState = {};
 
-export function OnboardingForm() {
+export function OnboardingForm({ variant = "shop" }: { variant?: "shop" | "branch" }) {
   const formRef = useRef<HTMLFormElement>(null);
   const id = useId();
   const [state, action, pending] = useActionState(createShop, initialState);
@@ -30,7 +30,7 @@ export function OnboardingForm() {
   return (
     <form key={JSON.stringify(state.values ?? {})} ref={formRef} action={action} noValidate className="space-y-4">
       <div data-auth-field className="space-y-2">
-        <Label htmlFor={`${id}-shopName`}>ชื่อร้าน</Label>
+        <Label htmlFor={`${id}-shopName`}>{variant === "branch" ? "ชื่อสาขา" : "ชื่อร้าน"}</Label>
         <Input id={`${id}-shopName`} name="shopName" maxLength={80} defaultValue={state.values?.shopName ?? ""} required />
         {state.errors?.shopName?.[0] && <p className="text-sm text-destructive">{state.errors.shopName[0]}</p>}
       </div>
@@ -58,7 +58,7 @@ export function OnboardingForm() {
       </div>
       {state.message && <p role="status" className="text-sm text-destructive">{state.message}</p>}
       <Button data-auth-field type="submit" className="w-full" disabled={pending}>
-        {pending ? "กำลังบันทึก…" : "สร้างร้าน"}
+        {pending ? "กำลังบันทึก…" : variant === "branch" ? "สร้างสาขา" : "สร้างร้าน"}
       </Button>
     </form>
   );

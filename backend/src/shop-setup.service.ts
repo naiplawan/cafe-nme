@@ -1,4 +1,4 @@
-import { Inject, Injectable } from "@nestjs/common";
+import { ForbiddenException, Inject, Injectable } from "@nestjs/common";
 import { randomBytes, scrypt as scryptCallback } from "node:crypto";
 import { promisify } from "node:util";
 import { DatabaseService } from "./database.service.js";
@@ -32,15 +32,15 @@ export class ShopSetupService {
     return Boolean(owner);
   }
 
-  async createShop(input: ShopSetupInput): Promise<{ status: "created" | "already_exists" }> {
+  async createShop(input: ShopSetupInput): Promise<{ status: "created"; shopId: string }> {
     return this.database.connection.begin(async (tx) => {
       // Serialize setup attempts for one app user, including retries from another app instance.
       await tx`select pg_advisory_xact_lock(hashtext(${input.authUserId}))`;
-      const [owner] = await tx<{ id: string }[]>`
-        select id::text as id from staff where auth_user_id = ${input.authUserId}::uuid limit 1
+      const memberships = await tx<{ role: "owner" | "manager" | "barista" }[]>`
+        select role from staff where auth_user_id = ${input.authUserId}::uuid and is_active = true
       `;
-      if (owner) {
-        return { status: "already_exists" };
+      if (memberships.length > 0 && !memberships.some((membership) => membership.role === "owner")) {
+        throw new ForbiddenException("Only an owner can create another shop");
       }
 
       const pinHash = await hashPin(input.pin);
@@ -53,7 +53,7 @@ export class ShopSetupService {
         insert into staff (shop_id, name, role, auth_user_id, pin_hash)
         values (${shop.id}::uuid, ${input.ownerName}, 'owner', ${input.authUserId}::uuid, ${pinHash})
       `;
-      return { status: "created" };
+      return { status: "created", shopId: shop.id };
     });
   }
 }

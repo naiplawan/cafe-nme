@@ -1,8 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { signOut } from "@/server/auth-actions";
-import { requireStaff } from "@/lib/auth";
+import { selectShop, signOut } from "@/server/auth-actions";
+import { requireStaff, type StaffSession } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { thaiInitial } from "@/lib/thai";
 import { AdminNavigation } from "./navigation";
@@ -16,8 +16,34 @@ const roleLabels = {
   barista: "บาริสต้า",
 } as const;
 
+function BranchSwitcher({ staff, shop, shops }: Pick<StaffSession, "staff" | "shop" | "shops">) {
+  if (shops.length < 2 && staff.role !== "owner") return null;
+  return (
+    <div className="mb-5 rounded-2xl border border-sidebar-border bg-background/60 p-3">
+      {shops.length > 1 && <p className="mb-2 px-1 text-xs text-muted-foreground">สลับสาขา</p>}
+      {shops.length > 1 && (
+        <div className="space-y-1">
+          {shops.filter((membership) => membership.shopId !== shop.id).map((membership) => (
+            <form key={membership.shopId} action={selectShop}>
+              <input type="hidden" name="shopId" value={membership.shopId} />
+              <Button type="submit" variant="ghost" className="h-9 w-full justify-start truncate px-2 text-sm">
+                {membership.shop.name}
+              </Button>
+            </form>
+          ))}
+        </div>
+      )}
+      {staff.role === "owner" && (
+        <Link href="/admin/branches/new" className="mt-2 block rounded-lg px-2 py-2 text-sm font-medium text-primary hover:bg-sidebar-accent">
+          + เพิ่มสาขา
+        </Link>
+      )}
+    </div>
+  );
+}
+
 export default async function AdminLayout({ children }: { children: ReactNode }) {
-  const { staff, shop } = await requireStaff();
+  const { staff, shop, shops } = await requireStaff();
 
   return (
     <div className="min-h-screen bg-[linear-gradient(135deg,oklch(0.97_0.018_78),oklch(0.94_0.022_68))] md:grid md:grid-cols-[264px_minmax(0,1fr)]">
@@ -29,6 +55,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
             <span className="mt-0.5 block text-xs text-muted-foreground">จัดการร้าน</span>
           </span>
         </Link>
+        <BranchSwitcher staff={staff} shop={shop} shops={shops} />
         <AdminNavigation role={staff.role} />
         <div className="mt-auto rounded-2xl border border-sidebar-border bg-background/60 p-3">
           <div className="flex items-center gap-3">
@@ -58,6 +85,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
             </form>
           </div>
           <div className="mt-3">
+            <BranchSwitcher staff={staff} shop={shop} shops={shops} />
             <AdminNavigation horizontal role={staff.role} />
           </div>
           <p className="mt-2 text-xs text-muted-foreground">

@@ -16,4 +16,17 @@ export class StaffSessionController {
   getStaffSession(@Param("authUserId", new ParseUUIDPipe()) authUserId: string) {
     return this.sessions.getByAuthUserId(authUserId);
   }
+
+  @Get(":authUserId/shops")
+  listShops(@Param("authUserId", new ParseUUIDPipe()) authUserId: string) {
+    return this.sessions.listByAuthUserId(authUserId);
+  }
+
+  @Get(":authUserId/shops/:shopId/staff-session")
+  getShopStaffSession(
+    @Param("authUserId", new ParseUUIDPipe()) authUserId: string,
+    @Param("shopId", new ParseUUIDPipe()) shopId: string,
+  ) {
+    return this.sessions.getByAuthUserIdAndShopId(authUserId, shopId);
+  }
 }

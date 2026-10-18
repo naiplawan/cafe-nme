@@ -127,6 +127,13 @@
       "when": 1792410000000,
       "tag": "0017_railway_menu_assets",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1792410000001,
+      "tag": "0018_multi_branch_memberships",
+      "breakpoints": true
     }
   ]
 }

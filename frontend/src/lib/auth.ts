@@ -3,7 +3,9 @@ import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { cache } from "react";
 import { AUTH_COOKIE_NAME, requestAuthApi } from "@/server/auth-api";
-import { findStaffSession } from "@/server/staff-session";
+import { findStaffSession, findStaffShops } from "@/server/staff-session";
+
+export const ACTIVE_SHOP_COOKIE_NAME = "cafenme_active_shop";
 
 export interface StaffSession {
   userId: string;
@@ -11,6 +13,7 @@ export interface StaffSession {
   staff: { id: string; name: string; role: "owner" | "manager" | "barista" };
   shop: { id: string; name: string };
   shopId: string;
+  shops: Awaited<ReturnType<typeof findStaffShops>>;
 }
 
 /** The signed-in application user, or null. */
@@ -34,15 +37,24 @@ export const requireStaff = cache(async (): Promise<StaffSession> => {
     redirect("/login");
   }
 
-  const session = await findStaffSession(user.id);
-  if (!session) {
+  const shops = await findStaffShops(user.id);
+  if (shops.length === 0) {
     redirect("/onboarding");
   }
+  const activeShopId = (await cookies()).get(ACTIVE_SHOP_COOKIE_NAME)?.value;
+  const selectedMembership = activeShopId
+    ? shops.find((membership) => membership.shopId === activeShopId)
+    : shops.length === 1 ? shops[0] : undefined;
+  if (!selectedMembership) redirect("/select-shop");
+
+  const session = await findStaffSession(user.id, selectedMembership.shopId);
+  if (!session) redirect("/select-shop");
   return {
     userId: user.id,
     email: user.email ?? null,
     staff: session.staff,
     shop: session.shop,
     shopId: session.shopId,
+    shops,
   };
 });

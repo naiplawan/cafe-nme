@@ -15,9 +15,12 @@ versioning (pre-1.0: minor = features, patch = fixes).
 ### Operations
 - Create the `cafenme-menu-assets` bucket in Singapore and configure its four reference variables on the frontend; migration `0017_railway_menu_assets` updates saved product image paths.
 - Apply migration `0016_restore_email_verification` and configure `RESEND_API_KEY`, `EMAIL_FROM`, and `APP_BASE_URL` on the API service. Production frontend ingress must overwrite `x-real-ip`.
+- Apply migration `0018_multi_branch_memberships` before deploying multi-branch admin; it lets an account link to one staff membership per shop.
 
 ### Added
 - Menu catalog and legacy product photos now use Railway's private storage bucket through signed asset links.
+- Business owners can create branches, choose a branch after login, and switch branches from the admin shell; each branch keeps its own shop data.
+- Added the multi-branch design and rollout plan in `docs/multi-branch-admin-plan.md`.
 - Loading states for admin brand, members, modifiers, and staff pages.
 
 ### Changed
