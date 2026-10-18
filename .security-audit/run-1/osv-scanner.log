@@ -1,0 +1,6 @@
+Scanning dir .
+Starting filesystem walk for root: /
+Scanned /home/naiplawan/Desktop/Workhub/cafe-pos/pnpm-lock.yaml file and found 788 packages
+End status: 392 dirs visited, 2253 inodes visited, 1 Extract calls, 62.734506ms elapsed, 62.734556ms wall time
+
+No issues found

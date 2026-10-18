@@ -43,13 +43,13 @@ describe("POS session integration", () => {
   it("creates and regenerates shop-scoped one-time pairing codes", async () => {
     const created = await createDevice(shopId, managerId, "Tablet");
     deviceId = created.deviceId;
-    expect(created.pairingCode).toMatch(/^\d{6}$/);
+    expect(created.pairingCode).toMatch(/^\d{8}$/);
     const [stored] = await db.select().from(posDevices).where(and(eq(posDevices.shopId, shopId), eq(posDevices.id, deviceId)));
     expect(stored.pairingCodeHash).not.toBe(created.pairingCode);
     expect(stored.pairingExpiresAt!.getTime()).toBeGreaterThan(Date.now());
 
     const renewed = await regeneratePairingCode(shopId, managerId, deviceId);
-    expect(renewed).toMatch(/^\d{6}$/);
+    expect(renewed).toMatch(/^\d{8}$/);
     expect(renewed).not.toBe(created.pairingCode);
     // Another shop's actor cannot touch this device.
     await expect(regeneratePairingCode(randomUUID(), managerId, deviceId)).rejects.toThrow();

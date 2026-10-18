@@ -7,7 +7,7 @@ test("unknown or expired pairing codes return a 404", async () => {
   const controller = new PosAccessController({ pairDevice: async () => null } as never);
 
   await assert.rejects(
-    controller.pairDevice({ code: "000000" }),
+    controller.pairDevice({ code: "00000000" }),
     (error: unknown) => error instanceof NotFoundException,
   );
 });

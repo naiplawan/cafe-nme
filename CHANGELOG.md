@@ -6,6 +6,15 @@ versioning (pre-1.0: minor = features, patch = fixes).
 
 ## [Unreleased]
 
+### Security
+- New accounts must verify email ownership before signing in or creating a shop; verification tokens are single-use, expire after 24 hours, and are stored hashed.
+- Login and signup throttles use the validated client address instead of a target email, preventing unauthenticated callers from locking a specific address out of either flow.
+- POS pairing codes now contain eight digits, and pairing throttles accept only the trusted `x-real-ip` address.
+- LINE webhook request bodies are streamed with a 1 MiB limit before shop configuration is fetched.
+
+### Operations
+- Apply migration `0016_restore_email_verification` and configure `RESEND_API_KEY`, `EMAIL_FROM`, and `APP_BASE_URL` on the API service. Production frontend ingress must overwrite `x-real-ip`.
+
 ### Added
 - Loading states for admin brand, members, modifiers, and staff pages.
 
@@ -13,14 +22,14 @@ versioning (pre-1.0: minor = features, patch = fixes).
 - Refined the brand and modifier admin forms and POS cart interactions for clearer workflows.
 
 ### Breaking changes
-- Removed email verification and password recovery API routes. Migration `0015_remove_email_auth_state` drops verification and reset state; email addresses and passwords remain account credentials. Users cannot recover forgotten passwords through the app.
+- Password recovery API routes remain removed. Migration `0015_remove_email_auth_state` removed verification and reset state; migration `0016_restore_email_verification` restores verification for new signups. Users still cannot recover forgotten passwords through the app.
 
 ### Removed
-- Removed Resend email delivery and the verification, reset-password, and email-notification flows. Email addresses remain account identifiers and login credentials.
+- Removed password reset and email-notification flows. Resend delivery and email verification are restored for new account registration; email addresses remain account identifiers and login credentials.
 - Removed the obsolete Supabase agent skill files.
 
 ### Operations
-- Apply migration `0015_remove_email_auth_state` before deploying the email-feature removal.
+- Migration `0015_remove_email_auth_state` removed email-verification and password-reset state; the current release reapplies verification state through migration `0016_restore_email_verification`.
 
 ### Added
 - Owners can preview a one-baht QR from their saved PromptPay identifier to inspect the recipient in a banking app without making a transfer.

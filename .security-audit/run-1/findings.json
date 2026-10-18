@@ -1,0 +1,189 @@
+[
+  {
+    "verdict": "confirmed",
+    "id": "auth-service-email-login-lockout",
+    "cwe": "CWE-645",
+    "title": "Unauthenticated users can lock out a known email address",
+    "description": "The public sign-in Server Action accepts unauthenticated requests and forwards them to the backend. The backend counts attempts under a shared key derived only from the normalized email address, before checking whether the password is correct. After ten attempts in a 15-minute window, request 11 and all further sign-in attempts for that address receive HTTP 429 until the window expires. An attacker who knows a user's email can therefore repeatedly prevent that user from signing in; the attack does not grant access or affect other addresses.",
+    "root_cause": "signIn in auth.service.ts applies a hard 15-minute login lockout keyed only by attacker-selectable email, allowing unauthenticated callers to deny sign-in to that address.",
+    "intended_behavior": "Limit password guessing while allowing the legitimate account holder to continue signing in despite attempts made by another unauthenticated caller.",
+    "trace": [
+      {
+        "kind": "entrypoint",
+        "file": "frontend/src/server/auth-actions.ts",
+        "line": 52,
+        "scope": "signIn",
+        "description": "The public login Server Action accepts an email and password without requiring an existing session, validates the form, then calls the backend login API."
+      },
+      {
+        "kind": "propagation",
+        "file": "backend/src/auth.controller.ts",
+        "line": 32,
+        "scope": "signIn",
+        "description": "The internal API login route passes the caller's email and password to AuthService.signIn; the public frontend action supplies the server-only internal API token."
+      },
+      {
+        "kind": "propagation",
+        "file": "backend/src/auth.service.ts",
+        "line": 46,
+        "scope": "signIn",
+        "description": "The service normalizes the email and calls the shared rate limiter with the key login:<email>, limit 10, and a 900-second window before querying or verifying the account."
+      },
+      {
+        "kind": "sink",
+        "file": "backend/src/rate-limit.service.ts",
+        "line": 9,
+        "scope": "consume",
+        "description": "The rate limiter hashes only the supplied key, increments the shared database counter, and returns false after the limit is exceeded; AuthService then responds with HTTP 429."
+      }
+    ],
+    "conditions": [
+      {
+        "kind": "user_interaction",
+        "description": "The attacker must know or guess the target's email and submit 11 sign-in attempts within a 15-minute window."
+      },
+      {
+        "kind": "authentication_level",
+        "description": "No valid account or password is required; the sign-in action is public."
+      }
+    ],
+    "execution": {
+      "attacker_perspective": "An unauthenticated visitor targeting a known user's email address.",
+      "payloads": [
+        "Submit the public sign-in action with FormData fields email=owner@example.test and password=incorrect-value 11 times within 15 minutes."
+      ],
+      "instructions": [
+        "Open the public login page or invoke its signIn Server Action as an unauthenticated visitor.",
+        "Submit the target email with an incorrect password ten times; each attempt reaches password verification and fails.",
+        "Submit the same email with an incorrect password once more; the backend rate limit rejects it with HTTP 429.",
+        "Have the legitimate account holder submit the correct password before the 15-minute window expires."
+      ],
+      "expected_result": "The legitimate login attempt is also rejected with HTTP 429 and the frontend displays the retry-in-15-minutes message, even though the attacker never authenticated."
+    },
+    "remediation": {
+      "strategy": "Avoid an account-wide hard lockout that any unauthenticated caller can trigger. Use a trusted source-address throttle and progressive delay or challenge controls, with carefully bounded account-level monitoring that does not block the account holder solely because a third party made failed attempts.",
+      "code_changes": [
+        {
+          "file_name": "backend/src/auth.service.ts",
+          "fixed_code": "Apply login throttling using a trusted caller source plus account key, and do not return a persistent account-wide 429 solely because unauthenticated callers exhausted the email bucket."
+        },
+        {
+          "file_name": "frontend/src/server/auth-actions.ts",
+          "fixed_code": "Pass only a proxy-validated client address to the login throttling policy; do not trust caller-supplied forwarding headers directly."
+        }
+      ]
+    },
+    "severity": {
+      "likelihood": {
+        "score": "medium",
+        "reason": "The public login action is directly reachable and only 11 requests are needed, but the attacker must target a known email and external hosting controls were not reviewed."
+      },
+      "impact": {
+        "score": "low",
+        "reason": "The attacker can temporarily deny sign-in for one account for up to 15 minutes, but gains no access, cannot affect other emails, and can repeat only by making another short burst."
+      },
+      "overall_severity": "low"
+    },
+    "confidence": {
+      "score": "high",
+      "reason": "The public Server Action, internal API call, email-only counter key, threshold, and 429 response were verified directly in source and independently reviewed. External WAF or hosting throttles were not available for inspection."
+    }
+  },
+  {
+    "verdict": "confirmed",
+    "id": "auth-service-unverified-email-squatting",
+    "cwe": "CWE-287",
+    "title": "Public sign-up lets attackers claim an unverified email address",
+    "description": "An unauthenticated visitor can submit an arbitrary, previously unused email address to the public sign-up action. The backend creates a user and session immediately without proving control of that email, and the frontend establishes a 30-day session before onboarding. The attacker can then create a shop and owner staff row tied to the claimed address. Because the email is unique and the app has no self-service recovery path, the legitimate holder cannot register with that address and may need operator intervention. This does not take over an existing account or expose pre-existing victim data; the impact is targeted account squatting, possible storefront impersonation, and registration denial.",
+    "root_cause": "signUp in auth.service.ts creates a user session from an email address without verifying address ownership, allowing an attacker to claim an unused address and provision an owner shop under it.",
+    "intended_behavior": "Let the rightful email holder create an application account and shop, while preventing an unrelated visitor from claiming that identity before ownership is established.",
+    "trace": [
+      {
+        "kind": "entrypoint",
+        "file": "frontend/src/server/auth-actions.ts",
+        "line": 88,
+        "scope": "signUp",
+        "description": "The public sign-up Server Action accepts email and password form fields without requiring an existing session, then calls the backend sign-up API."
+      },
+      {
+        "kind": "propagation",
+        "file": "backend/src/auth.controller.ts",
+        "line": 27,
+        "scope": "signUp",
+        "description": "The guarded backend signup route accepts the email and password from the frontend action and passes them to AuthService; the frontend action supplies the server-held internal API token."
+      },
+      {
+        "kind": "propagation",
+        "file": "backend/src/auth.service.ts",
+        "line": 31,
+        "scope": "signUp",
+        "description": "The service inserts the submitted, unverified email into the users table as the unique account identity."
+      },
+      {
+        "kind": "propagation",
+        "file": "frontend/src/server/auth-actions.ts",
+        "line": 133,
+        "scope": "createShop",
+        "description": "After the signup action accepts the returned session, the authenticated onboarding action uses that account's user ID to create a shop."
+      },
+      {
+        "kind": "sink",
+        "file": "backend/src/shop-setup.service.ts",
+        "line": 38,
+        "scope": "createShop",
+        "description": "The authenticated onboarding call inserts a shop and an owner staff record bound to the attacker-created user id."
+      }
+    ],
+    "conditions": [
+      {
+        "kind": "user_interaction",
+        "description": "The attacker must target a known email address whose rightful holder has not yet registered with the application."
+      },
+      {
+        "kind": "authentication_level",
+        "description": "No pre-existing account or password is required; public sign-up creates the attacker's own account using the claimed address."
+      }
+    ],
+    "execution": {
+      "attacker_perspective": "An unauthenticated visitor who knows a business owner's email address before that owner registers with the service.",
+      "payloads": [
+        "Submit the public sign-up action with FormData fields email=owner@business.example and password=AttackerChosenPassword123."
+      ],
+      "instructions": [
+        "Open the public sign-up page while unauthenticated.",
+        "Submit an email address belonging to the intended business owner, provided that address has no existing application account, and choose an attacker-controlled password.",
+        "Use the resulting session to complete onboarding with a shop name and owner name associated with that business.",
+        "When the rightful holder attempts to sign up with the same address, observe the duplicate-account response; no email verification or self-service recovery is available in the reviewed flow."
+      ],
+      "expected_result": "The attacker controls an application account and owner shop under the submitted email, while the rightful holder is prevented from registering that email and may need manual operator recovery."
+    },
+    "remediation": {
+      "strategy": "Require control of the email address before issuing an authenticated session or allowing shop onboarding. Store the account as pending until a short-lived, single-use verification token is redeemed; ensure the sign-in and shop-setup paths enforce verified status.",
+      "code_changes": [
+        {
+          "file_name": "backend/src/auth.service.ts",
+          "fixed_code": "Create unverified users in a pending state and do not return an authenticated session until a single-use email verification token has been redeemed."
+        },
+        {
+          "file_name": "frontend/src/server/auth-actions.ts",
+          "fixed_code": "After registration, prompt for email verification and prevent the account from reaching shop onboarding until the backend reports verified ownership."
+        }
+      ]
+    },
+    "severity": {
+      "likelihood": {
+        "score": "medium",
+        "reason": "Public sign-up requires only one request and business email addresses are often discoverable, but the attacker must act before the rightful holder registers and must target that specific address."
+      },
+      "impact": {
+        "score": "medium",
+        "reason": "The attacker can reserve the account identity and create a shop appearing under that business email, blocking its rightful holder from registering; no existing account or data is taken over, and manual recovery may be possible."
+      },
+      "overall_severity": "medium"
+    },
+    "confidence": {
+      "score": "medium",
+      "reason": "The signup, session, unique-address constraint, and shop-onboarding flow were verified directly and independently. Product documentation acknowledges missing email verification, so the intended identity policy is not explicit; the concrete registration-preemption behavior remains present."
+    }
+  }
+]

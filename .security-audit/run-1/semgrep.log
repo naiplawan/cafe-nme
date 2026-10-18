@@ -1,0 +1,97 @@
+
+
+┌─────────────┐
+│ Scan Status │
+└─────────────┘
+  Scanning 417 files tracked by git with 598 Code rules:
+
+  Language      Rules   Files          Origin      Rules
+ ─────────────────────────────        ───────────────────
+  <multilang>      40     417          Community     598
+  ts               74     287
+  json              3      24
+  html              1       4
+  yaml             27       3
+  js               68       2
+
+
+
+┌──────────────┐
+│ Scan Summary │
+└──────────────┘
+✅ Scan completed successfully.
+ • Findings: 8 (8 blocking)
+ • Rules run: 145
+ • Targets scanned: 417
+ • Parsed lines: ~100.0%
+ • Scan skipped:
+   ◦ Matching --exclude patterns: 7
+   ◦ Files larger than  files 1.0 MB: 16
+   ◦ Files matching .semgrepignore patterns: 10
+ • Scan was limited to files tracked by git
+ • For a detailed list of skipped files and lines, run semgrep with the --verbose flag
+Ran 145 rules on 417 files: 8 findings.
+
+
+┌─────────────────┐
+│ 8 Code Findings │
+└─────────────────┘
+
+    .github/workflows/ci.yml
+    ❯❱ yaml.github-actions.security.github-actions-mutable-action-tag.github-actions-mutable-action-tag
+          ❰❰ Blocking ❱❱
+          GitHub Actions step uses a mutable tag or branch reference. Tags and branch names can be silently
+          repointed by the action owner, enabling supply-chain attacks — as seen in the trivy-action and kics-
+          github-action compromises. Pin the reference to a full 40-character commit SHA instead, e.g. `uses:
+          actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608`.
+          Details: https://sg.run/2LgAL
+
+           37┆ - uses: actions/checkout@v4
+            ⋮┆----------------------------------------
+           38┆ - uses: pnpm/action-setup@v4
+            ⋮┆----------------------------------------
+           41┆ - uses: actions/setup-node@v4
+            ⋮┆----------------------------------------
+           89┆ - uses: actions/upload-artifact@v4
+
+    frontend/src/lib/crypto.ts
+   ❯❯❱ javascript.node-crypto.security.gcm-no-tag-length.gcm-no-tag-length
+          ❰❰ Blocking ❱❱
+          The call to 'createDecipheriv' with the Galois Counter Mode (GCM) mode of operation is missing an
+          expected authentication tag length. If the expected authentication tag length is not specified or
+          otherwise checked, the application might be tricked into verifying a shorter-than-expected
+          authentication tag. This can be abused by an attacker to spoof ciphertexts or recover the implicit
+          authentication key of GCM, allowing arbitrary forgeries.
+          Details: https://sg.run/NbGG1
+
+           19┆ const decipher = createDecipheriv("aes-256-gcm", encryptionKey(), Buffer.from(ivPart,
+               "base64url"));
+
+    pnpm-workspace.yaml
+    ❯❱ package_managers.pnpm.pnpm-block-exotic-sub-dependencies.pnpm-block-exotic-sub-dependencies
+          ❰❰ Blocking ❱❱
+          Missing or incorrect blockExoticSubdeps. Set `blockExoticSubdeps: true` to transitive dependencies
+          from being installed from untrusted sources. Added in: v10.26.0 Reference:
+          https://pnpm.io/settings#blockexoticsubdeps
+          Details: https://sg.run/RrWRv
+
+            1┆ packages:
+
+    ❯❱ package_managers.pnpm.pnpm-missing-minimum-release-age.pnpm-minimum-release-age
+          ❰❰ Blocking ❱❱
+          This pnpm workspace configuration does not set a minimum release age. Newly published packages can
+          be malicious or unstable. Add `minimumReleaseAge: 10080` (minutes) to wait at least seven days
+          before installing newly published package versions. Added in: v10.16.0 Reference:
+          https://pnpm.io/settings#minimumreleaseage
+          Details: https://sg.run/Aj0o0
+
+            1┆ packages:
+
+    ❯❱ package_managers.pnpm.pnpm-trust-policy.pnpm-trust-policy
+          ❰❰ Blocking ❱❱
+          Missing or incorrect trustPolicy. Set `trustPolicy: no-downgrade` to prevent malicious package
+          updates from downgrading security settings. Added in: v10.21.0 Reference:
+          https://pnpm.io/settings#trustpolicy
+          Details: https://sg.run/B2Kz7
+
+            1┆ packages:

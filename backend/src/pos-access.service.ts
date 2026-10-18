@@ -7,11 +7,12 @@ import {
 import { randomBytes, randomInt, scrypt as scryptCallback, timingSafeEqual, createHash } from "node:crypto";
 import { promisify } from "node:util";
 import { DatabaseService } from "./database.service.js";
+import { isPairingCode } from "./pos-pairing.js";
 
 const scrypt = promisify(scryptCallback);
 const KEY_LENGTH = 64;
 const sha256 = (value: string) => createHash("sha256").update(value).digest("hex");
-const newPairingCode = () => randomInt(0, 1_000_000).toString().padStart(6, "0");
+const newPairingCode = () => randomInt(0, 100_000_000).toString().padStart(8, "0");
 
 async function hashPin(pin: string): Promise<string> {
   const salt = randomBytes(16);
@@ -79,7 +80,7 @@ export class PosAccessService {
   }
 
   async pairDevice(code: string) {
-    if (!/^\d{6}$/.test(code)) return null;
+    if (!isPairingCode(code)) return null;
     const deviceToken = randomBytes(32).toString("base64url");
     const [device] = await this.database.connection<{
       deviceId: string; deviceName: string; shopId: string;

@@ -1,7 +1,8 @@
 "use server";
 
 import { randomBytes } from "node:crypto";
-import { cookies } from "next/headers";
+import { isIP } from "node:net";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { getUser } from "@/lib/auth";
@@ -65,7 +66,17 @@ export async function signIn(
 
   let response: Response;
   try {
-    response = await requestAuthApi("/login", { method: "POST", body: parsed.data });
+    const requestHeaders = await headers();
+    const clientAddress = requestHeaders.get("x-real-ip")?.trim()
+      || (process.env.NODE_ENV === "production" ? "" : "127.0.0.1");
+    if (!isIP(clientAddress)) {
+      return { email: parsed.data.email, message: "ระบบเข้าสู่ระบบขัดข้อง กรุณาลองอีกครั้ง" };
+    }
+    response = await requestAuthApi("/login", {
+      method: "POST",
+      body: parsed.data,
+      clientAddress,
+    });
   } catch {
     return { email: parsed.data.email, message: "เชื่อมต่อระบบไม่ได้ กรุณาลองอีกครั้ง" };
   }
@@ -99,20 +110,17 @@ export async function signUp(
     };
   }
 
-  const response = await requestAuthApi("/signup", { method: "POST", body: parsed.data });
+  const requestHeaders = await headers();
+  const clientAddress = requestHeaders.get("x-real-ip")?.trim()
+    || (process.env.NODE_ENV === "production" ? "" : "127.0.0.1");
+  if (!isIP(clientAddress)) {
+    return { email: parsed.data.email, message: "ระบบสมัครบัญชีขัดข้อง กรุณาลองอีกครั้ง" };
+  }
+  const response = await requestAuthApi("/signup", { method: "POST", body: parsed.data, clientAddress });
   if (response.status === 409) return { email: parsed.data.email, message: "อีเมลนี้มีบัญชีแล้ว กรุณาเข้าสู่ระบบ" };
   if (response.status === 429) return { email: parsed.data.email, message: "สมัครบัญชีมากเกินไป กรุณาลองอีกครั้งใน 1 ชั่วโมง" };
   if (!response.ok) return { email: parsed.data.email, message: "ไม่สามารถสมัครบัญชีได้ กรุณาลองอีกครั้ง" };
-  const result = await response.json() as { token: string };
-  const cookieStore = await cookies();
-  cookieStore.set(AUTH_COOKIE_NAME, result.token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    maxAge: 60 * 60 * 24 * 30,
-  });
-  redirect("/onboarding");
+  return { email: parsed.data.email, message: "ส่งลิงก์ยืนยันไปยังอีเมลแล้ว กรุณายืนยันก่อนเข้าสู่ระบบ" };
 }
 
 export async function signOut() {

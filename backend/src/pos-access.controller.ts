@@ -27,6 +27,7 @@ import {
 } from "@nestjs/common";
 import { InternalApiGuard } from "./internal-api.guard.js";
 import { PosAccessService } from "./pos-access.service.js";
+import { isPairingCode } from "./pos-pairing.js";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 function object(value: unknown): Record<string, unknown> {
@@ -85,7 +86,9 @@ export class PosAccessController {
 
   @Post("pos/pair")
   async pairDevice(@Body() value: PairingCodeDto) {
-    const device = await this.access.pairDevice(text(object(value).code, "code", 6));
+    const code = text(object(value).code, "code", 8);
+    if (!isPairingCode(code)) throw new BadRequestException("Pairing code must be 8 digits");
+    const device = await this.access.pairDevice(code);
     if (!device) throw new NotFoundException("Pairing code is invalid or expired");
     return device;
   }

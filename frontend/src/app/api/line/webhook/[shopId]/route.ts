@@ -5,9 +5,11 @@ import { z } from "zod";
 import { decryptSecret } from "@/lib/crypto";
 import { createInternalApiToken } from "@/lib/internal-api-token";
 import { logger } from "@/lib/logger";
+import { readBoundedBody } from "@/server/read-bounded-body";
 
 const TRAILING_SLASH = /\/$/;
 const UUID = z.uuid();
+const MAX_WEBHOOK_BYTES = 1_048_576;
 const webhookConfigSchema = z.object({
   channelSecretEnc: z.string().nullable(),
   accessTokenEnc: z.string().nullable(),
@@ -38,7 +40,13 @@ interface Event {
 
 export async function POST(request: Request, context: { params: Promise<{ shopId: string }> }) {
   const { shopId } = await context.params;
-  const body = await request.text();
+  let body: string;
+  try {
+    body = await readBoundedBody(request, MAX_WEBHOOK_BYTES);
+  } catch (error) {
+    const status = error instanceof Error && error.message === "Body too large" ? 413 : 400;
+    return new Response(status === 413 ? "Payload too large" : "Invalid body", { status });
+  }
   const signature = request.headers.get("x-line-signature") ?? "";
   const config = await getWebhookConfig(shopId);
   if (!config?.channelSecretEnc || !config.accessTokenEnc) { return new Response("LINE webhook is not configured", { status: 401 }); }

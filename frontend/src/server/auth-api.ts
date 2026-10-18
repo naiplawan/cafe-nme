@@ -13,13 +13,14 @@ function apiUrl(path: string) {
   return `${baseUrl.replace(TRAILING_SLASH, "")}/v1/auth${path}`;
 }
 
-export function requestAuthApi(path: string, options: { method?: "GET" | "POST"; body?: unknown; token?: string } = {}) {
+export function requestAuthApi(path: string, options: { method?: "GET" | "POST"; body?: unknown; token?: string; clientAddress?: string } = {}) {
   return fetch(apiUrl(path), {
     method: options.method ?? "GET",
     headers: {
       "x-internal-api-token": createInternalApiToken(),
       ...(options.body ? { "content-type": "application/json" } : {}),
       ...(options.token ? { authorization: `Bearer ${options.token}` } : {}),
+      ...(options.clientAddress ? { "x-client-address": options.clientAddress } : {}),
     },
     ...(options.body ? { body: JSON.stringify(options.body) } : {}),
     cache: "no-store",

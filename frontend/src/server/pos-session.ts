@@ -74,14 +74,14 @@ const cookieOptions = (maxAge: number) => ({
 
 export async function createDevice(shopId: string, actorStaffIdOrName: string, name?: string) {
   if (name === undefined) throw new Error("An authenticated staff ID is required to create a POS device");
-  return requestApi(`${shopPath(shopId)}/pos-devices`, z.object({ deviceId: UUID, pairingCode: z.string().regex(/^\d{6}$/) }).strict(), {
+  return requestApi(`${shopPath(shopId)}/pos-devices`, z.object({ deviceId: UUID, pairingCode: z.string().regex(/^\d{8}$/) }).strict(), {
     method: "POST", body: JSON.stringify({ actorStaffId: actorStaffIdOrName, name }),
   });
 }
 
 export async function regeneratePairingCode(shopId: string, actorStaffIdOrDeviceId: string, deviceId?: string) {
   if (deviceId === undefined) throw new Error("An authenticated staff ID is required to regenerate a pairing code");
-  const value = await requestApi(`${shopPath(shopId)}/pos-devices/${encodeURIComponent(UUID.parse(deviceId))}/pairing-code`, z.object({ pairingCode: z.string().regex(/^\d{6}$/) }).strict(), {
+  const value = await requestApi(`${shopPath(shopId)}/pos-devices/${encodeURIComponent(UUID.parse(deviceId))}/pairing-code`, z.object({ pairingCode: z.string().regex(/^\d{8}$/) }).strict(), {
     method: "POST", body: JSON.stringify({ actorStaffId: actorStaffIdOrDeviceId }),
   });
   return value.pairingCode;
@@ -112,7 +112,7 @@ export async function setAdminStaffActive(shopId: string, actorStaffId: string, 
 }
 
 export async function pairDevice(code: string): Promise<PosDevice | null> {
-  if (!/^\d{6}$/.test(code)) return null;
+  if (!/^\d{8}$/.test(code)) return null;
   const response = await fetch(`${apiBaseUrl()}/v1/pos/pair`, {
     method: "POST",
     headers: { "x-internal-api-token": createInternalApiToken(), "content-type": "application/json" },

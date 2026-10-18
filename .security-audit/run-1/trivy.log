@@ -1,0 +1,24 @@
+2026-10-18T07:44:37+07:00	INFO	[vuln] Vulnerability scanning is enabled
+2026-10-18T07:44:37+07:00	INFO	[secret] Secret scanning is enabled
+2026-10-18T07:44:37+07:00	INFO	[secret] If your scanning is slow, please try '--scanners vuln' to disable secret scanning
+2026-10-18T07:44:37+07:00	INFO	[secret] Please see https://trivy.dev/docs/v0.69/guide/scanner/secret#recommendation for faster secret detection
+2026-10-18T07:44:39+07:00	INFO	Suppressing dependencies for development and testing. To display them, try the '--include-dev-deps' flag.
+2026-10-18T07:44:39+07:00	INFO	Number of language-specific files	num=1
+2026-10-18T07:44:39+07:00	INFO	[pnpm] Detecting vulnerabilities...
+
+Report Summary
+
+┌────────────────┬──────┬─────────────────┬─────────┐
+│     Target     │ Type │ Vulnerabilities │ Secrets │
+├────────────────┼──────┼─────────────────┼─────────┤
+│ pnpm-lock.yaml │ pnpm │        0        │    -    │
+└────────────────┴──────┴─────────────────┴─────────┘
+Legend:
+- '-': Not scanned
+- '0': Clean (no security findings detected)
+
+
+📣 [34mNotices:[0m
+  - Version 0.76.0 of Trivy is now available, current version is 0.69.3
+
+To suppress version checks, run Trivy scans with the --skip-version-check flag
