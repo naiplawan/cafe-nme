@@ -377,7 +377,7 @@ export class MenuService {
         if (existingNames.has(name)) continue;
         const [product] = await tx`insert into products
           (shop_id, category_id, name, base_price_satang, image_url, earns_stamp, is_active, sort)
-          values (${shopId}::uuid, ${categoryIds.get(category)}::uuid, ${name}, ${price}, ${`/assets/menu/${slug}.webp`}, ${kind !== "bakery"}, true, ${sort++})
+          values (${shopId}::uuid, ${categoryIds.get(category)}::uuid, ${name}, ${price}, ${`/api/menu-assets/menu/${slug}.webp`}, ${kind !== "bakery"}, true, ${sort++})
           returning id::text as id`;
         const links = STOCK_GROUPS[kind].flatMap((groupName) => {
           const id = groupIds.get(groupName);

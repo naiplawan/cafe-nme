@@ -42,4 +42,23 @@ export const MENU_CATALOG: MenuCatalogItem[] = [
   { slug: "cinnamon-roll", name: "ซินนามอนโรล", category: "เบเกอรี่", priceSatang: 6000, kind: "bakery" },
 ];
 
-export const menuImageSrc = (slug: string) => `/assets/menu/${slug}.webp`;
+const LEGACY_PRODUCT_ASSETS = new Set([
+  "product-americano.png",
+  "product-latte.png",
+  "product-thai-tea.png",
+  "product-matcha-latte.png",
+]);
+
+export const menuImageSrc = (slug: string) => `/api/menu-assets/menu/${slug}.webp`;
+
+export const legacyProductImageSrc = (filename: string) => `/api/menu-assets/${filename}`;
+
+export function menuAssetObjectKey(segments: string[]): string | null {
+  if (segments.length === 2 && segments[0] === "menu") {
+    const slug = segments[1].replace(/\.webp$/, "");
+    return MENU_CATALOG.some((item) => item.slug === slug) ? `menu/${slug}.webp` : null;
+  }
+
+  if (segments.length === 1 && LEGACY_PRODUCT_ASSETS.has(segments[0])) return segments[0];
+  return null;
+}

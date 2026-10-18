@@ -3,6 +3,7 @@ import { and, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import { hashPin } from "../../frontend/src/lib/pin";
+import { legacyProductImageSrc } from "../../frontend/src/lib/menu-catalog";
 import { hashPassword } from "../src/auth-crypto";
 import {
   categories,
@@ -148,11 +149,11 @@ async function seed() {
       const productRows = await tx
         .insert(products)
         .values([
-          { shopId: shop.id, categoryId: categoryId.get("กาแฟ"), name: "อเมริกาโน่", basePriceSatang: 5000, imageUrl: "/assets/product-americano.png", sort: 0 },
-          { shopId: shop.id, categoryId: categoryId.get("กาแฟ"), name: "ลาเต้", basePriceSatang: 5500, imageUrl: "/assets/product-latte.png", sort: 1 },
+          { shopId: shop.id, categoryId: categoryId.get("กาแฟ"), name: "อเมริกาโน่", basePriceSatang: 5000, imageUrl: legacyProductImageSrc("product-americano.png"), sort: 0 },
+          { shopId: shop.id, categoryId: categoryId.get("กาแฟ"), name: "ลาเต้", basePriceSatang: 5500, imageUrl: legacyProductImageSrc("product-latte.png"), sort: 1 },
           { shopId: shop.id, categoryId: categoryId.get("กาแฟ"), name: "คาปูชิโน่", basePriceSatang: 5500, sort: 2 },
-          { shopId: shop.id, categoryId: categoryId.get("ชา"), name: "ชาไทย", basePriceSatang: 4500, imageUrl: "/assets/product-thai-tea.png", sort: 3 },
-          { shopId: shop.id, categoryId: categoryId.get("ชา"), name: "มัทฉะลาเต้", basePriceSatang: 6000, imageUrl: "/assets/product-matcha-latte.png", sort: 4 },
+          { shopId: shop.id, categoryId: categoryId.get("ชา"), name: "ชาไทย", basePriceSatang: 4500, imageUrl: legacyProductImageSrc("product-thai-tea.png"), sort: 3 },
+          { shopId: shop.id, categoryId: categoryId.get("ชา"), name: "มัทฉะลาเต้", basePriceSatang: 6000, imageUrl: legacyProductImageSrc("product-matcha-latte.png"), sort: 4 },
           { shopId: shop.id, categoryId: categoryId.get("อื่นๆ"), name: "โกโก้", basePriceSatang: 4500, sort: 5 },
         ])
         .returning({ id: products.id, name: products.name });

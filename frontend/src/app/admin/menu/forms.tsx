@@ -13,7 +13,7 @@ import { ConfirmSubmit } from "@/components/ui/confirm-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MENU_CATALOG, menuImageSrc } from "@/lib/menu-catalog";
+import { legacyProductImageSrc, MENU_CATALOG, menuImageSrc } from "@/lib/menu-catalog";
 import { satangToInput } from "@/lib/money";
 import { thaiInitial } from "@/lib/thai";
 import { isTileColor, TILE_COLOR_LABELS, TILE_COLORS, tileClasses, tileColorOf } from "@/lib/tile-colors";
@@ -114,10 +114,10 @@ function CategoryRow({ category }: { category: Category }) {
 }
 
 const imageChoices = [
-  { src: "/assets/product-americano.png", label: "อเมริกาโน่" },
-  { src: "/assets/product-latte.png", label: "ลาเต้" },
-  { src: "/assets/product-thai-tea.png", label: "ชาไทย" },
-  { src: "/assets/product-matcha-latte.png", label: "มัทฉะลาเต้" },
+  { src: legacyProductImageSrc("product-americano.png"), label: "อเมริกาโน่" },
+  { src: legacyProductImageSrc("product-latte.png"), label: "ลาเต้" },
+  { src: legacyProductImageSrc("product-thai-tea.png"), label: "ชาไทย" },
+  { src: legacyProductImageSrc("product-matcha-latte.png"), label: "มัทฉะลาเต้" },
   ...MENU_CATALOG.map((item) => ({ src: menuImageSrc(item.slug), label: item.name })),
 ];
 
@@ -320,7 +320,7 @@ function ImageFields({ values, product }: { values: SubmittedValues; product?: P
   const isChecked = (src: string) => {
     if (typeof values?.imageUrl === "string") return values.imageUrl === src;
     if (product?.imageUrl) return product.imageUrl === src;
-    return suggestedImage ? src === `/assets/menu/${suggestedImage.slug}.webp` : src === "";
+    return suggestedImage ? src === menuImageSrc(suggestedImage.slug) : src === "";
   };
   const [color, setColor] = useState(() => {
     const submitted = typeof values?.tileColor === "string" ? values.tileColor : product?.tileColor;

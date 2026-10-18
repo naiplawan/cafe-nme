@@ -13,9 +13,11 @@ versioning (pre-1.0: minor = features, patch = fixes).
 - LINE webhook request bodies are streamed with a 1 MiB limit before shop configuration is fetched.
 
 ### Operations
+- Create the `cafenme-menu-assets` bucket in Singapore and configure its four reference variables on the frontend; migration `0017_railway_menu_assets` updates saved product image paths.
 - Apply migration `0016_restore_email_verification` and configure `RESEND_API_KEY`, `EMAIL_FROM`, and `APP_BASE_URL` on the API service. Production frontend ingress must overwrite `x-real-ip`.
 
 ### Added
+- Menu catalog and legacy product photos now use Railway's private storage bucket through signed asset links.
 - Loading states for admin brand, members, modifiers, and staff pages.
 
 ### Changed
