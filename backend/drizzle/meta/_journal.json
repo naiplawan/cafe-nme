@@ -134,6 +134,13 @@
       "when": 1792410000001,
       "tag": "0018_multi_branch_memberships",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1792410000002,
+      "tag": "0019_remove_email_verification",
+      "breakpoints": true
     }
   ]
 }

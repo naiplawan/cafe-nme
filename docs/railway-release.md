@@ -11,7 +11,7 @@ Use these commands from the workspace root in the backend service's build/deploy
 - Start: `pnpm --filter @cafenme/backend start`
 - Healthcheck: `/health/ready`
 
-Configure `RESEND_API_KEY`, `EMAIL_FROM`, and the public frontend origin as `APP_BASE_URL` on the API service. On the frontend service, production ingress must overwrite `x-real-ip` with the connecting client address. Signup, login, and POS pairing fail closed when that trusted address is unavailable or invalid; `x-forwarded-for` is not used for these limits.
+On the frontend service, production ingress must overwrite `x-real-ip` with the connecting client address. Signup, login, and POS pairing fail closed when that trusted address is unavailable or invalid; `x-forwarded-for` is not used for these limits.
 
 The image must retain `backend/drizzle`, its metadata, and the dependencies for the migration command. Railway runs the pre-deploy command with the service's private network and environment. A failed migration must stop the deployment. Do not publish PostgreSQL networking or create another credential merely to run a release migration.
 
@@ -21,13 +21,13 @@ References: [Railway pre-deploy commands](https://docs.railway.com/deployments/p
 
 ## Account identity
 
-Email addresses remain the account identifier and login credential. New accounts must verify mailbox ownership before they can sign in or create a shop. The API sends verification mail through Resend. Configure `RESEND_API_KEY`, `EMAIL_FROM`, and `APP_BASE_URL` on the API service before enabling signup; missing configuration fails signup closed. Existing accounts are retained as verified by the additive migration. Password recovery remains operator-managed through the existing database access procedure.
+Email addresses remain the account identifier and login credential. Signup creates an authenticated session immediately and has no outbound email or email ownership verification dependency. Password recovery remains operator-managed through the existing database access procedure.
 
 ## Release sequence
 
 1. Review the complete change and its verification evidence. Confirm the exact API and frontend commits to deploy.
 2. Before a schema change, confirm the PostgreSQL backup/recovery configuration and take a restorable backup using existing authorized database access. Record its identifier and retention without logging connection strings.
-3. Apply migrations in the API pre-deploy step. Migration `0016_restore_email_verification` restores verification state and token storage; existing accounts remain verified, while new accounts are pending until they use a one-time link that expires after 24 hours. Historical migrations `0013_password_reset`, `0014_email_verification`, and `0015_remove_email_auth_state` remain unchanged. Migration `0012_checkout_idempotency` adds nullable columns and a unique index. Migration `0011_clear_demo_promptpay` changes only the known demo shop placeholder; it intentionally has no schema snapshot.
+3. Apply migrations in the API pre-deploy step. Migration `0019_remove_email_verification` removes verification state and token storage. Historical migrations `0013_password_reset`, `0014_email_verification`, `0015_remove_email_auth_state`, and `0016_restore_email_verification` remain unchanged. Migration `0012_checkout_idempotency` adds nullable columns and a unique index. Migration `0011_clear_demo_promptpay` changes only the known demo shop placeholder; it intentionally has no schema snapshot.
 4. Wait for API deployment success and `/health/ready`. Only then deploy the frontend that uses the new API behavior.
 5. Inspect owner settings, cash checkout, PromptPay availability, and an identical-key retry with disposable fixtures before accepting the release. Do not test transfers or create paid production orders as a smoke check.
 6. Record deployment IDs, commit IDs, migration evidence, and any environment-specific limitations.

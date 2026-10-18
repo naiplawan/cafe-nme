@@ -1,5 +1,5 @@
 import { ApiSecurity, ApiTags } from "@nestjs/swagger";
-import { Body, Controller, Get, Headers, Inject, Post, UnauthorizedException, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, Headers, Inject, Post, UseGuards } from "@nestjs/common";
 import { IsEmail, IsString, MaxLength, MinLength } from "class-validator";
 import { ApiStandardErrors } from "./common/api-errors.decorator.js";
 import { InternalApiGuard } from "./internal-api.guard.js";
@@ -32,14 +32,6 @@ export class AuthController {
   @Post("login")
   signIn(@Body() body: CredentialsDto, @Headers("x-client-address") clientAddress?: string) {
     return this.auth.signIn(body.email, body.password, clientAddress || "unknown");
-  }
-
-  @Post("verify-email")
-  verifyEmail(@Body() body: { token?: unknown }) {
-    if (typeof body?.token !== "string" || !/^[A-Za-z0-9_-]{43}$/.test(body.token)) {
-      throw new UnauthorizedException("Invalid or expired verification token");
-    }
-    return this.auth.verifyEmail(body.token);
   }
 
   @Get("session")
