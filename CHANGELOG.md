@@ -25,6 +25,7 @@ versioning (pre-1.0: minor = features, patch = fixes).
 ### Changed
 - Refined the brand and modifier admin forms and POS cart interactions for clearer workflows.
 - Signup now creates a session immediately without requiring outbound email.
+- The menu-asset route and authenticated setup/branch-selection pages now build with Next.js 16 Cache Components and stream loading shells while checking the session.
 
 ### Breaking changes
 - Email ownership verification is removed. Signup no longer verifies mailbox ownership; password recovery remains operator-managed.

@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { redirect } from "next/navigation";
 import { ArrowRight } from "lucide-react";
+import { Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import { getUser } from "@/lib/auth";
 import { findStaffShops } from "@/server/staff-session";
@@ -8,7 +9,15 @@ import { selectShop } from "@/server/auth-actions";
 
 const roleLabels = { owner: "เจ้าของร้าน", manager: "ผู้จัดการ", barista: "บาริสต้า" } as const;
 
-export default async function SelectShopPage() {
+export default function SelectShopPage() {
+  return (
+    <Suspense fallback={<main className="flex min-h-screen items-center justify-center bg-muted/40 px-4 py-10"><p className="text-sm text-muted-foreground">กำลังโหลดรายการสาขา…</p></main>}>
+      <SelectShopContent />
+    </Suspense>
+  );
+}
+
+async function SelectShopContent() {
   const user = await getUser();
   if (!user) redirect("/login");
   const shops = await findStaffShops(user.id);

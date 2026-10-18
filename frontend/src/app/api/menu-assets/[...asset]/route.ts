@@ -2,8 +2,6 @@ import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { menuAssetObjectKey } from "@/lib/menu-catalog";
 
-export const runtime = "nodejs";
-
 export async function GET(_request: Request, context: { params: Promise<{ asset: string[] }> }) {
   const { asset } = await context.params;
   const key = menuAssetObjectKey(asset);

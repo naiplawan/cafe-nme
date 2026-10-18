@@ -1,10 +1,19 @@
 import Image from "next/image";
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 import { getUser } from "@/lib/auth";
 import { findStaffShops } from "@/server/staff-session";
 import { OnboardingForm } from "./onboarding-form";
 
-export default async function OnboardingPage() {
+export default function OnboardingPage() {
+  return (
+    <Suspense fallback={<main className="flex min-h-screen items-center justify-center bg-muted/40 px-4 py-10"><p className="text-sm text-muted-foreground">กำลังตรวจสอบบัญชี…</p></main>}>
+      <OnboardingPageContent />
+    </Suspense>
+  );
+}
+
+async function OnboardingPageContent() {
   const user = await getUser();
   if (!user) redirect("/login");
   const shops = await findStaffShops(user.id);
