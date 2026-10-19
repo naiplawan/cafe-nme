@@ -7,12 +7,21 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import type { TransactionSql } from "postgres";
+import {
+  businessDate,
+  calculatePrice,
+  CheckoutDomainError,
+  rewardDiscount,
+  stampsForLines,
+  type CheckoutCartLine,
+  type CheckoutProduct,
+} from "./checkout-domain.js";
 import { DatabaseService } from "./database.service.js";
 import { clearExpiredSoldOut } from "./sold-out.js";
 
 export interface CheckoutInput {
   requestId?: string;
-  lines: { productId: string; qty: number; modifierIds: string[]; note?: string }[];
+  lines: CheckoutCartLine[];
   memberId?: string | null;
   redeemRewardId?: string | null;
   payment: { method: "cash"; cashReceivedSatang: number } | { method: "promptpay" };
@@ -28,67 +37,6 @@ export interface CheckoutReceipt {
   stampsEarned: number;
   rewardsCreated: number;
   replayed: boolean;
-}
-
-interface PricedLine {
-  productId: string;
-  name: string;
-  qty: number;
-  note: string | null;
-  earnsStamp: boolean;
-  modifiers: { id: string; name: string; priceDeltaSatang: number }[];
-  unitPriceSatang: number;
-  lineTotalSatang: number;
-}
-
-type CheckoutFailure = "empty_cart" | "pricing" | "sold_out" | "member_not_found" | "reward_unavailable" | "cash_insufficient" | "promptpay_not_configured";
-
-class CheckoutDomainError extends Error {
-  constructor(readonly code: CheckoutFailure) { super(code); }
-}
-
-function businessDate(at: Date, timeZone: string): string {
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone, year: "numeric", month: "2-digit", day: "2-digit",
-  }).formatToParts(at);
-  const values = Object.fromEntries(parts.map(({ type, value }) => [type, value]));
-  return `${values.year}-${values.month}-${values.day}`;
-}
-
-function calculatePrice(lines: CheckoutInput["lines"], products: {
-  id: string; name: string; basePriceSatang: number; earnsStamp: boolean; soldOut: boolean;
-  groups: { minSelect: number; maxSelect: number; modifiers: { id: string; name: string; priceDeltaSatang: number }[] }[];
-}[]): { lines: PricedLine[]; subtotalSatang: number } {
-  const byId = new Map(products.map((product) => [product.id, product]));
-  const priced = lines.map((line): PricedLine => {
-    const product = byId.get(line.productId);
-    if (!product || !Number.isInteger(line.qty) || line.qty < 1 || line.qty > 99
-      || new Set(line.modifierIds).size !== line.modifierIds.length) throw new CheckoutDomainError("pricing");
-    if (product.soldOut) throw new CheckoutDomainError("sold_out");
-    const selected = new Set(line.modifierIds);
-    const modifiers = product.groups.flatMap((group) => group.modifiers).filter((modifier) => selected.has(modifier.id));
-    if (modifiers.length !== line.modifierIds.length) throw new CheckoutDomainError("pricing");
-    for (const group of product.groups) {
-      const count = group.modifiers.filter((modifier) => selected.has(modifier.id)).length;
-      if (count < group.minSelect || count > group.maxSelect) throw new CheckoutDomainError("pricing");
-    }
-    const note = line.note?.trim().slice(0, 120) || null;
-    const unitPriceSatang = Math.max(0, product.basePriceSatang + modifiers.reduce((sum, modifier) => sum + modifier.priceDeltaSatang, 0));
-    return {
-      productId: product.id, name: product.name, qty: line.qty, note,
-      earnsStamp: product.earnsStamp, modifiers, unitPriceSatang, lineTotalSatang: unitPriceSatang * line.qty,
-    };
-  });
-  return { lines: priced, subtotalSatang: priced.reduce((sum, line) => sum + line.lineTotalSatang, 0) };
-}
-
-function rewardDiscount(lines: PricedLine[]): number {
-  const eligible = lines.filter((line) => line.earnsStamp);
-  return eligible.length === 0 ? 0 : Math.min(...eligible.map((line) => line.unitPriceSatang));
-}
-
-function stampsForLines(lines: PricedLine[]): number {
-  return lines.reduce((sum, line) => sum + (line.earnsStamp ? line.qty : 0), 0);
 }
 
 async function checkoutMenu(tx: TransactionSql, shopId: string) {
@@ -108,7 +56,7 @@ async function checkoutMenu(tx: TransactionSql, shopId: string) {
     where p.shop_id = ${shopId}::uuid and p.is_active = true
     order by p.sort, pmg.sort, mg.sort, m.sort
   `;
-  const byProduct = new Map<string, ReturnType<typeof productsType>>();
+  const byProduct = new Map<string, CheckoutProduct>();
   for (const row of rows) {
     let product = byProduct.get(row.id);
     if (!product) {
@@ -129,15 +77,6 @@ async function checkoutMenu(tx: TransactionSql, shopId: string) {
   }
   return [...byProduct.values()];
 }
-
-function productsType() {
-  return {
-    id: "", name: "", basePriceSatang: 0, earnsStamp: false, soldOut: false,
-    groups: [] as { id: string; minSelect: number; maxSelect: number; modifiers: { id: string; name: string; priceDeltaSatang: number }[] }[],
-  };
-}
-
-function asNumber(value: number | string | null): number { return Number(value ?? 0); }
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -183,26 +122,6 @@ function parseCheckoutResult(value: unknown): CheckoutReceipt | null {
 @Injectable()
 export class OrdersService {
   constructor(@Inject(DatabaseService) private readonly database: DatabaseService) {}
-
-  async getPromptPayId(shopId: string) {
-    const [shop] = await this.database.connection<{ promptpayId: string | null }[]>`
-      select promptpay_id as "promptpayId" from shops where id = ${shopId}::uuid limit 1
-    `;
-    return shop ? { promptpayId: shop.promptpayId } : null;
-  }
-
-  async getReceiptRecipient(shopId: string, orderId: string) {
-    const [recipient] = await this.database.connection<{
-      dailyNo: number; hasMember: boolean; lineUserId: string | null;
-    }[]>`
-      select o.daily_no as "dailyNo", (o.member_id is not null) as "hasMember",
-        m.line_user_id as "lineUserId"
-      from orders o
-      left join members m on m.id = o.member_id and m.shop_id = ${shopId}::uuid and m.deleted_at is null
-      where o.id = ${orderId}::uuid and o.shop_id = ${shopId}::uuid limit 1
-    `;
-    return recipient ?? null;
-  }
 
   async checkout(shopId: string, staffId: string, input: CheckoutInput): Promise<CheckoutReceipt> {
     if (input.lines.length === 0) throw new BadRequestException({ code: "empty_cart" });
@@ -349,72 +268,6 @@ export class OrdersService {
       if (error instanceof CheckoutDomainError) throw new BadRequestException({ code: error.code });
       throw error;
     }
-  }
-
-  async listOrdersForDay(shopId: string, date: string) {
-    const rows = await this.database.connection<{
-      id: string; dailyNo: number; status: "open" | "paid" | "void"; totalSatang: number;
-      paymentMethod: "cash" | "promptpay" | null; memberName: string | null; staffName: string | null;
-      itemCount: number | string; paidAt: Date | null;
-    }[]>`
-      select o.id::text as id, o.daily_no as "dailyNo", o.status, o.total_satang as "totalSatang",
-        p.method as "paymentMethod", m.display_name as "memberName", s.name as "staffName",
-        coalesce(sum(i.qty), 0) as "itemCount", o.paid_at as "paidAt"
-      from orders o
-      left join payments p on p.order_id = o.id
-      left join members m on m.id = o.member_id and m.shop_id = ${shopId}::uuid
-      left join staff s on s.id = o.staff_id and s.shop_id = ${shopId}::uuid
-      left join order_items i on i.order_id = o.id
-      where o.shop_id = ${shopId}::uuid and o.business_date = ${date}
-      group by o.id, p.method, m.display_name, s.name
-      order by o.created_at desc
-    `;
-    return rows.map((row) => ({ ...row, totalSatang: Number(row.totalSatang), itemCount: asNumber(row.itemCount) }));
-  }
-
-  async getOrder(shopId: string, orderId: string) {
-    const [order] = await this.database.connection<{
-      id: string; dailyNo: number; status: "open" | "paid" | "void"; totalSatang: number;
-      subtotalSatang: number; discountSatang: number; paidAt: Date | null; voidedAt: Date | null;
-      businessDate: string; shopName: string; receiptFooter: string | null; memberName: string | null;
-      staffName: string | null; paymentMethod: "cash" | "promptpay" | null; cashReceivedSatang: number | null;
-    }[]>`
-      select o.id::text as id, o.daily_no as "dailyNo", o.status, o.total_satang as "totalSatang",
-        o.subtotal_satang as "subtotalSatang", o.discount_satang as "discountSatang", o.paid_at as "paidAt",
-        o.voided_at as "voidedAt", o.business_date as "businessDate", sh.name as "shopName",
-        sh.receipt_footer as "receiptFooter", m.display_name as "memberName", st.name as "staffName",
-        p.method as "paymentMethod", p.cash_received_satang as "cashReceivedSatang"
-      from orders o join shops sh on sh.id = o.shop_id
-      left join members m on m.id = o.member_id and m.shop_id = ${shopId}::uuid
-      left join staff st on st.id = o.staff_id and st.shop_id = ${shopId}::uuid
-      left join payments p on p.order_id = o.id
-      where o.id = ${orderId}::uuid and o.shop_id = ${shopId}::uuid limit 1
-    `;
-    if (!order) return null;
-    const itemRows = await this.database.connection<{
-      id: string; name: string; qty: number; unitPriceSatang: number; note: string | null;
-    }[]>`
-      select id::text as id, name_snapshot as name, qty, unit_price_satang as "unitPriceSatang", note
-      from order_items where order_id = ${orderId}::uuid
-    `;
-    const modifiers = itemRows.length ? await this.database.connection<{
-      orderItemId: string; name: string; priceDeltaSatang: number;
-    }[]>`
-      select order_item_id::text as "orderItemId", name_snapshot as name, price_delta_satang as "priceDeltaSatang"
-      from order_item_modifiers where order_item_id in ${this.database.connection(itemRows.map((item) => item.id))}
-    ` : [];
-    const items = itemRows.map((item) => ({
-      ...item,
-      modifiers: modifiers.filter((modifier) => modifier.orderItemId === item.id)
-        .map(({ name, priceDeltaSatang }) => ({ name, priceDeltaSatang: Number(priceDeltaSatang) })),
-    }));
-    return {
-      ...order,
-      totalSatang: Number(order.totalSatang), subtotalSatang: Number(order.subtotalSatang),
-      discountSatang: Number(order.discountSatang),
-      cashReceivedSatang: order.cashReceivedSatang === null ? null : Number(order.cashReceivedSatang),
-      itemCount: items.reduce((count, item) => count + Number(item.qty), 0), items,
-    };
   }
 
   async voidOrder(shopId: string, orderId: string, managerStaffId: string): Promise<void> {

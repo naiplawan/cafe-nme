@@ -1,4 +1,13 @@
-# Module contracts (weeks 2–6)
+# Historical module contracts (weeks 2–6)
+
+This document records the original parallel-build contracts and is not the current
+implementation guide. The runtime architecture is Next.js server adapters → NestJS
+API → Drizzle → PostgreSQL, as described in [PLAN.md](../PLAN.md). NestJS owns
+database access; frontend server modules use the shared
+`frontend/src/server/internal-api.ts` transport. The generated API reference is
+`backend/openapi.json` (`pnpm --filter @cafenme/backend openapi:generate`). Frontend
+adapters currently retain Zod runtime response validation rather than consuming
+generated OpenAPI client types.
 
 Workers implement these exact exports so modules built in parallel fit together.
 All server modules start with `import "server-only"`. Every function that touches shop

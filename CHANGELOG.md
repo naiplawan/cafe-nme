@@ -7,6 +7,19 @@ versioning (pre-1.0: minor = features, patch = fixes).
 ## [Unreleased]
 
 ### Added
+- Frontend server adapters share one internal API transport for URL construction, authentication, JSON headers, and uncached requests.
+- Database constraints enforce valid stamp goals, product and order prices, modifier selection bounds, and order quantities; migration `0020_business_invariants` applies them.
+- Isolated checkout pricing and reward calculations into a domain module with focused unit coverage.
+
+### Changed
+- Order read queries now live in a dedicated service, separate from checkout and order mutations.
+- API failures log request context and stack frames while keeping exception messages out of logs and client responses.
+- Architecture documentation now describes the Next.js-to-NestJS API boundary and identifies the original module contracts as historical.
+
+### Operations
+- Apply migration `0020_business_invariants` before deploying the updated API.
+
+### Added
 - Owner dashboards compare recent sales and order counts across branches the owner manages.
 - Login and signup pages explain Cafe'nMe's multi-branch features on desktop while keeping a compact mobile layout.
 

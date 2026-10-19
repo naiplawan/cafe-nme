@@ -1,27 +1,19 @@
 import "server-only";
 import { z } from "zod";
-import { createInternalApiToken } from "@/lib/internal-api-token";
-
-const TRAILING_SLASH = /\/$/;
+import { internalApiFetch, internalApiUrl } from "@/server/internal-api";
 const settingsSchema = z.object({ promptpayId: z.string().nullable() }).strict();
 const successSchema = z.object({ success: z.literal(true) }).strict();
 
 function endpoint(shopId: string, suffix = "") {
-  const apiBaseUrl = process.env.API_BASE_URL ?? (
-    process.env.NODE_ENV === "production" ? undefined : "http://127.0.0.1:3101"
-  );
-  if (!apiBaseUrl) throw new Error("API_BASE_URL is required to access payment settings");
-  return `${apiBaseUrl.replace(TRAILING_SLASH, "")}/v1/shops/${encodeURIComponent(shopId)}/payment-settings/promptpay${suffix}`;
+  return internalApiUrl(`/v1/shops/${encodeURIComponent(shopId)}/payment-settings/promptpay${suffix}`, "API_BASE_URL is required to access payment settings");
 }
 
 async function request(shopId: string, options: RequestInit) {
-  return fetch(endpoint(shopId), {
+  return internalApiFetch(endpoint(shopId), {
     ...options,
     headers: {
-      "x-internal-api-token": createInternalApiToken(),
       ...options.headers,
     },
-    cache: "no-store",
   });
 }
 
@@ -41,10 +33,7 @@ async function throwApiError(response: Response): Promise<never> {
 }
 
 export async function getPromptPaySettings(shopId: string, actorStaffId: string) {
-  const response = await fetch(endpoint(shopId, `?actorStaffId=${encodeURIComponent(actorStaffId)}`), {
-    headers: { "x-internal-api-token": createInternalApiToken() },
-    cache: "no-store",
-  });
+  const response = await internalApiFetch(endpoint(shopId, `?actorStaffId=${encodeURIComponent(actorStaffId)}`));
   if (!response.ok) return throwApiError(response);
   const parsed = settingsSchema.safeParse(await response.json());
   if (!parsed.success) throw new Error("Nest payment-settings API returned an invalid payload");

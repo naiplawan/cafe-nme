@@ -1,7 +1,7 @@
 import "server-only";
 import { cache } from "react";
 import { z } from "zod";
-import { createInternalApiToken } from "@/lib/internal-api-token";
+import { internalApiFetch, internalApiUrl } from "@/server/internal-api";
 
 export type ProductInput = {
   name: string;
@@ -13,7 +13,6 @@ export type ProductInput = {
   isActive: boolean;
 };
 
-const TRAILING_SLASH = /\/$/;
 const categorySchema = z.object({
   id: z.uuid(),
   shopId: z.uuid(),
@@ -82,22 +81,12 @@ export function stockMenuModifierGroupNames(kind: keyof typeof STOCK_MENU_MODIFI
 }
 
 function menuUrl(shopId: string, suffix = "") {
-  const apiBaseUrl = process.env.API_BASE_URL ?? (
-    process.env.NODE_ENV === "production" ? undefined : "http://127.0.0.1:3101"
-  );
-  if (!apiBaseUrl) throw new Error("API_BASE_URL is required to manage the menu");
-  return `${apiBaseUrl.replace(TRAILING_SLASH, "")}/v1/shops/${encodeURIComponent(shopId)}/menu${suffix}`;
+  return internalApiUrl(`/v1/shops/${encodeURIComponent(shopId)}/menu${suffix}`, "API_BASE_URL is required to manage the menu");
 }
 
 async function requestMenu<T>(shopId: string, suffix: string, options: RequestInit, schema: z.ZodType<T>): Promise<T> {
-  const response = await fetch(menuUrl(shopId, suffix), {
+  const response = await internalApiFetch(menuUrl(shopId, suffix), {
     ...options,
-    headers: {
-      "x-internal-api-token": createInternalApiToken(),
-      ...(options.body ? { "content-type": "application/json" } : {}),
-      ...options.headers,
-    },
-    cache: "no-store",
   });
   if (!response.ok) throw new Error(`Nest menu API returned ${response.status}`);
   const parsed = schema.safeParse(await response.json());
@@ -149,10 +138,7 @@ export async function listProducts(shopId: string) {
 }
 
 export async function getProduct(shopId: string, productId: string): Promise<ProductDetail | null> {
-  const response = await fetch(menuUrl(shopId, `/products/${encodeURIComponent(productId)}`), {
-    headers: { "x-internal-api-token": createInternalApiToken() },
-    cache: "no-store",
-  });
+  const response = await internalApiFetch(menuUrl(shopId, `/products/${encodeURIComponent(productId)}`));
   if (response.status === 404) return null;
   if (!response.ok) throw new Error(`Nest menu API returned ${response.status}`);
   const parsed = productDetailSchema.safeParse(await response.json());

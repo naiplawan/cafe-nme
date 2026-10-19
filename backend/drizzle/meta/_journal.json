@@ -141,6 +141,13 @@
       "when": 1792410000002,
       "tag": "0019_remove_email_verification",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1792416656060,
+      "tag": "0020_business_invariants",
+      "breakpoints": true
     }
   ]
 }

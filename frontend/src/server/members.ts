@@ -1,10 +1,9 @@
 import "server-only";
 import { z } from "zod";
-import { createInternalApiToken } from "@/lib/internal-api-token";
+import { internalApiFetch } from "@/server/internal-api";
 import { verifyMemberToken } from "@/lib/member-token";
 
 const UUID = z.uuid();
-const TRAILING_SLASH = /\/$/;
 const memberRowSchema = z.object({
   id: UUID,
   displayName: z.string(),
@@ -17,19 +16,7 @@ const memberRowSchema = z.object({
 export type MemberRow = z.infer<typeof memberRowSchema>;
 
 async function requestApi(path: string, init?: RequestInit): Promise<unknown> {
-  const apiBaseUrl = process.env.API_BASE_URL ?? (
-    process.env.NODE_ENV === "production" ? undefined : "http://127.0.0.1:3101"
-  );
-  if (!apiBaseUrl) { throw new Error("API_BASE_URL is required to access members"); }
-  const response = await fetch(`${apiBaseUrl.replace(TRAILING_SLASH, "")}${path}`, {
-    ...init,
-    headers: {
-      "x-internal-api-token": createInternalApiToken(),
-      ...(init?.body ? { "content-type": "application/json" } : {}),
-      ...init?.headers,
-    },
-    cache: "no-store",
-  });
+  const response = await internalApiFetch(path, init, "API_BASE_URL is required to access members");
   if (response.status === 409) {
     // A conflict carries a message meant for staff (e.g. "เบอร์โทรนี้มีสมาชิกแล้ว").
     const body: unknown = await response.json().catch(() => null);

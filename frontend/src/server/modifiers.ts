@@ -1,8 +1,6 @@
 import "server-only";
 import { z } from "zod";
-import { createInternalApiToken } from "@/lib/internal-api-token";
-
-const TRAILING_SLASH = /\/$/;
+import { internalApiFetch, internalApiUrl } from "@/server/internal-api";
 const optionSchema = z.object({
   id: z.uuid(),
   groupId: z.uuid(),
@@ -27,11 +25,7 @@ const standardGroupsResultSchema = z.object({ created: z.number().int(), linkedP
 const setProductsResultSchema = z.object({ success: z.literal(true) });
 
 function modifiersUrl(shopId: string, suffix = "") {
-  const apiBaseUrl = process.env.API_BASE_URL ?? (
-    process.env.NODE_ENV === "production" ? undefined : "http://127.0.0.1:3101"
-  );
-  if (!apiBaseUrl) throw new Error("API_BASE_URL is required to manage modifiers");
-  return `${apiBaseUrl.replace(TRAILING_SLASH, "")}/v1/shops/${encodeURIComponent(shopId)}/modifiers${suffix}`;
+  return internalApiUrl(`/v1/shops/${encodeURIComponent(shopId)}/modifiers${suffix}`, "API_BASE_URL is required to manage modifiers");
 }
 
 async function requestModifiers<T>(
@@ -41,14 +35,12 @@ async function requestModifiers<T>(
   schema: z.ZodType<T>,
   body?: unknown,
 ): Promise<T> {
-  const response = await fetch(modifiersUrl(shopId, suffix), {
+  const response = await internalApiFetch(modifiersUrl(shopId, suffix), {
     method,
     headers: {
-      "x-internal-api-token": createInternalApiToken(),
       ...(body === undefined ? {} : { "content-type": "application/json" }),
     },
     ...(body === undefined ? {} : { body: JSON.stringify(body) }),
-    cache: "no-store",
   });
   if (!response.ok) throw new Error(`Nest modifiers API returned ${response.status}`);
   const parsed = schema.safeParse(await response.json());

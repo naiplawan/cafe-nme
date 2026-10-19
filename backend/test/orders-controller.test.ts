@@ -18,7 +18,7 @@ function body(overrides: Record<string, unknown> = {}) {
 }
 
 test("checkout rejects a provided request key that is not a UUID", () => {
-  const controller = new OrdersController({ checkout: async () => ({}) } as never);
+  const controller = new OrdersController({ checkout: async () => ({}) } as never, {} as never);
 
   assert.throws(
     () => controller.checkout(shopId, body({ requestId: "retry-key" })),
@@ -27,7 +27,7 @@ test("checkout rejects a provided request key that is not a UUID", () => {
 });
 
 test("checkout rejects an unsupported nested line field when called without ValidationPipe", () => {
-  const controller = new OrdersController({ checkout: async () => ({}) } as never);
+  const controller = new OrdersController({ checkout: async () => ({}) } as never, {} as never);
 
   assert.throws(
     () => controller.checkout(shopId, body({ lines: [{ productId, qty: 1, modifierIds: [], unitPriceSatang: 1 }] })),
@@ -36,7 +36,7 @@ test("checkout rejects an unsupported nested line field when called without Vali
 });
 
 test("checkout rejects unsupported top-level and payment fields when called without ValidationPipe", () => {
-  const controller = new OrdersController({ checkout: async () => ({}) } as never);
+  const controller = new OrdersController({ checkout: async () => ({}) } as never, {} as never);
 
   for (const candidate of [
     body({ unexpected: true }),
@@ -56,7 +56,7 @@ test("checkout accepts an omitted request key for legacy clients", async () => {
       received = input;
       return { ok: true };
     },
-  } as never);
+  } as never, {} as never);
 
   await controller.checkout(shopId, body());
   assert.equal((received as { requestId?: string }).requestId, undefined);
@@ -70,8 +70,26 @@ test("checkout forwards a valid request key to the service", async () => {
       received = input;
       return { ok: true };
     },
-  } as never);
+  } as never, {} as never);
 
   await controller.checkout(shopId, body({ requestId }));
   assert.equal((received as { requestId?: string }).requestId, requestId);
+});
+
+test("order detail reads are delegated with the shop scope", async () => {
+  const orderId = randomUUID();
+  const expected = { id: orderId, shopId };
+  let received: unknown[] = [];
+  const controller = new OrdersController(
+    { checkout: async () => ({}) } as never,
+    {
+      getOrder: async (...args: unknown[]) => {
+        received = args;
+        return expected;
+      },
+    } as never,
+  );
+
+  assert.deepEqual(await controller.get(shopId, orderId), expected);
+  assert.deepEqual(received, [shopId, orderId]);
 });

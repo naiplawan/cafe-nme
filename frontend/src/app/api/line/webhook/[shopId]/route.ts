@@ -3,11 +3,10 @@ import { messagingApi, validateSignature } from "@line/bot-sdk";
 import { after } from "next/server";
 import { z } from "zod";
 import { decryptSecret } from "@/lib/crypto";
-import { createInternalApiToken } from "@/lib/internal-api-token";
 import { logger } from "@/lib/logger";
+import { internalApiFetch, internalApiUrl } from "@/server/internal-api";
 import { readBoundedBody } from "@/server/read-bounded-body";
 
-const TRAILING_SLASH = /\/$/;
 const UUID = z.uuid();
 const MAX_WEBHOOK_BYTES = 1_048_576;
 const webhookConfigSchema = z.object({
@@ -18,11 +17,8 @@ const webhookConfigSchema = z.object({
 }).strict();
 
 async function getWebhookConfig(shopId: string) {
-  const base = process.env.API_BASE_URL ?? (process.env.NODE_ENV === "production" ? undefined : "http://127.0.0.1:3101");
-  if (!base) { throw new Error("API_BASE_URL is required to access LINE webhook configuration"); }
-  const response = await fetch(
-    `${base.replace(TRAILING_SLASH, "")}/v1/shops/${encodeURIComponent(UUID.parse(shopId))}/line/webhook-config`,
-    { headers: { "x-internal-api-token": createInternalApiToken() }, cache: "no-store" },
+  const response = await internalApiFetch(
+    internalApiUrl(`/v1/shops/${encodeURIComponent(UUID.parse(shopId))}/line/webhook-config`, "API_BASE_URL is required to access LINE webhook configuration"),
   );
   if (!response.ok) { throw new Error(`Nest LINE API returned ${response.status}`); }
   const value: unknown = await response.json();

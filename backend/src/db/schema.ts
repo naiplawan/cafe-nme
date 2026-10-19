@@ -1,5 +1,7 @@
+import { sql } from "drizzle-orm";
 import {
   boolean,
+  check,
   customType,
   index,
   integer,
@@ -65,7 +67,7 @@ export const shops = pgTable("shops", {
   // Sold-out products become available again on the shop's next business day.
   autoClearSoldOut: boolean("auto_clear_sold_out").notNull().default(true),
   createdAt: createdAt(),
-});
+}, (t) => [check("shops_stamp_goal_positive_check", sql`${t.stampGoal} > 0`)]);
 
 export const staff = pgTable(
   "staff",
@@ -129,7 +131,10 @@ export const products = pgTable(
     sort: integer("sort").notNull().default(0),
     createdAt: createdAt(),
   },
-  (t) => [index("products_shop_idx").on(t.shopId)],
+  (t) => [
+    index("products_shop_idx").on(t.shopId),
+    check("products_base_price_nonnegative_check", sql`${t.basePriceSatang} >= 0`),
+  ],
 );
 
 export const modifierGroups = pgTable(
@@ -142,7 +147,10 @@ export const modifierGroups = pgTable(
     maxSelect: integer("max_select").notNull().default(1),
     sort: integer("sort").notNull().default(0),
   },
-  (t) => [index("modifier_groups_shop_idx").on(t.shopId)],
+  (t) => [
+    index("modifier_groups_shop_idx").on(t.shopId),
+    check("modifier_groups_selection_bounds_check", sql`${t.minSelect} >= 0 and ${t.maxSelect} >= ${t.minSelect}`),
+  ],
 );
 
 export const modifiers = pgTable("modifiers", {
@@ -231,7 +239,10 @@ export const orderItems = pgTable("order_items", {
   unitPriceSatang: integer("unit_price_satang").notNull(),
   qty: integer("qty").notNull().default(1),
   note: text("note"),
-});
+}, (t) => [
+  check("order_items_qty_bounds_check", sql`${t.qty} between 1 and 99`),
+  check("order_items_unit_price_nonnegative_check", sql`${t.unitPriceSatang} >= 0`),
+]);
 
 export const orderItemModifiers = pgTable("order_item_modifiers", {
   id: id(),

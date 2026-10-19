@@ -43,7 +43,18 @@ export class HttpExceptionFilter implements ExceptionFilter {
       : undefined;
 
     if (status >= 500) {
-      this.logger.error(`${requestId} ${request.method} ${request.path} ${exception instanceof Error ? exception.name : "UnknownError"}`);
+      const error = exception instanceof Error ? exception : null;
+      const stack = error?.stack?.split("\n").slice(1).join("\n");
+      const causeName = error?.cause instanceof Error ? error.cause.name : undefined;
+      this.logger.error(JSON.stringify({
+        requestId,
+        method: request.method,
+        path: request.path,
+        statusCode: status,
+        errorName: error?.name ?? "UnknownError",
+        ...(causeName ? { causeName } : {}),
+        ...(stack ? { stack } : {}),
+      }));
     }
 
     const errorBody: ErrorBody = {

@@ -1,8 +1,6 @@
 import "server-only";
 import { z } from "zod";
-import { createInternalApiToken } from "@/lib/internal-api-token";
-
-const TRAILING_SLASH = /\/$/;
+import { internalApiFetch, internalApiUrl } from "@/server/internal-api";
 const UUID = z.uuid();
 const staffSessionSchema = z.object({
   staff: z.object({
@@ -19,22 +17,10 @@ const staffShopsSchema = z.array(z.object({
   shopId: UUID,
 }).strict());
 
-function apiBaseUrl() {
-  const base = process.env.API_BASE_URL ?? (process.env.NODE_ENV === "production" ? undefined : "http://127.0.0.1:3101");
-  if (!base) {
-    throw new Error("API_BASE_URL is required to access staff sessions");
-  }
-  return base.replace(TRAILING_SLASH, "");
-}
-
 export async function findStaffShops(authUserId: string) {
   const userId = UUID.parse(authUserId);
-  const response = await fetch(
-    `${apiBaseUrl()}/v1/auth-users/${encodeURIComponent(userId)}/shops`,
-    {
-      headers: { "x-internal-api-token": createInternalApiToken() },
-      cache: "no-store",
-    },
+  const response = await internalApiFetch(
+    internalApiUrl(`/v1/auth-users/${encodeURIComponent(userId)}/shops`, "API_BASE_URL is required to access staff sessions"),
   );
 
   if (!response.ok) {
@@ -50,12 +36,8 @@ export async function findStaffShops(authUserId: string) {
 export async function findStaffSession(authUserId: string, shopId: string) {
   const userId = UUID.parse(authUserId);
   const selectedShopId = UUID.parse(shopId);
-  const response = await fetch(
-    `${apiBaseUrl()}/v1/auth-users/${encodeURIComponent(userId)}/shops/${encodeURIComponent(selectedShopId)}/staff-session`,
-    {
-      headers: { "x-internal-api-token": createInternalApiToken() },
-      cache: "no-store",
-    },
+  const response = await internalApiFetch(
+    internalApiUrl(`/v1/auth-users/${encodeURIComponent(userId)}/shops/${encodeURIComponent(selectedShopId)}/staff-session`, "API_BASE_URL is required to access staff sessions"),
   );
 
   if (!response.ok) {

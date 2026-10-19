@@ -16,6 +16,7 @@ import { ApiStandardErrors } from "./common/api-errors.decorator.js";
 import { CheckoutDto, VoidOrderDto } from "./common/request.dto.js";
 import { CheckoutReceiptDto } from "./checkout-receipt.dto.js";
 import { InternalApiGuard } from "./internal-api.guard.js";
+import { OrderQueriesService } from "./order-queries.service.js";
 import { type CheckoutInput, OrdersService } from "./orders.service.js";
 
 type CheckoutRequest = CheckoutInput & { staffId: string };
@@ -75,7 +76,10 @@ function parseCheckout(value: unknown): CheckoutRequest {
 @Controller("v1/shops/:shopId/orders")
 @UseGuards(InternalApiGuard)
 export class OrdersController {
-  constructor(@Inject(OrdersService) private readonly orders: OrdersService) {}
+  constructor(
+    @Inject(OrdersService) private readonly orders: OrdersService,
+    @Inject(OrderQueriesService) private readonly queries: OrderQueriesService,
+  ) {}
 
   @Post()
   @ApiOperation({
@@ -100,7 +104,7 @@ export class OrdersController {
 
   @Get("promptpay-config")
   getPromptPayId(@Param("shopId", new ParseUUIDPipe()) shopId: string) {
-    return this.orders.getPromptPayId(shopId);
+    return this.queries.getPromptPayId(shopId);
   }
 
   @Get(":orderId/receipt-recipient")
@@ -108,7 +112,7 @@ export class OrdersController {
     @Param("shopId", new ParseUUIDPipe()) shopId: string,
     @Param("orderId", new ParseUUIDPipe()) orderId: string,
   ) {
-    return this.orders.getReceiptRecipient(shopId, orderId);
+    return this.queries.getReceiptRecipient(shopId, orderId);
   }
 
   @Get()
@@ -120,7 +124,7 @@ export class OrdersController {
     if (!date || !parsed || Number.isNaN(parsed.valueOf()) || parsed.toISOString().slice(0, 10) !== date) {
       throw new BadRequestException("date must be a valid YYYY-MM-DD date");
     }
-    return this.orders.listOrdersForDay(shopId, date);
+    return this.queries.listOrdersForDay(shopId, date);
   }
 
   @Get(":orderId")
@@ -128,7 +132,7 @@ export class OrdersController {
     @Param("shopId", new ParseUUIDPipe()) shopId: string,
     @Param("orderId", new ParseUUIDPipe()) orderId: string,
   ) {
-    return this.orders.getOrder(shopId, orderId);
+    return this.queries.getOrder(shopId, orderId);
   }
 
   @Post(":orderId/void")

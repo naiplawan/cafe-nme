@@ -1,31 +1,11 @@
 import "server-only";
 import { z } from "zod";
-import { createInternalApiToken } from "@/lib/internal-api-token";
-
-const TRAILING_SLASH = /\/$/;
+import { internalApiFetch, internalApiUrl } from "@/server/internal-api";
 const ownerExistsSchema = z.object({ exists: z.boolean() });
 const createShopSchema = z.object({ status: z.literal("created"), shopId: z.uuid() });
 
-function apiUrl(path: string) {
-  const baseUrl = process.env.API_BASE_URL ?? (
-    process.env.NODE_ENV === "production" ? undefined : "http://127.0.0.1:3101"
-  );
-  if (!baseUrl) {
-    throw new Error("API_BASE_URL is required to set up a shop");
-  }
-  return `${baseUrl.replace(TRAILING_SLASH, "")}${path}`;
-}
-
 async function request<T>(path: string, schema: z.ZodType<T>, init?: RequestInit): Promise<T> {
-  const response = await fetch(apiUrl(path), {
-    ...init,
-    headers: {
-      "x-internal-api-token": createInternalApiToken(),
-      ...(init?.body ? { "content-type": "application/json" } : {}),
-      ...init?.headers,
-    },
-    cache: "no-store",
-  });
+  const response = await internalApiFetch(internalApiUrl(path, "API_BASE_URL is required to set up a shop"), init);
   if (!response.ok) {
     throw new Error(`Nest shop setup API returned ${response.status}`);
   }

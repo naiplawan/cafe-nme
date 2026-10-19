@@ -1,6 +1,6 @@
 import "server-only";
 import { z } from "zod";
-import { createInternalApiToken } from "@/lib/internal-api-token";
+import { internalApiFetch, internalApiUrl } from "@/server/internal-api";
 
 export interface SalesSummary {
   orders: number;
@@ -16,7 +16,6 @@ export interface SalesSummary {
   newMembers: number;
 }
 
-const TRAILING_SLASH = /\/$/;
 const shopIdSchema = z.uuid();
 const rangeSchema = z.object({ from: z.iso.date(), to: z.iso.date() }).refine(({ from, to }) => {
   const days = (Date.parse(`${to}T00:00:00.000Z`) - Date.parse(`${from}T00:00:00.000Z`)) / 86_400_000;
@@ -67,16 +66,8 @@ function reportUrl(shopId: string, report: string, range?: DateRange) {
     throw new Error("A valid report date range is required");
   }
 
-  const apiBaseUrl = process.env.API_BASE_URL ?? (
-    process.env.NODE_ENV === "production" ? undefined : "http://127.0.0.1:3101"
-  );
-  if (!apiBaseUrl) {
-    throw new Error("API_BASE_URL is required to read reports");
-  }
-
   const url = new URL(
-    `/v1/shops/${encodeURIComponent(shopId)}/reports/${report}`,
-    `${apiBaseUrl.replace(TRAILING_SLASH, "")}/`,
+    internalApiUrl(`/v1/shops/${encodeURIComponent(shopId)}/reports/${report}`, "API_BASE_URL is required to read reports"),
   );
   if (range) {
     url.searchParams.set("from", range.from);
@@ -91,10 +82,7 @@ async function requestReport<T>(
   schema: ReportSchema<T>,
   range?: DateRange,
 ): Promise<T> {
-  const response = await fetch(reportUrl(shopId, report, range), {
-    headers: { "x-internal-api-token": createInternalApiToken() },
-    cache: "no-store",
-  });
+  const response = await internalApiFetch(reportUrl(shopId, report, range));
   if (!response.ok) {
     throw new Error(`Nest reports API returned ${response.status}`);
   }

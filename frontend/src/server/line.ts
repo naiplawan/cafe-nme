@@ -2,8 +2,8 @@ import "server-only";
 import { messagingApi } from "@line/bot-sdk";
 import { z } from "zod";
 import { decryptSecret, encryptSecret } from "@/lib/crypto";
-import { createInternalApiToken } from "@/lib/internal-api-token";
 import { logger } from "@/lib/logger";
+import { internalApiFetch, internalApiUrl } from "@/server/internal-api";
 import { RICH_MENU_LABELS, renderRichMenuPng } from "@/server/rich-menu-image";
 
 export interface LineConfig {
@@ -15,7 +15,6 @@ export interface LineConfig {
   richMenuId: string | null;
 }
 
-const TRAILING_SLASH = /\/$/;
 const UUID = z.uuid();
 const apiConfigSchema = z.object({
   messagingChannelId: z.string().nullable(),
@@ -27,22 +26,8 @@ const apiConfigSchema = z.object({
 }).strict();
 const okSchema = z.object({ ok: z.literal(true) }).strict();
 
-function apiUrl(path: string) {
-  const base = process.env.API_BASE_URL ?? (process.env.NODE_ENV === "production" ? undefined : "http://127.0.0.1:3101");
-  if (!base) { throw new Error("API_BASE_URL is required to access LINE configuration"); }
-  return `${base.replace(TRAILING_SLASH, "")}${path}`;
-}
-
 async function requestLineApi(path: string, init?: RequestInit): Promise<unknown> {
-  const response = await fetch(apiUrl(path), {
-    ...init,
-    headers: {
-      "x-internal-api-token": createInternalApiToken(),
-      ...(init?.body === undefined ? {} : { "content-type": "application/json" }),
-      ...init?.headers,
-    },
-    cache: "no-store",
-  });
+  const response = await internalApiFetch(path, init, "API_BASE_URL is required to access LINE configuration");
   if (!response.ok) { throw new Error(`Nest LINE API returned ${response.status}`); }
   return response.json();
 }

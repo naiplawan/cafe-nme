@@ -2,14 +2,13 @@ import "server-only";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { createInternalApiToken } from "@/lib/internal-api-token";
 import { sign, unsign } from "@/lib/signing";
+import { internalApiFetch } from "@/server/internal-api";
 
 const DEVICE_COOKIE = "pos_device";
 const STAFF_COOKIE = "pos_staff";
 const DEVICE_AGE = 365 * 24 * 60 * 60;
 const STAFF_AGE = 12 * 60 * 60;
-const TRAILING_SLASH = /\/$/;
 const UUID = z.uuid();
 
 export type PosShop = {
@@ -39,22 +38,8 @@ const staffAdminSchema = z.object({
 }).strict();
 const deviceAdminSchema = z.object({ id: UUID, name: z.string(), paired: z.boolean(), lastSeenAt: z.coerce.date().nullable() }).strict();
 
-function apiBaseUrl() {
-  const base = process.env.API_BASE_URL ?? (process.env.NODE_ENV === "production" ? undefined : "http://127.0.0.1:3101");
-  if (!base) throw new Error("API_BASE_URL is required to access POS sessions");
-  return base.replace(TRAILING_SLASH, "");
-}
-
 async function requestApi<T>(path: string, schema: z.ZodType<T>, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${apiBaseUrl()}${path}`, {
-    ...init,
-    headers: {
-      "x-internal-api-token": createInternalApiToken(),
-      ...(init?.body === undefined ? {} : { "content-type": "application/json" }),
-      ...init?.headers,
-    },
-    cache: "no-store",
-  });
+  const response = await internalApiFetch(path, init, "API_BASE_URL is required to access POS sessions");
   if (!response.ok) throw new Error(`Nest POS access API returned ${response.status}`);
   // Nest sends a handler's `null` (e.g. a wrong PIN) as an empty body, which response.json() cannot parse.
   const text = await response.text();
@@ -113,12 +98,10 @@ export async function setAdminStaffActive(shopId: string, actorStaffId: string, 
 
 export async function pairDevice(code: string): Promise<PosDevice | null> {
   if (!/^\d{8}$/.test(code)) return null;
-  const response = await fetch(`${apiBaseUrl()}/v1/pos/pair`, {
+  const response = await internalApiFetch("/v1/pos/pair", {
     method: "POST",
-    headers: { "x-internal-api-token": createInternalApiToken(), "content-type": "application/json" },
     body: JSON.stringify({ code }),
-    cache: "no-store",
-  });
+  }, "API_BASE_URL is required to access POS sessions");
   if (response.status === 404 || response.status === 400) return null;
   if (!response.ok) throw new Error(`Nest POS access API returned ${response.status}`);
   const pairedSchema = deviceSchema.extend({ deviceToken: z.string().min(32) }).strict().nullable();

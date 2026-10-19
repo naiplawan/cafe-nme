@@ -1,9 +1,8 @@
 import "server-only";
 import { z } from "zod";
-import { createInternalApiToken } from "@/lib/internal-api-token";
+import { internalApiFetch } from "@/server/internal-api";
 
 const UUID = z.uuid();
-const TRAILING_SLASH = /\/$/;
 const memberSummarySchema = z.object({
   id: UUID,
   displayName: z.string(),
@@ -25,19 +24,7 @@ const ledgerEntrySchema = z.object({
 });
 
 async function requestApi(path: string, init?: RequestInit): Promise<unknown> {
-  const apiBaseUrl = process.env.API_BASE_URL ?? (
-    process.env.NODE_ENV === "production" ? undefined : "http://127.0.0.1:3101"
-  );
-  if (!apiBaseUrl) { throw new Error("API_BASE_URL is required to access loyalty data"); }
-  const response = await fetch(`${apiBaseUrl.replace(TRAILING_SLASH, "")}${path}`, {
-    ...init,
-    headers: {
-      "x-internal-api-token": createInternalApiToken(),
-      ...(init?.body ? { "content-type": "application/json" } : {}),
-      ...init?.headers,
-    },
-    cache: "no-store",
-  });
+  const response = await internalApiFetch(path, init, "API_BASE_URL is required to access loyalty data");
   if (!response.ok) { throw new Error(`Nest loyalty API returned ${response.status}`); }
   return response.json();
 }

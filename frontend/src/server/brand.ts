@@ -1,7 +1,7 @@
 import "server-only";
 import { z } from "zod";
 import { brandLogoUrl, DEFAULT_ACCENT, LOGO_MAX_BYTES, normalizeHex, sniffImageMime } from "@/lib/brand";
-import { createInternalApiToken } from "@/lib/internal-api-token";
+import { internalApiFetch, internalApiUrl } from "@/server/internal-api";
 
 export interface ShopBrand {
   /** Resolved accent: the shop's own, or DEFAULT_ACCENT. */
@@ -11,7 +11,6 @@ export interface ShopBrand {
   logoUrl: string | null;
 }
 
-const TRAILING_SLASH = /\/$/;
 const MAX_BASE64_BYTES = Math.ceil(LOGO_MAX_BYTES / 3) * 4;
 const brandSchema = z.object({
   accent: z.string().nullable(),
@@ -22,21 +21,15 @@ const successSchema = z.object({ success: z.literal(true) });
 const logoMimeSchema = z.enum(["image/png", "image/jpeg", "image/webp"]);
 
 function brandUrl(shopId: string, suffix = "") {
-  const apiBaseUrl = process.env.API_BASE_URL ?? (
-    process.env.NODE_ENV === "production" ? undefined : "http://127.0.0.1:3101"
-  );
-  if (!apiBaseUrl) { throw new Error("API_BASE_URL is required to access shop branding"); }
-  return `${apiBaseUrl.replace(TRAILING_SLASH, "")}/v1/shops/${encodeURIComponent(shopId)}/brand${suffix}`;
+  return internalApiUrl(`/v1/shops/${encodeURIComponent(shopId)}/brand${suffix}`, "API_BASE_URL is required to access shop branding");
 }
 
 async function requestBrand(shopId: string, suffix: string, options: RequestInit): Promise<Response> {
-  return fetch(brandUrl(shopId, suffix), {
+  return internalApiFetch(brandUrl(shopId, suffix), {
     ...options,
     headers: {
-      "x-internal-api-token": createInternalApiToken(),
       ...options.headers,
     },
-    cache: "no-store",
   });
 }
 

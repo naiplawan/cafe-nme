@@ -1,8 +1,7 @@
 import "server-only";
 import { z } from "zod";
-import { createInternalApiToken } from "@/lib/internal-api-token";
+import { internalApiFetch, internalApiUrl } from "@/server/internal-api";
 
-const TRAILING_SLASH = /\/$/;
 const soldOutResultSchema = z.object({ soldOut: z.boolean() }).nullable();
 const promptPayConfigSchema = z.object({ promptpayId: z.string().nullable() }).nullable();
 const receiptRecipientSchema = z.object({
@@ -12,18 +11,12 @@ const receiptRecipientSchema = z.object({
 }).nullable();
 
 function apiUrl(shopId: string, path: string) {
-  const baseUrl = process.env.API_BASE_URL ?? (
-    process.env.NODE_ENV === "production" ? undefined : "http://127.0.0.1:3101"
-  );
-  if (!baseUrl) throw new Error("API_BASE_URL is required for POS operations");
-  return `${baseUrl.replace(TRAILING_SLASH, "")}/v1/shops/${encodeURIComponent(shopId)}${path}`;
+  return internalApiUrl(`/v1/shops/${encodeURIComponent(shopId)}${path}`, "API_BASE_URL is required for POS operations");
 }
 
 async function request<T>(path: string, schema: z.ZodType<T>, method = "GET"): Promise<T> {
-  const response = await fetch(path, {
+  const response = await internalApiFetch(path, {
     method,
-    headers: { "x-internal-api-token": createInternalApiToken() },
-    cache: "no-store",
   });
   if (!response.ok) throw new Error(`Nest POS API returned ${response.status}`);
   const parsed = schema.safeParse(await response.json());

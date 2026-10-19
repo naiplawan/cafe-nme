@@ -23,16 +23,21 @@ A POS for Thai coffee shops and cafés, with a stamp-card membership that lives 
 ## 2. Architecture
 
 ```
-┌──────────── Next.js (App Router) on Vercel ─────────────┐
-│ /admin   Owner back office  (email login)                  │
-│ /pos     Tablet POS         (device pairing + staff PIN)   │
-│ /liff    Member app in LINE (LIFF ID token)                │
-│ /api/line/webhook/[shopId]   LINE events, signature check  │
-│ Server Actions → service layer → Drizzle → Postgres        │
-└────────────────────────────────────────────────────────────┘
-        │                    │                    │
-   Railway PostgreSQL  LINE Messaging API     LINE Login / LIFF
-   (+ Realtime later)  (push, rich menu)      (member identity)
+Browser / LINE LIFF
+       │
+       ▼
+Next.js 16 (App Router, Vercel)
+  pages + Server Actions + server-only API adapters
+       │  internal HTTP, signed x-internal-api-token
+       ▼
+NestJS 12 API (Railway)
+  controllers → domain/application services → Drizzle
+       │
+       ▼
+PostgreSQL (Railway)
+
+Next.js LINE webhook route ── signature check / replies ── LINE Messaging API
+Next.js LINE integration ──── login verification / LIFF ── LINE Login
 ```
 
 **Stack:** Next.js 16 with TypeScript, NestJS, Railway PostgreSQL, Drizzle ORM, database-backed app sessions, shadcn/ui with Tailwind, Zod, `@line/bot-sdk`, `@line/liff`, `promptpay-qr` with `qrcode`, `@zxing/browser` for camera QR scanning, Vitest and Playwright.
@@ -40,9 +45,10 @@ A POS for Thai coffee shops and cafés, with a stamp-card membership that lives 
 **Conventions**
 - Money is stored as integers in **satang**, never floats.
 - All times use the Asia/Bangkok timezone; daily order numbers reset each day (#001, #002…).
-- Every query goes through a service layer that requires `shopId`; the app enforces shop scope in its services.
+- NestJS owns application database access. Its services scope shop data by `shopId`; the frontend calls the API through `frontend/src/server/internal-api.ts`.
 - Order lines store a **snapshot** of names and prices, so menu edits never change past receipts.
 - LINE channel secrets and tokens are encrypted at rest.
+- `backend/openapi.json` is generated from NestJS decorators by `pnpm --filter @cafenme/backend openapi:generate`. Frontend server adapters also validate runtime responses with local Zod schemas; generated client types are not currently used.
 
 ## 3. Data model
 

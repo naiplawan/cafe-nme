@@ -1,6 +1,6 @@
 import "server-only";
 import { z } from "zod";
-import { createInternalApiToken } from "@/lib/internal-api-token";
+import { internalApiFetch } from "@/server/internal-api";
 import type { CartLineInput } from "@/lib/pricing";
 import { logger } from "@/lib/logger";
 import { getMemberSummary, type MemberSummary } from "@/server/loyalty";
@@ -94,28 +94,8 @@ const orderDetailSchema = orderSummarySchema.extend({
 export type OrderSummary = z.infer<typeof orderSummarySchema>;
 export type OrderDetail = z.infer<typeof orderDetailSchema>;
 
-const TRAILING_SLASH = /\/$/;
-
-function apiBaseUrl(): string {
-  const baseUrl = process.env.API_BASE_URL ?? (
-    process.env.NODE_ENV === "production" ? undefined : "http://127.0.0.1:3101"
-  );
-  if (!baseUrl) {
-    throw new Error("API_BASE_URL is required to access orders");
-  }
-  return baseUrl.replace(TRAILING_SLASH, "");
-}
-
 async function request<T>(path: string, schema: z.ZodType<T>, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${apiBaseUrl()}${path}`, {
-    ...init,
-    headers: {
-      "x-internal-api-token": createInternalApiToken(),
-      ...(init?.body ? { "content-type": "application/json" } : {}),
-      ...init?.headers,
-    },
-    cache: "no-store",
-  });
+  const response = await internalApiFetch(path, init, "API_BASE_URL is required to access orders");
   if (!response.ok) {
     let code: unknown;
     try {
