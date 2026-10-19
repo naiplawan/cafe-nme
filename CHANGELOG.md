@@ -6,6 +6,14 @@ versioning (pre-1.0: minor = features, patch = fixes).
 
 ## [Unreleased]
 
+### Added
+- Owner dashboards compare recent sales and order counts across branches the owner manages.
+- Login and signup pages explain Cafe'nMe's multi-branch features on desktop while keeping a compact mobile layout.
+
+### Changed
+- Login and signup inputs now provide clearer placeholders, accessible field errors, and focus on the first invalid field.
+- Menu images stream from Railway Object Storage through the frontend route so Next.js image optimization can read them.
+
 ### Security
 - Login and signup throttles use the validated client address instead of a target email, preventing unauthenticated callers from locking a specific address out of either flow.
 - POS pairing codes now contain eight digits, and pairing throttles accept only the trusted `x-real-ip` address.

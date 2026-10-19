@@ -1,5 +1,4 @@
 import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { menuAssetObjectKey } from "@/lib/menu-catalog";
 
 export async function GET(_request: Request, context: { params: Promise<{ asset: string[] }> }) {
@@ -20,9 +19,15 @@ export async function GET(_request: Request, context: { params: Promise<{ asset:
     endpoint,
     credentials: { accessKeyId, secretAccessKey },
   });
-  const url = await getSignedUrl(s3, new GetObjectCommand({ Bucket: bucket, Key: key }), { expiresIn: 900 });
-  return new Response(null, {
-    status: 307,
-    headers: { Location: url, "Cache-Control": "public, max-age=300, s-maxage=300" },
+  const object = await s3.send(new GetObjectCommand({ Bucket: bucket, Key: key }));
+  if (!object.Body) return new Response("Not found", { status: 404 });
+
+  const headers = new Headers({
+    "Content-Type": object.ContentType ?? "application/octet-stream",
+    "Cache-Control": "public, max-age=300, s-maxage=300",
   });
+  if (object.ContentLength !== undefined) headers.set("Content-Length", String(object.ContentLength));
+  if (object.ETag) headers.set("ETag", object.ETag);
+
+  return new Response(object.Body.transformToWebStream(), { headers });
 }

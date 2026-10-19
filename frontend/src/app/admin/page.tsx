@@ -11,6 +11,7 @@ import { getPromptPaySettings } from "@/server/payment-settings";
 import { dailySales, hourlySales, salesByItem, salesSummary } from "@/server/reports";
 import { AdminPageHeader } from "./_components/page-header";
 import { SetupChecklist } from "./_components/setup-checklist";
+import { BranchComparison } from "./branch-comparison";
 
 function shiftDate(date: string, days: number) {
   const [year, month, day] = date.split("-").map(Number);
@@ -27,7 +28,7 @@ function bangkokHour(at: Date) {
 }
 
 export default async function AdminDashboardPage() {
-  const { shopId, staff: currentStaff } = await requireStaff();
+  const { shopId, staff: currentStaff, shops } = await requireStaff();
   const now = new Date();
   const today = businessDate(now);
   const weekStart = shiftDate(today, -6);
@@ -106,6 +107,8 @@ export default async function AdminDashboardPage() {
           </Link>
         ))}
       </section>
+
+      <BranchComparison shops={shops} activeShopId={shopId} from={weekStart} to={today} activeWeeklySales={weeklySales} />
 
       {dashboard.allProducts === 0 && (
         <Card>
