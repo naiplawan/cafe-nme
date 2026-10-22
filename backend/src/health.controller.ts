@@ -1,5 +1,6 @@
 import { Controller, Get, Inject, ServiceUnavailableException } from "@nestjs/common";
-import { ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
+import { ApiOkResponse, ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
+import { HealthStatusDto } from "./core-response.dto.js";
 import { DatabaseService } from "./database.service.js";
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
@@ -19,14 +20,14 @@ export class HealthController {
 
   @Get()
   @ApiOperation({ summary: "Check process liveness" })
-  @ApiResponse({ status: 200, description: "Process is alive" })
+  @ApiOkResponse({ type: HealthStatusDto, description: "Process is alive" })
   getHealth() {
     return { status: "ok" };
   }
 
   @Get("ready")
   @ApiOperation({ summary: "Check database connectivity and required migration readiness" })
-  @ApiResponse({ status: 200, description: "Database is ready" })
+  @ApiOkResponse({ type: HealthStatusDto, description: "Database is ready" })
   @ApiResponse({ status: 503, description: "Database is unavailable" })
   async getReadiness(): Promise<{ status: "ready" }> {
     try {

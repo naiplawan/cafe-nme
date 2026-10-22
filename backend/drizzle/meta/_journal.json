@@ -148,6 +148,20 @@
       "when": 1792416656060,
       "tag": "0020_business_invariants",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1792642511543,
+      "tag": "0021_order_item_line_no",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1792682311273,
+      "tag": "0022_password_recovery",
+      "breakpoints": true
     }
   ]
 }

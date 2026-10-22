@@ -135,7 +135,7 @@ export function DoneScreen({ result, method, onNewOrder }: DoneScreenProps) {
 
         {result.rewardsCreated > 0 && <div className="relative px-7 py-1 text-[17px] font-semibold text-[#2F6B3F]">
           <Image src="/assets/reward-free-drink.png" alt="" width={24} height={24} className="mr-1 inline-block size-6 align-middle object-contain" />
-          <span className="relative z-10">ครบแล้ว! ได้เครื่องดื่มฟรี {result.rewardsCreated} แก้ว{member?.lineLinked ? " ส่งแจ้งเตือนทาง LINE ให้ลูกค้าแล้ว" : ""}</span>
+          <span className="relative z-10">ครบแล้ว! ได้เครื่องดื่มฟรี {result.rewardsCreated} แก้ว</span>
           <svg className="pointer-events-none absolute inset-x-0 top-0 h-full w-full overflow-visible" viewBox="0 0 260 44" preserveAspectRatio="none" aria-hidden="true">
             <line ref={(element) => { if (element) raysRef.current[0] = element; }} x1="18" y1="22" x2="4" y2="22" stroke="#C69C72" strokeWidth="2.5" strokeLinecap="round" />
             <line ref={(element) => { if (element) raysRef.current[1] = element; }} x1="30" y1="7" x2="20" y2="1" stroke="#C69C72" strokeWidth="2.5" strokeLinecap="round" />

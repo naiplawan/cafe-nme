@@ -1,5 +1,5 @@
 import { ApiStandardErrors } from "./common/api-errors.decorator.js";
-import { ApiSecurity, ApiTags } from "@nestjs/swagger";
+import { ApiCreatedResponse, ApiOkResponse, ApiSecurity, ApiTags } from "@nestjs/swagger";
 import { BulkProductUpdateDto, CategoryIdsDto, CreateCategoryDto, MenuSettingsDto, ProductDto, ProductIdsDto } from "./common/request.dto.js";
 import {
   Body,
@@ -15,6 +15,7 @@ import {
 } from "@nestjs/common";
 import { InternalApiGuard } from "./internal-api.guard.js";
 import { MenuService } from "./menu.service.js";
+import { IdResultDto, MenuProductDetailResponseDto, MenuProductMutationResponseDto, MenuCategoryResponseDto, MenuResponseDto, MenuSettingsResponseDto, ProductSoldOutResponseDto, StockImportResponseDto } from "./rest-response.dto.js";
 
 @ApiStandardErrors()
 @ApiTags("menu")
@@ -25,26 +26,31 @@ export class MenuController {
   constructor(@Inject(MenuService) private readonly menu: MenuService) {}
 
   @Get()
+  @ApiOkResponse({ type: MenuResponseDto })
   getMenu(@Param("shopId", new ParseUUIDPipe()) shopId: string) {
     return this.menu.getMenu(shopId);
   }
 
   @Patch("settings")
+  @ApiOkResponse({ type: MenuSettingsResponseDto })
   updateSettings(@Param("shopId", new ParseUUIDPipe()) shopId: string, @Body() body: MenuSettingsDto) {
     return this.menu.updateSettings(shopId, body);
   }
 
   @Post("categories")
+  @ApiCreatedResponse({ type: MenuCategoryResponseDto, isArray: true })
   createCategory(@Param("shopId", new ParseUUIDPipe()) shopId: string, @Body() body: CreateCategoryDto) {
     return this.menu.createCategory(shopId, body);
   }
 
   @Post("categories/reorder")
+  @ApiCreatedResponse({ type: IdResultDto, isArray: true })
   reorderCategories(@Param("shopId", new ParseUUIDPipe()) shopId: string, @Body() body: CategoryIdsDto) {
     return this.menu.reorderCategories(shopId, body);
   }
 
   @Patch("categories/:categoryId")
+  @ApiOkResponse({ type: MenuCategoryResponseDto, isArray: true })
   renameCategory(
     @Param("shopId", new ParseUUIDPipe()) shopId: string,
     @Param("categoryId", new ParseUUIDPipe()) categoryId: string,
@@ -54,6 +60,7 @@ export class MenuController {
   }
 
   @Delete("categories/:categoryId")
+  @ApiOkResponse({ type: IdResultDto, isArray: true })
   deleteCategory(
     @Param("shopId", new ParseUUIDPipe()) shopId: string,
     @Param("categoryId", new ParseUUIDPipe()) categoryId: string,
@@ -62,11 +69,13 @@ export class MenuController {
   }
 
   @Post("products")
+  @ApiCreatedResponse({ type: MenuProductMutationResponseDto, isArray: true })
   createProduct(@Param("shopId", new ParseUUIDPipe()) shopId: string, @Body() body: ProductDto) {
     return this.menu.createProduct(shopId, body);
   }
 
   @Get("products/:productId")
+  @ApiOkResponse({ type: MenuProductDetailResponseDto })
   getProduct(
     @Param("shopId", new ParseUUIDPipe()) shopId: string,
     @Param("productId", new ParseUUIDPipe()) productId: string,
@@ -75,6 +84,7 @@ export class MenuController {
   }
 
   @Post("products/:productId/toggle-sold-out")
+  @ApiCreatedResponse({ type: ProductSoldOutResponseDto, nullable: true })
   toggleProductSoldOut(
     @Param("shopId", new ParseUUIDPipe()) shopId: string,
     @Param("productId", new ParseUUIDPipe()) productId: string,
@@ -83,6 +93,7 @@ export class MenuController {
   }
 
   @Patch("products/:productId")
+  @ApiOkResponse({ type: IdResultDto, isArray: true })
   updateProduct(
     @Param("shopId", new ParseUUIDPipe()) shopId: string,
     @Param("productId", new ParseUUIDPipe()) productId: string,
@@ -92,6 +103,7 @@ export class MenuController {
   }
 
   @Delete("products/:productId")
+  @ApiOkResponse({ type: IdResultDto, isArray: true })
   deleteProduct(
     @Param("shopId", new ParseUUIDPipe()) shopId: string,
     @Param("productId", new ParseUUIDPipe()) productId: string,
@@ -100,21 +112,25 @@ export class MenuController {
   }
 
   @Post("products/bulk")
+  @ApiCreatedResponse({ type: IdResultDto, isArray: true })
   bulkUpdateProducts(@Param("shopId", new ParseUUIDPipe()) shopId: string, @Body() body: BulkProductUpdateDto) {
     return this.menu.bulkUpdateProducts(shopId, body);
   }
 
   @Post("products/reorder")
+  @ApiCreatedResponse({ type: IdResultDto, isArray: true })
   reorderProducts(@Param("shopId", new ParseUUIDPipe()) shopId: string, @Body() body: ProductIdsDto) {
     return this.menu.reorderProducts(shopId, body);
   }
 
   @Post("products/import-stock")
+  @ApiCreatedResponse({ type: StockImportResponseDto })
   importStock(@Param("shopId", new ParseUUIDPipe()) shopId: string) {
     return this.menu.importStock(shopId);
   }
 
   @Post("products/clear-sold-out")
+  @ApiCreatedResponse({ type: IdResultDto, isArray: true })
   clearSoldOut(@Param("shopId", new ParseUUIDPipe()) shopId: string) {
     return this.menu.clearSoldOut(shopId);
   }

@@ -52,6 +52,8 @@ jobs:
             printf '%s\n' "$migration_changes"
             exit 1
           fi
+      - name: Check generated API contracts
+        run: pnpm api:check
       - name: Apply database migrations
         run: pnpm --filter @cafenme/backend db:migrate
       - run: pnpm lint

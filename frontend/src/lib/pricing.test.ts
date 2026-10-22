@@ -73,6 +73,9 @@ describe("hasSoldOutLine", () => {
 });
 
 describe("suggestCashAmounts", () => {
+  it("offers the exact amount including satang", () => {
+    expect(suggestCashAmounts(5050)).toEqual([50.5, 60, 100, 500, 1000]);
+  });
   it("suggests unique ascending round amounts after the exact amount", () => {
     expect(suggestCashAmounts(21_000)).toEqual([210, 220, 250, 300, 500]);
   });

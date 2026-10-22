@@ -1,9 +1,10 @@
 import { ApiStandardErrors } from "./common/api-errors.decorator.js";
-import { ApiSecurity, ApiTags } from "@nestjs/swagger";
+import { ApiOkResponse, ApiSecurity, ApiTags } from "@nestjs/swagger";
 import { Body, Controller, Get, Inject, Param, ParseUUIDPipe, Put, Query, UseGuards } from "@nestjs/common";
 import { InternalApiGuard } from "./internal-api.guard.js";
 import { PromptPaySettingsDto } from "./common/request.dto.js";
 import { PaymentSettingsService } from "./payment-settings.service.js";
+import { PaymentSettingsDto, SuccessDto } from "./core-response.dto.js";
 
 @ApiStandardErrors()
 @ApiTags("payment-settings")
@@ -14,6 +15,7 @@ export class PaymentSettingsController {
   constructor(@Inject(PaymentSettingsService) private readonly settings: PaymentSettingsService) {}
 
   @Get("promptpay")
+  @ApiOkResponse({ type: PaymentSettingsDto })
   getPromptPayId(
     @Param("shopId", new ParseUUIDPipe()) shopId: string,
     @Query("actorStaffId", new ParseUUIDPipe()) actorStaffId: string,
@@ -22,6 +24,7 @@ export class PaymentSettingsController {
   }
 
   @Put("promptpay")
+  @ApiOkResponse({ type: SuccessDto })
   savePromptPayId(
     @Param("shopId", new ParseUUIDPipe()) shopId: string,
     @Body() body: PromptPaySettingsDto,

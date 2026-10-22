@@ -135,7 +135,7 @@ export function LoginForm({ staff, shopName, deviceName, logoUrl }: { staff: Sta
         <div ref={pinDotsRef} role="img" aria-label={`PIN ที่ใส่แล้ว ${pin.length} หลัก`} className="flex h-7 items-center gap-3">
           {Array.from({ length: 6 }, (_, index) => index + 1).map((pinPosition) => <span key={pinPosition} data-pin-index={pinPosition - 1} className={`pin-dot size-[22px] rounded-full border-2 ${state.success ? "border-[#2F6B3F] bg-[#2F6B3F]" : `border-[#3B2A20] ${pinPosition <= pin.length ? "bg-[#3B2A20]" : "bg-transparent"}`}`} />)}
         </div>
-        {showError && state.message ? <div data-login-error role="alert" className="text-center text-base font-semibold text-[#8E3415]">PIN ไม่ถูกต้อง ลองอีกครั้ง</div> : null}
+        {showError && state.message ? <div data-login-error role="alert" className="text-center text-base font-semibold text-[#8E3415]">{state.message}</div> : null}
         <form action={action} onSubmit={() => { setDismissedError(false); }} className="flex w-full flex-col gap-3">
           <input type="hidden" name="staffId" value={selected.id} />
           <input type="hidden" name="pin" value={pin} />
@@ -148,7 +148,7 @@ export function LoginForm({ staff, shopName, deviceName, logoUrl }: { staff: Sta
       </div> : <div className="flex flex-1 flex-col items-center justify-center gap-3 text-center text-[#6B5547]">
         <svg aria-hidden="true" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#C69C72" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="10" width="16" height="11" rx="2" /><path d="M8 10V7a4 4 0 0 1 8 0v3" /></svg>
         <span className="text-xl font-semibold text-[#3B2A20]">เลือกชื่อของคุณ</span>
-        <span className="text-base">แล้วใส่ PIN 4 หลักเพื่อเริ่มขาย</span>
+        <span className="text-base">แล้วใส่ PIN 4–6 หลักเพื่อเริ่มขาย</span>
       </div>}
     </aside>
   </main>;

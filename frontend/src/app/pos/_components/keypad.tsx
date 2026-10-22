@@ -7,6 +7,7 @@ import { gsap, MOTION, prefersReducedMotion, useGSAP } from "@/components/motion
 
 type KeypadProps = {
   value: string;
+  decimal?: boolean;
   onChange: (next: string) => void;
   maxLength: number;
   /** Label for the bottom-left key; it clears the value. */
@@ -18,7 +19,7 @@ type KeypadProps = {
 const DIGITS = ["1", "2", "3", "4", "5", "6", "7", "8", "9"];
 
 /** Large touch number pad shared by cash entry, phone search and PIN screens. */
-export function Keypad({ value, onChange, maxLength, clearLabel = "ล้าง", keyClassName, className }: KeypadProps) {
+export function Keypad({ value, onChange, maxLength, decimal = false, clearLabel = "ล้าง", keyClassName, className }: KeypadProps) {
   const keypadRef = useRef<HTMLDivElement>(null);
   const { contextSafe } = useGSAP({ scope: keypadRef });
   const animatePress = contextSafe((button: HTMLButtonElement) => {
@@ -30,7 +31,8 @@ export function Keypad({ value, onChange, maxLength, clearLabel = "ล้าง"
     keyClassName,
   );
   const press = (digit: string) => {
-    if (value.length < maxLength) onChange(value + digit);
+    const next = value + digit;
+    if (next.length <= maxLength && (!decimal || /^\d{0,6}(\.\d{0,2})?$/.test(next))) onChange(next);
   };
 
   return (
@@ -40,8 +42,8 @@ export function Keypad({ value, onChange, maxLength, clearLabel = "ล้าง"
           {digit}
         </button>
       ))}
-      <button type="button" className={cn(keyClass, "text-lg")} onClick={(event) => { onChange(""); animatePress(event.currentTarget); }}>
-        {clearLabel}
+      <button type="button" className={cn(keyClass, "text-lg")} onClick={(event) => { decimal ? press(value ? "." : "0.") : onChange(""); animatePress(event.currentTarget); }}>
+        {decimal ? "." : clearLabel}
       </button>
       <button type="button" className={keyClass} onClick={(event) => { press("0"); animatePress(event.currentTarget); }}>
         0

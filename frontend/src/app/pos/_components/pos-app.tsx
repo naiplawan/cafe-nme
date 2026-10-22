@@ -42,6 +42,7 @@ export function PosApp({ shop, staff, menu, orderNo: initialOrderNo, logoUrl }: 
   const [modifierLineIndex, setModifierLineIndex] = useState<number | null>(null);
   const [showScan, setShowScan] = useState(false);
   const [showPhone, setShowPhone] = useState(false);
+  const [showCart, setShowCart] = useState(false);
   const [showPayment, setShowPayment] = useState(false);
   const [paidOrder, setPaidOrder] = useState<PaidOrder | null>(null);
   const [online, setOnline] = useState(true);
@@ -256,21 +257,26 @@ export function PosApp({ shop, staff, menu, orderNo: initialOrderNo, logoUrl }: 
     return <CheckoutRecovery pending={pendingCheckout} cartStorageKey={recoveryStorageKey} onRecovered={onRecoveredCheckout} onRejected={rejectPendingCheckout} />;
   }
 
-  return <div className="flex h-dvh min-h-[600px] flex-col overflow-hidden bg-[#F5EDE3]">
-    <PosHeader shopName={shop.name} orderNo={orderNo} staffName={staff.name} staffRole={staffRole} online={online} logoUrl={logoUrl} onLogout={clearSavedCart} />
+  return <div className="flex h-dvh min-h-0 flex-col overflow-hidden bg-[#F5EDE3]">
+    <PosHeader shopName={shop.name} orderNo={orderNo} staffName={staff.name} staffRole={staffRole} online={online} logoUrl={logoUrl} />
+    <button type="button" aria-pressed={showCart} className="min-h-12 shrink-0 bg-[#E9D9C6] p-2 font-bold lg:hidden" onClick={() => setShowCart((value) => !value)}>{showCart ? "กลับไปเลือกเมนู" : `ดูตะกร้า (${cart.reduce((count, line) => count + line.qty, 0)} ชิ้น)`}</button>
     <div className="flex min-h-0 flex-1">
+      <div className={`${showCart ? "hidden" : "flex"} min-h-0 min-w-0 flex-1 flex-col md:flex-row lg:flex`}>
       <CategoryRail menu={menu} selectedId={categoryId} onSelect={setCategoryId} />
       <ProductGrid menu={menu} categoryId={categoryId} addedProductId={recentAddedProduct} onChoose={(productId) => {
         // Items without add-ons (e.g. bakery) go straight into the order.
         if (menu.products.find((product) => product.id === productId)?.groups.length === 0) addLine(productId, [], 1);
         else setModifierProductId(productId);
       }} />
+      </div>
+      <div className={`${showCart ? "flex" : "hidden"} min-h-0 min-w-0 flex-1 lg:flex lg:flex-none`}>
       <CartPanel lines={cart} pricedLines={pricing.lines} subtotalSatang={pricing.subtotalSatang} discountSatang={discountSatang}
         totalSatang={totalSatang} menu={menu} member={member} memberLoading={memberLoading} memberLookupError={memberLookupError} redeemRewardId={redeemRewardId} online={online} onQuantity={changeQuantity}
         onEdit={(index) => { setModifierLineIndex(index); setModifierProductId(cart[index]?.productId ?? null); }}
         onScan={() => { setMemberLookupError(""); setShowScan(true); }} onPhone={() => { setMemberLookupError(""); setShowPhone(true); }} onRemoveMember={() => { setMember(null); setRedeemRewardId(null); }}
         onToggleReward={() => setRedeemRewardId((current) => current ? null : member?.availableRewards[0]?.id ?? null)}
-        onPay={() => { if (cart.length && online) setShowPayment(true); }} />
+        onPay={() => { if (cart.length > 100 || cart.reduce((count, line) => count + line.qty, 0) > 500) { setCartNotice("ออเดอร์ต้องไม่เกิน 100 รายการและ 500 ชิ้น กรุณาลดจำนวนหรือแยกออเดอร์"); return; } if (cart.length && online) setShowPayment(true); }} />
+      </div>
     </div>
     {modifierProduct && <ModifierSheet key={`${modifierProduct.id}:${modifierLineIndex ?? "new"}`} product={modifierProduct}
       initialModifierIds={modifierLineIndex === null ? [] : cart[modifierLineIndex]?.modifierIds}

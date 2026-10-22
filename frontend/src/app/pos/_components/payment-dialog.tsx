@@ -1,10 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
-import { formatBaht } from "@/lib/money";
+import { formatBaht, parseBahtToSatang } from "@/lib/money";
 import { suggestCashAmounts } from "@/lib/pricing";
-import type { CheckoutInput, CheckoutResult } from "@/server/orders";
-import { checkoutAction } from "@/app/pos/checkout-actions";
+import type { CheckoutInput, CheckoutResult, CheckoutQuote } from "@/server/orders";
+import { checkoutAction, quoteCheckoutAction } from "@/app/pos/checkout-actions";
 import { gsap, MOTION, prefersReducedMotion, useGSAP } from "@/components/motion/gsap";
 import { Keypad } from "./keypad";
 import { PromptPayQr } from "./promptpay-qr";
@@ -54,8 +54,32 @@ function AnimatedBaht({ satang, className }: { satang: number; className?: strin
   return <span ref={amountRef} className={className}>{formatBaht(satang)}</span>;
 }
 
-export function PaymentDialog({ orderLabel, lines, subtotalSatang, discountSatang, totalSatang,
+export function PaymentDialog({ orderLabel, lines: cartLines, subtotalSatang: cartSubtotal, discountSatang: cartDiscount, totalSatang: cartTotal,
   checkoutInput, cartStorageKey, expectedScope, promptpayEnabled, shopName, onClose, onPaid }: PaymentDialogProps) {
+  const [quote, setQuote] = useState<CheckoutQuote | null>(null);
+  const [quoteError, setQuoteError] = useState<string | null>(null);
+  const [quoteVersion, setQuoteVersion] = useState(0);
+  const [priceAccepted, setPriceAccepted] = useState(false);
+  const quoteInput = JSON.stringify(checkoutInput);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: quoteVersion explicitly refreshes the same quote after rejection or retry.
+  useEffect(() => {
+    let active = true;
+    setQuote(null);
+    setQuoteError(null);
+    setPriceAccepted(false);
+    void quoteCheckoutAction(JSON.parse(quoteInput)).then((response) => {
+      if (!active) return;
+      if (!response.ok) { setQuoteError(response.message); return; }
+      setQuote(response.quote);
+      setPriceAccepted(response.quote.totalSatang === cartTotal);
+    }).catch(() => { if (active) setQuoteError("ตรวจสอบราคาไม่สำเร็จ กรุณาลองใหม่"); });
+    return () => { active = false; };
+  }, [quoteInput, cartTotal, quoteVersion]);
+  const lines = quote ? quote.lines.map((line, index) => ({ ...line, key: cartLines[index]?.key ?? String(index) })) : cartLines;
+  const subtotalSatang = quote?.subtotalSatang ?? cartSubtotal;
+  const discountSatang = quote?.discountSatang ?? cartDiscount;
+  const totalSatang = quote?.totalSatang ?? cartTotal;
+  const ready = quote !== null && priceAccepted;
   const [method, setMethod] = useState<PaymentMethod>("cash");
   const [cashInput, setCashInput] = useState("");
   const [pending, setPending] = useState(false);
@@ -70,7 +94,7 @@ export function PaymentDialog({ orderLabel, lines, subtotalSatang, discountSatan
   const progressRef = useRef<SVGLineElement>(null);
   const attemptRef = useRef<CheckoutAttempt | null>(null);
   const submittingRef = useRef(false);
-  const receivedSatang = Number.parseInt(cashInput || "0", 10) * 100;
+  const receivedSatang = parseBahtToSatang(cashInput.replace(/\.$/, "")) ?? 0;
   const changeSatang = receivedSatang - totalSatang;
   const shortBySatang = Math.max(0, -changeSatang);
   const quickAmounts = useMemo(() => suggestCashAmounts(totalSatang), [totalSatang]);
@@ -90,7 +114,8 @@ export function PaymentDialog({ orderLabel, lines, subtotalSatang, discountSatan
   }, { scope: rootRef });
 
   useGSAP(() => {
-    if (!indicatorRef.current || prefersReducedMotion()) return;
+    if (!indicatorRef.current) return;
+    if (prefersReducedMotion()) { gsap.set(indicatorRef.current, { xPercent: method === "cash" ? 0 : 100 }); return; }
     gsap.to(indicatorRef.current, { xPercent: method === "cash" ? 0 : 100, duration: MOTION.base, ease: MOTION.ease });
   }, { scope: rootRef, dependencies: [method], revertOnUpdate: true });
 
@@ -136,7 +161,7 @@ export function PaymentDialog({ orderLabel, lines, subtotalSatang, discountSatan
   }, [pending, requestClose]);
 
   async function confirm() {
-    if (submittingRef.current || (method === "cash" && receivedSatang < totalSatang)) return;
+    if (!ready || submittingRef.current || (method === "cash" && receivedSatang < totalSatang)) return;
     submittingRef.current = true;
     setPending(true);
     setError(null);
@@ -144,7 +169,7 @@ export function PaymentDialog({ orderLabel, lines, subtotalSatang, discountSatan
       ? { method: "cash", cashReceivedSatang: receivedSatang }
       : { method: "promptpay" };
     try {
-      const input = { ...checkoutInput, payment };
+      const input = { ...checkoutInput, expectedTotalSatang: totalSatang, payment };
       const attempt = checkoutAttempt(input, attemptRef.current);
       attemptRef.current = attempt;
       const pendingInput = { ...input, requestId: attempt.requestId, expectedScope };
@@ -156,6 +181,7 @@ export function PaymentDialog({ orderLabel, lines, subtotalSatang, discountSatan
         } else if (response.kind === "rejected") {
           attemptRef.current = null;
           setRecovering(false);
+          setQuoteVersion((version) => version + 1);
         }
         return;
       }
@@ -171,17 +197,17 @@ export function PaymentDialog({ orderLabel, lines, subtotalSatang, discountSatan
   }
 
   const isCash = method === "cash";
-  const blocked = pending || (isCash && receivedSatang < totalSatang);
+  const blocked = !ready || pending || (isCash && receivedSatang < totalSatang);
   const changeShort = shortBySatang > 0;
 
   return (
     <div ref={rootRef} className="fixed inset-0 z-40 flex items-center justify-center bg-[rgba(43,30,22,0.55)] p-3 sm:p-6">
       {/* biome-ignore lint/a11y/noNoninteractiveElementInteractions: the dialog container owns the keyboard focus trap. */}
       <div ref={dialogRef} tabIndex={-1} role="dialog" aria-modal="true" aria-busy={pending} aria-labelledby={`${id}-payment-title`} onKeyDown={trapDialogTab}
-        className="flex h-[min(680px,calc(100dvh-24px))] w-full max-w-[1000px] overflow-hidden rounded-[24px] border border-white/60 bg-[#FFFBF6] shadow-[0_24px_80px_rgba(43,30,22,0.25)] outline-none">
-        <aside className="flex w-[36%] min-w-[260px] shrink-0 flex-col gap-3 bg-gradient-to-b from-[#F7F0E7] to-[#F0E4D7] p-7">
+        className="flex max-h-[calc(100dvh-24px)] flex-col overflow-y-auto md:h-[min(680px,calc(100dvh-24px))] md:flex-row w-full max-w-[1000px] md:overflow-hidden rounded-[24px] border border-white/60 bg-[#FFFBF6] shadow-[0_24px_80px_rgba(43,30,22,0.25)] outline-none">
+        <aside className="flex w-full shrink-0 md:w-[36%] md:min-w-[260px] flex-col gap-3 bg-gradient-to-b from-[#F7F0E7] to-[#F0E4D7] p-4 md:p-7">
         <h2 id={`${id}-payment-title`} className="text-base text-[#6B5547]">ออเดอร์ {orderLabel}</h2>
-          <div className="min-h-0 space-y-3 overflow-y-auto">
+          <div className="max-h-32 space-y-3 overflow-y-auto md:max-h-none md:min-h-0">
             {lines.map((line) => (
               <div key={line.key} className="flex justify-between gap-2 text-base">
                 <div className="min-w-0"><div>{line.qty} × {line.name}</div>
@@ -201,8 +227,12 @@ export function PaymentDialog({ orderLabel, lines, subtotalSatang, discountSatan
           </div>
         </aside>
 
-        <section className="flex min-w-0 flex-1 flex-col gap-4 p-6 sm:p-7">
-          <fieldset disabled={pending || recovering} className="contents">
+        <section className="flex min-w-0 flex-1 flex-col gap-4 md:overflow-y-auto p-6 sm:p-7">
+          {!quote && <div role="status">{quoteError ?? "กำลังตรวจสอบราคาปัจจุบัน…"}{quoteError && <button type="button" className="ml-3 underline" onClick={() => setQuoteVersion((version) => version + 1)}>ลองใหม่</button>}</div>}
+          {quote && !priceAccepted && <div role="alert" className="rounded-xl bg-amber-100 p-3">ราคาเปลี่ยนจาก {formatBaht(cartTotal)} เป็น {formatBaht(totalSatang)} กรุณาตรวจสอบรายการ
+            <button type="button" className="mt-2 block min-h-11 font-bold underline" onClick={() => setPriceAccepted(true)}>ยืนยันยอดใหม่</button>
+          </div>}
+          <fieldset disabled={!ready || pending || recovering} className="contents">
           <legend className="sr-only">วิธีชำระและจำนวนเงินที่รับ</legend>
           <div role="tablist" aria-label="วิธีชำระ" className="relative grid grid-cols-2 rounded-[18px] bg-[#F1E7DC] p-1.5">
             <span ref={indicatorRef} aria-hidden="true" className="absolute inset-y-1.5 left-1.5 w-[calc(50%-6px)] rounded-[14px] bg-[#3B2A20] shadow-sm" />
@@ -214,12 +244,12 @@ export function PaymentDialog({ orderLabel, lines, subtotalSatang, discountSatan
           </div>
           {!promptpayEnabled && <p className="-mt-3 text-sm text-[#6B5547]">ยังไม่ได้ตั้งค่าพร้อมเพย์ในหลังร้าน</p>}
 
-          <div ref={contentRef} className="flex min-h-0 flex-1 flex-col">
-            {isCash ? <div className="flex min-h-0 flex-1 gap-4">
+          <div ref={contentRef} className="flex shrink-0 flex-col">
+            {isCash ? <div className="flex min-h-0 flex-1 flex-col gap-4 sm:flex-row">
               <div className="flex min-w-0 flex-1 flex-col gap-3">
                 <div className="rounded-2xl border border-[#D9C5B0] bg-white/60 px-4 py-2.5 shadow-[0_2px_8px_rgba(59,42,32,0.04)]">
                   <div className="text-sm text-[#6B5547]">รับเงินมา</div>
-                  <AnimatedBaht satang={receivedSatang} className="block text-[40px] font-bold leading-tight tabular-nums" />
+                  <input aria-label="จำนวนเงินที่รับ (บาท)" inputMode="decimal" value={cashInput} placeholder="0" className="w-full min-w-0 bg-transparent text-[40px] font-bold leading-tight tabular-nums" onChange={(event) => { const value = event.target.value; if (/^\d{0,6}(\.\d{0,2})?$/.test(value)) setCashInput(value); }} />
                 </div>
                 <div className={`rounded-2xl border px-4 py-2.5 transition-colors duration-200 ${changeShort ? "border-[#E9B29B] bg-[#F7DCD0] text-[#8E3415]" : "border-[#BDD3C0] bg-[#E7F1E8] text-[#245232]"}`}>
                   <div className="text-sm">เงินทอน</div>
@@ -231,15 +261,15 @@ export function PaymentDialog({ orderLabel, lines, subtotalSatang, discountSatan
                     onClick={() => setCashInput(String(amount))}>{index === 0 ? "พอดี" : formatBaht(amount * 100)}</button>)}
                 </div>
               </div>
-              <Keypad value={cashInput} onChange={(next) => setCashInput(next.replace(/^0+(?=\d)/, ""))} maxLength={6}
-                className="w-[min(280px,43%)] content-start" keyClassName="h-[min(72px,9vh)] min-h-[50px]" />
-            </div> : <PromptPayQr amountSatang={totalSatang} shopName={shopName} />}
+              <Keypad value={cashInput} onChange={(next) => setCashInput(next.replace(/^0+(?=\d)/, ""))} maxLength={9} decimal
+                className="w-full sm:w-[min(280px,43%)] content-start" keyClassName="h-[min(72px,9vh)] min-h-[50px]" />
+            </div> : ready ? <PromptPayQr amountSatang={totalSatang} shopName={shopName} /> : null}
           </div>
 
           </fieldset>
-          <div className="flex gap-3">
+          <div className="flex shrink-0 gap-3">
             <button type="button" disabled={pending || closing || recovering} onClick={requestClose}
-              className="h-[72px] w-36 shrink-0 rounded-2xl border border-[#D9C5B0] bg-[#FFFBF6] text-lg font-semibold shadow-sm disabled:opacity-60">กลับ</button>
+              className="h-[72px] w-20 shrink-0 sm:w-36 rounded-2xl border border-[#D9C5B0] bg-[#FFFBF6] text-lg font-semibold shadow-sm disabled:opacity-60">กลับ</button>
             <button type="button" disabled={blocked} onClick={() => void confirm()}
               className="relative h-[72px] min-w-0 flex-1 overflow-hidden rounded-2xl bg-[#2F6B3F] px-3 text-lg font-bold text-white shadow-[0_7px_16px_rgba(47,107,63,0.18)] transition-colors disabled:bg-[#C9B6A4]">
               {pending && <svg className="absolute inset-x-4 bottom-0 h-1.5 w-[calc(100%-2rem)]" viewBox="0 0 100 4" preserveAspectRatio="none" aria-hidden="true"><line ref={progressRef} x1="0" y1="2" x2="100" y2="2" stroke="#D7E8D9" strokeWidth="3" strokeLinecap="round" /></svg>}

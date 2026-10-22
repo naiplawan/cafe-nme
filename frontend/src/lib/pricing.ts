@@ -42,7 +42,7 @@ export function priceCart(lines: CartLineInput[], menu: PosMenu): { lines: Price
 }
 
 export function suggestCashAmounts(totalSatang: number): number[] {
-  const exactAmount = Math.ceil(totalSatang / 100);
+  const exactAmount = totalSatang / 100;
   const suggestions = [20, 50, 100, 500, 1000]
     .map((denomination) => Math.ceil(exactAmount / denomination) * denomination)
     .filter((amount) => amount > exactAmount);

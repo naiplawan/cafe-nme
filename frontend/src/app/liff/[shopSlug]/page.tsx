@@ -50,6 +50,7 @@ export default async function LiffMemberPage({ params }: { params: Promise<{ sho
         name: product.name,
         priceSatang: product.basePriceSatang,
         imageUrl: product.imageUrl,
+        soldOut: product.soldOut,
       })),
     })).filter((category) => category.products.length > 0),
     ...(() => {
@@ -62,6 +63,7 @@ export default async function LiffMemberPage({ params }: { params: Promise<{ sho
           name: product.name,
           priceSatang: product.basePriceSatang,
           imageUrl: product.imageUrl,
+        soldOut: product.soldOut,
         })),
       }] : [];
     })(),

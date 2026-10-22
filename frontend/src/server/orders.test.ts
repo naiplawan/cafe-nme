@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const line = vi.hoisted(() => ({ pushRewardUnlocked: vi.fn() }));
 vi.mock("@/server/line", () => line);
 
-import { checkout } from "./orders";
+import { checkout, CheckoutError } from "./orders";
 
 const shopId = "11111111-1111-4111-8111-111111111111";
 const staffId = "22222222-2222-4222-8222-222222222222";
@@ -90,4 +90,17 @@ describe("checkout transport boundary", () => {
     expect(line.pushRewardUnlocked).toHaveBeenCalledTimes(1);
     expect(fetchMock).toHaveBeenCalledTimes(4);
   });
+});
+
+it("classifies validation rejection as definitive but retains uncertainty for server failures", async () => {
+  const input = { lines: [{ productId, qty: 1, modifierIds: [] }], payment: { method: "promptpay" as const } };
+  for (const code of ["cart_limit_exceeded", "price_changed"]) {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({ code }), { status: 400 })));
+    await expect(checkout({ shopId, staffId }, input)).rejects.toMatchObject({ code });
+  }
+  vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("invalid", { status: 400 })));
+  await expect(checkout({ shopId, staffId }, input)).rejects.toBeInstanceOf(CheckoutError);
+  vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("unavailable", { status: 503 })));
+  await expect(checkout({ shopId, staffId }, input)).rejects.not.toBeInstanceOf(CheckoutError);
+  vi.unstubAllGlobals();
 });

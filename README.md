@@ -74,11 +74,28 @@ Prerequisites: Node.js 20.9+, pnpm, and PostgreSQL 18 (local or Railway).
 | `SEED_OWNER_PIN` / `SEED_BARISTA_PIN` | Production seed requires two different six-digit POS PINs. |
 | `API_BASE_URL` / `API_PORT` | Frontend's backend URL and Nest's listening port. |
 | `APP_SECRET` | Signs POS sessions and member QR tokens; derives the key that encrypts LINE secrets. |
+| `FRONTEND_URL` | Backend recovery-link origin; HTTPS in production. |
+| `RESEND_API_KEY` / `RECOVERY_EMAIL_FROM` | Backend-only recovery email API key and verified sender. |
 | `LINE_DEV_MOCK` | `1` only in local development. |
 
 LINE channel IDs, secret and access token are entered per shop in **Admin › เชื่อมต่อ LINE** and stored encrypted.
 
 For a production seed, put the Railway PostgreSQL `DATABASE_URL` in the ignored `backend/.env.production.local`, then set `SEED_TARGET=production`, `SEED_CONFIRM_PRODUCTION=demo-cafe`, `SEED_OWNER_EMAIL`, a strong `SEED_OWNER_PASSWORD`, and different six-digit `SEED_OWNER_PIN` and `SEED_BARISTA_PIN` values when running `pnpm db:seed`. The script refuses the public demo password and skips existing demo data; rerunning it refreshes the two demo staff PINs without changing the owner password.
+
+## Account recovery
+
+The login page links to `/forgot-password`. Set `FRONTEND_URL`, `RESEND_API_KEY`, and
+`RECOVERY_EMAIL_FROM` in the backend environment, then apply migrations through
+`0022_password_recovery` before deploying the updated API. Delivery uses the
+[Resend email API](https://resend.com/docs/api-reference/emails/send-email).
+Without mail configuration, the request form reports that recovery is unavailable.
+
+Reset links keep the token in a URL fragment, expire after 30 minutes, and can be
+used once. Only token hashes are stored. A successful reset revokes the account's
+admin sessions; staff PINs and paired devices remain separate. Requests are limited
+per source IP and email, and return the same accepted response for known and unknown
+accounts. Email delivery is asynchronous; provider failures are logged for operators.
+Verify delivery with a controlled mailbox after configuring the deployment.
 
 ## Scripts
 
@@ -86,6 +103,7 @@ For a production seed, put the Railway PostgreSQL `DATABASE_URL` in the ignored 
 | --- | --- |
 | `pnpm dev` / `build` / `start` | Develop, build and run the app. |
 | `pnpm typecheck` / `lint` | TypeScript checks for both apps and workspace lint. |
+| `pnpm api:generate` / `api:check` | Regenerate Nest OpenAPI and frontend TypeScript types; CI checks for stale generated contracts. |
 | `pnpm test` / `test:int` | Unit tests / integration tests against the database. |
 | `pnpm db:generate` / `db:migrate` | Generate and apply Drizzle migrations. |
 | `pnpm db:seed` / `db:seed-menu` / `db:seed-sales` | Demo shop, stock menu, demo sales. |

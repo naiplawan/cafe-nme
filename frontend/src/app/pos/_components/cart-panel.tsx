@@ -72,9 +72,9 @@ export function CartPanel({ lines, pricedLines, subtotalSatang, discountSatang, 
     gsap.fromTo(shine, { xPercent: -140, opacity: 0.8 }, { xPercent: 140, opacity: 0, duration: 0.55, ease: MOTION.ease });
   }, { scope: panelRef, dependencies: [lines.length] });
 
-  return <aside ref={panelRef} data-cart-panel aria-label="ออเดอร์ปัจจุบัน" className="flex w-[min(404px,34vw)] min-w-[320px] shrink-0 flex-col border-l border-[#E4D6C6] bg-[#FFFBF6] shadow-[-8px_0_24px_rgba(59,42,32,0.035)]">
+  return <aside ref={panelRef} data-cart-panel aria-label="ออเดอร์ปัจจุบัน" className="flex w-full min-w-0 overflow-y-auto lg:w-[min(404px,34vw)] lg:min-w-[320px] shrink-0 flex-col border-l border-[#E4D6C6] bg-[#FFFBF6] shadow-[-8px_0_24px_rgba(59,42,32,0.035)]">
     <MemberPanel member={member} loading={memberLoading} lookupError={memberLookupError} redeemRewardId={redeemRewardId} onScan={onScan} onPhone={onPhone} onRemove={onRemoveMember} onToggleReward={onToggleReward} />
-    <div className="min-h-0 flex-1 overflow-y-auto px-4 py-1.5">
+    <div className="min-h-32 flex-1 overflow-y-auto px-4 py-1.5">
       {lines.length === 0 ? <div className="flex h-full flex-col items-center justify-center gap-2 text-center text-[#6B5547]">
         <Coffee aria-hidden="true" size={44} className="text-[#C69C72]" /><span className="text-[17px] font-semibold">ยังไม่มีรายการ</span><span className="text-sm">แตะเมนูทางซ้ายเพื่อเริ่มออเดอร์</span>
       </div> : lines.map((line, index) => {

@@ -6,7 +6,7 @@ import generatePayload from "promptpay-qr";
 import { logger } from "@/lib/logger";
 import { formatBaht } from "@/lib/money";
 import { getPosPromptPayConfig, getPosReceiptRecipient } from "@/server/pos-operations";
-import { CheckoutError, checkout, getOrder, type CheckoutInput, type CheckoutResult } from "@/server/orders";
+import { CheckoutError, quoteCheckout, checkout, getOrder, type CheckoutInput, type CheckoutResult } from "@/server/orders";
 import { requirePosStaff } from "@/server/pos-session";
 import { pushText } from "@/server/line";
 import type { CheckoutSessionScope } from "@/lib/checkout-attempt";
@@ -14,6 +14,9 @@ import type { CheckoutSessionScope } from "@/lib/checkout-attempt";
 export type CheckoutActionResult = { ok: true; result: CheckoutResult } | { ok: false; message: string; retryable?: boolean };
 
 const CHECKOUT_MESSAGES: Record<CheckoutError["code"], string> = {
+  price_changed: "ราคาหรือส่วนลดเปลี่ยนไป กรุณากลับไปตรวจสอบยอดก่อนชำระอีกครั้ง",
+  cart_limit_exceeded: "ออเดอร์ต้องไม่เกิน 100 รายการและ 500 ชิ้น กรุณาลดจำนวนหรือแยกออเดอร์",
+  invalid_checkout: "รายการไม่ถูกต้อง กรุณากลับไปตรวจสอบตะกร้า",
   empty_cart: "ยังไม่มีรายการ",
   pricing: "เมนูหรือตัวเลือกไม่ถูกต้อง กรุณาลองใหม่",
   sold_out: "มีเมนูหมดแล้ว กรุณานำออกจากออเดอร์",
@@ -87,5 +90,15 @@ export async function sendReceiptToLine(orderId: string): Promise<{ ok: boolean;
   } catch (error) {
     logger.error({ err: error, orderId }, "POS LINE receipt failed");
     return { ok: false, message: "ส่งใบเสร็จไม่สำเร็จ กรุณาลองใหม่" };
+  }
+}
+
+export async function quoteCheckoutAction(input: Omit<CheckoutInput, "payment">) {
+  const session = await requirePosStaff();
+  try {
+    return { ok: true as const, quote: await quoteCheckout({ shopId: session.shopId, staffId: session.staff.id }, input) };
+  } catch (error) {
+    logger.error({ err: error, shopId: session.shopId }, "POS quote failed");
+    return { ok: false as const, message: error instanceof CheckoutError ? CHECKOUT_MESSAGES[error.code] : "ตรวจสอบราคาไม่สำเร็จ กรุณาลองใหม่" };
   }
 }

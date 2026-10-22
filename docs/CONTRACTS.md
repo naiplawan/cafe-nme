@@ -4,10 +4,27 @@ This document records the original parallel-build contracts and is not the curre
 implementation guide. The runtime architecture is Next.js server adapters → NestJS
 API → Drizzle → PostgreSQL, as described in [PLAN.md](../PLAN.md). NestJS owns
 database access; frontend server modules use the shared
-`frontend/src/server/internal-api.ts` transport. The generated API reference is
-`backend/openapi.json` (`pnpm --filter @cafenme/backend openapi:generate`). Frontend
-adapters currently retain Zod runtime response validation rather than consuming
-generated OpenAPI client types.
+`frontend/src/server/internal-api.ts` transport. `pnpm api:generate` creates the API
+reference at `backend/openapi.json` and generated types at
+`frontend/src/server/api-types.generated.ts`; CI checks both with `pnpm api:check`.
+Frontend adapters still retain Zod runtime response validation.
+
+## Checkout and recovery additions (2026-10-22)
+
+- `POST /v1/shops/:shopId/orders/quote` accepts the checkout DTO and returns current
+  line prices, subtotal, discount, and total without recording a sale. The frontend
+  waits for this quote before showing a payment QR and asks for confirmation if the
+  displayed total changed.
+- Checkout accepts optional `expectedTotalSatang` for compatibility with previously
+  persisted retries. New POS submissions always supply it. The transaction rejects a
+  changed total with `price_changed` before writes. A committed request-key replay
+  still returns its original receipt. The expected total is included in the fingerprint.
+- Carts exceeding 100 lines or 500 units receive `cart_limit_exceeded`. Validation
+  failures are definitive; network/server failures retain the existing recovery flow.
+- `POST /v1/auth/password-reset/request` accepts `email` and returns `accepted` for
+  both known and unknown accounts. `POST /v1/auth/password-reset/confirm` accepts
+  `token` and `password`, consumes the valid token atomically, and revokes admin sessions.
+  Both endpoints require internal API authentication and apply source-address limits.
 
 Workers implement these exact exports so modules built in parallel fit together.
 All server modules start with `import "server-only"`. Every function that touches shop

@@ -1,5 +1,5 @@
 import { ApiStandardErrors } from "./common/api-errors.decorator.js";
-import { ApiSecurity, ApiTags } from "@nestjs/swagger";
+import { ApiCreatedResponse, ApiOkResponse, ApiSecurity, ApiTags } from "@nestjs/swagger";
 import { CreateMemberDto, StampAdjustmentDto } from "./common/request.dto.js";
 import {
   Body,
@@ -15,6 +15,7 @@ import {
 } from "@nestjs/common";
 import { InternalApiGuard } from "./internal-api.guard.js";
 import { MembersService } from "./members.service.js";
+import { MemberIdResponseDto, MemberListResponseDto, MemberResponseDto, MemberSummaryResponseDto, OkResultDto, StampLedgerResponseDto } from "./rest-response.dto.js";
 
 @ApiStandardErrors()
 @ApiTags("members")
@@ -25,6 +26,7 @@ export class MembersController {
   constructor(@Inject(MembersService) private readonly members: MembersService) {}
 
   @Get("by-token/:memberId")
+  @ApiOkResponse({ type: MemberIdResponseDto, nullable: true })
   findByToken(
     @Param("shopId", new ParseUUIDPipe()) shopId: string,
     @Param("memberId", new ParseUUIDPipe()) memberId: string,
@@ -33,6 +35,7 @@ export class MembersController {
   }
 
   @Get("by-phone")
+  @ApiOkResponse({ type: MemberResponseDto, isArray: true })
   findByPhone(
     @Param("shopId", new ParseUUIDPipe()) shopId: string,
     @Query("phone") phone: string,
@@ -41,6 +44,7 @@ export class MembersController {
   }
 
   @Get()
+  @ApiOkResponse({ type: MemberListResponseDto })
   list(
     @Param("shopId", new ParseUUIDPipe()) shopId: string,
     @Query("search") search?: string,
@@ -52,11 +56,13 @@ export class MembersController {
   }
 
   @Post()
+  @ApiCreatedResponse({ type: MemberResponseDto })
   create(@Param("shopId", new ParseUUIDPipe()) shopId: string, @Body() body: CreateMemberDto) {
     return this.members.createByPhone(shopId, body);
   }
 
   @Delete(":memberId/personal-data")
+  @ApiOkResponse({ type: OkResultDto })
   deletePersonalData(
     @Param("shopId", new ParseUUIDPipe()) shopId: string,
     @Param("memberId", new ParseUUIDPipe()) memberId: string,
@@ -65,6 +71,7 @@ export class MembersController {
   }
 
   @Get(":memberId/summary")
+  @ApiOkResponse({ type: MemberSummaryResponseDto, nullable: true })
   getSummary(
     @Param("shopId", new ParseUUIDPipe()) shopId: string,
     @Param("memberId", new ParseUUIDPipe()) memberId: string,
@@ -73,6 +80,7 @@ export class MembersController {
   }
 
   @Get(":memberId/ledger")
+  @ApiOkResponse({ type: StampLedgerResponseDto, isArray: true })
   listLedger(
     @Param("shopId", new ParseUUIDPipe()) shopId: string,
     @Param("memberId", new ParseUUIDPipe()) memberId: string,
@@ -82,6 +90,7 @@ export class MembersController {
   }
 
   @Post(":memberId/stamp-adjustments")
+  @ApiCreatedResponse({ type: MemberSummaryResponseDto })
   adjustStamps(
     @Param("shopId", new ParseUUIDPipe()) shopId: string,
     @Param("memberId", new ParseUUIDPipe()) memberId: string,

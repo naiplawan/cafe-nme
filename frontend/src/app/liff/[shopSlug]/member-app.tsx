@@ -132,6 +132,27 @@ function MemberCardView({ shopSlug, shopName, idToken, initial, loadCard, brand,
   const qrImageRef = useRef<HTMLImageElement>(null);
   const [qrData, setQrData] = useState("");
   const [seconds, setSeconds] = useState(30);
+  const [refreshError, setRefreshError] = useState("");
+  const [refreshing, setRefreshing] = useState(false);
+  const refreshInFlight = useRef(false);
+  const refreshDeadline = useRef(Date.now() + 30_000);
+  const refreshCard = useCallback(async () => {
+    if (refreshInFlight.current) return;
+    refreshInFlight.current = true;
+    setRefreshing(true);
+    setRefreshError("");
+    try {
+      await loadCard(idToken);
+      refreshDeadline.current = Date.now() + 30_000;
+      setSeconds(30);
+    } catch {
+      setSeconds(0);
+      setRefreshError("อัปเดต QR ไม่สำเร็จ กรุณาลองใหม่ หากยังไม่ได้ให้เปิดจาก LINE อีกครั้ง");
+    } finally {
+      refreshInFlight.current = false;
+      setRefreshing(false);
+    }
+  }, [idToken, loadCard]);
   const [showSettings, setShowSettings] = useState(false);
   const [dismissedRegisteredNotice, setDismissedRegisteredNotice] = useState(false);
   const showRegisteredNotice = alreadyRegisteredNotice && !dismissedRegisteredNotice;
@@ -190,19 +211,22 @@ function MemberCardView({ shopSlug, shopName, idToken, initial, loadCard, brand,
   }, { scope: rootRef, dependencies: [qrData], revertOnUpdate: true });
   useEffect(() => {
     let active = true;
-    void QRCode.toDataURL(card.qrToken, { width: 280, margin: 1 }).then((url) => { if (active) setQrData(url); });
+    setQrData("");
+    void QRCode.toDataURL(card.qrToken, { width: 280, margin: 1 }).then((url) => { if (active) setQrData(url); })
+      .catch(() => { if (active) setRefreshError("สร้าง QR ไม่สำเร็จ กรุณาลองใหม่"); });
     return () => { active = false; };
   }, [card.qrToken]);
   useEffect(() => {
-    const ticker = window.setInterval(() => setSeconds((value) => {
-      if (value <= 1) {
-        void loadCard(idToken);
-        return 30;
-      }
-      return value - 1;
-    }), 1000);
-    return () => window.clearInterval(ticker);
-  }, [idToken, loadCard]);
+    if (refreshError || refreshing) return;
+    const tick = () => {
+      const remaining = Math.max(0, Math.ceil((refreshDeadline.current - Date.now()) / 1000));
+      setSeconds(remaining);
+      if (remaining === 0) void refreshCard();
+    };
+    const ticker = window.setInterval(tick, 1000);
+    document.addEventListener("visibilitychange", tick);
+    return () => { window.clearInterval(ticker); document.removeEventListener("visibilitychange", tick); };
+  }, [refreshCard, refreshError, refreshing]);
   return <main ref={rootRef} style={brandVars(brand.accent) as CSSProperties} className="mx-auto min-h-screen max-w-md space-y-4 p-4 pb-8">
     <header className="flex items-center justify-between"><div className="flex items-center gap-3"><BrandLogo logoUrl={brand.logoUrl} size={40} /><div><p className="text-sm text-muted-foreground">สมาชิก</p><h1 className="font-semibold">{shopName}</h1></div></div><div className="flex items-center gap-2"><button type="button" onClick={onShowMenu} className="rounded-full border px-3 py-2 text-sm">เมนู</button><button type="button" onClick={() => setShowSettings(!showSettings)} className="rounded-full border px-3 py-2 text-sm">ตั้งค่า</button></div></header>
     {showRegisteredNotice && <div role="status" className="flex items-center justify-between rounded-xl border border-[#C69C72] bg-[#FFF8EF] px-4 py-3 text-sm"><p>คุณเป็นสมาชิกอยู่แล้ว</p><button type="button" aria-label="ปิดข้อความ" onClick={() => setDismissedRegisteredNotice(true)} className="rounded p-1"><X aria-hidden="true" size={18} /></button></div>}
@@ -213,7 +237,7 @@ function MemberCardView({ shopSlug, shopName, idToken, initial, loadCard, brand,
       </section>
       <section className={`relative flex items-center gap-4 overflow-hidden rounded-2xl border bg-card p-4 transition-shadow duration-300 ${highlightStamps ? "ring-2 ring-[#C69C72] shadow-[0_0_24px_rgba(198,156,114,0.32)]" : card.member.stampBalance === 0 && card.member.availableRewards > 0 ? "border-[#C69C72] shadow-[0_0_24px_rgba(198,156,114,0.24)]" : ""}`}><div data-reward-glow aria-hidden="true" className="pointer-events-none absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r from-transparent via-white/70 to-transparent opacity-0" /><Image src="/assets/reward-free-drink.png" alt="เครื่องดื่มฟรี" width={72} height={72} /><div><h2 className="font-semibold">รางวัลเครื่องดื่มฟรี</h2><p className="text-sm text-muted-foreground">{card.member.availableRewards > 0 ? `ใช้ได้ ${card.member.availableRewards} รางวัล` : `อีก ${Math.max(0, card.member.stampGoal - card.member.stampBalance)} แสตมป์ รับฟรี 1 แก้ว`}</p></div></section>
       </div>
-      <section className="space-y-2 rounded-2xl border bg-white p-4 text-center"><p className="font-semibold">แสดง QR นี้ให้พนักงานสแกน</p><div className="relative mx-auto size-[276px] p-[18px]">{qrData && <Image ref={qrImageRef} key={card.qrToken} src={qrData} alt="QR สำหรับสะสมแสตมป์" width={240} height={240} unoptimized className="mx-auto" />}<svg aria-hidden="true" className="pointer-events-none absolute inset-0 size-full" viewBox="0 0 276 276"><rect x="3" y="3" width="270" height="270" rx="22" fill="none" stroke="#EADBC8" strokeWidth="3" /><rect ref={qrRingRef} x="3" y="3" width="270" height="270" rx="22" fill="none" stroke="var(--brand)" strokeWidth="3" strokeLinecap="round" /></svg></div><p className="text-sm text-muted-foreground">QR จะเปลี่ยนใน <span className="tabular-nums">{seconds}</span> วินาที</p></section>
+      <section className="space-y-2 rounded-2xl border bg-white p-4 text-center"><p className="font-semibold">แสดง QR นี้ให้พนักงานสแกน</p><div className="relative mx-auto size-[276px] p-[18px]">{qrData && seconds > 0 && !refreshError && !refreshing && <Image ref={qrImageRef} key={card.qrToken} src={qrData} alt="QR สำหรับสะสมแสตมป์" width={240} height={240} unoptimized className="mx-auto" />}<svg aria-hidden="true" className="pointer-events-none absolute inset-0 size-full" viewBox="0 0 276 276"><rect x="3" y="3" width="270" height="270" rx="22" fill="none" stroke="#EADBC8" strokeWidth="3" /><rect ref={qrRingRef} x="3" y="3" width="270" height="270" rx="22" fill="none" stroke="var(--brand)" strokeWidth="3" strokeLinecap="round" /></svg></div>{refreshError ? <div role="alert"><p className="text-sm text-destructive">{refreshError}</p><Button type="button" onClick={() => void refreshCard()}>ลองใหม่</Button></div> : <p role="status" className="text-sm text-muted-foreground">{refreshing ? "กำลังอัปเดต QR…" : `ตรวจสอบ QR อีกครั้งใน ${seconds} วินาที`}</p>}</section>
       <Link href={`/liff/${shopSlug}/privacy`} className="block text-center text-sm text-muted-foreground underline">ประกาศความเป็นส่วนตัว</Link>
     </>}
   </main>;

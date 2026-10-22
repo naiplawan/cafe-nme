@@ -48,6 +48,9 @@ export function OrdersScreen({ orders, initialDetail, netSalesSatang, todaySumma
   const [view, setView] = useState<"orders" | "summary">("orders");
   const [selectedId, setSelectedId] = useState(initialDetail?.id ?? null);
   const [detail, setDetail] = useState<OrderDetail | null>(initialDetail);
+  const detailRequest = useRef(0);
+  const voidInFlight = useRef(false);
+  const [detailError, setDetailError] = useState<string | null>(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [showVoid, setShowVoid] = useState(false);
   const [pin, setPin] = useState("");
@@ -174,13 +177,20 @@ export function OrdersScreen({ orders, initialDetail, netSalesSatang, todaySumma
   }, [showVoid, closeVoid]);
 
   async function selectOrder(orderId: string) {
+    const request = ++detailRequest.current;
     setSelectedId(orderId);
+    setDetail(null);
+    setDetailError(null);
     setLoadingDetail(true);
     try {
       const next = await getOrderAction(orderId);
+      if (request !== detailRequest.current) return;
       setDetail(next);
+      if (!next) setDetailError("ไม่พบออเดอร์นี้");
+    } catch {
+      if (request === detailRequest.current) setDetailError("โหลดรายละเอียดไม่สำเร็จ กรุณาลองใหม่");
     } finally {
-      setLoadingDetail(false);
+      if (request === detailRequest.current) setLoadingDetail(false);
     }
   }
 
@@ -192,19 +202,23 @@ export function OrdersScreen({ orders, initialDetail, netSalesSatang, todaySumma
   }
 
   async function confirmVoid() {
-    if (!detail || pin.length < 4 || voiding) return;
+    if (!detail || detail.id !== selectedId || loadingDetail || pin.length < 4 || voidInFlight.current) return;
+    voidInFlight.current = true;
     setVoiding(true);
-    const result = await voidOrderAction(detail.id, pin);
-    setVoiding(false);
-    if (!result.ok) {
-      setVoidMessage(result.message);
+    setVoidMessage(null);
+    try {
+      const result = await voidOrderAction(detail.id, pin);
+      if (!result.ok) { setVoidMessage(result.message); setPin(""); return; }
+      setShowVoid(false);
+      await selectOrder(detail.id);
+      router.refresh();
+    } catch {
+      setVoidMessage("ยังยืนยันผลการยกเลิกไม่ได้ กรุณาลองตรวจสอบบิลเดิมอีกครั้ง");
       setPin("");
-      return;
+    } finally {
+      voidInFlight.current = false;
+      setVoiding(false);
     }
-    const updated = await getOrderAction(detail.id);
-    setDetail(updated);
-    closeVoid();
-    router.refresh();
   }
 
   const voidCount = orders.filter((order) => order.status === "void").length;
@@ -251,7 +265,8 @@ export function OrdersScreen({ orders, initialDetail, netSalesSatang, todaySumma
       </section>
 
       <section ref={detailsRef} aria-label="รายละเอียดออเดอร์" className="flex min-w-0 flex-1 flex-col gap-4 overflow-y-auto bg-[#FFFBF6] px-8 py-7 max-[760px]:min-h-[420px] max-[760px]:px-5">
-        {detail ? <>
+        {detailError && <div role="alert">{detailError}<button type="button" className="ml-3 min-h-11 underline" onClick={() => { if (selectedId) void selectOrder(selectedId); }}>ลองใหม่</button></div>}
+        {detail && detail.id === selectedId && !loadingDetail ? <>
           <div className="flex flex-wrap items-baseline gap-x-3.5 gap-y-2">
             <span className="text-[40px] font-bold">{orderLabel(detail.dailyNo)}</span>
             <span className="text-base text-[#6B5547]">{orderTimestamp(detail.paidAt ?? detail.voidedAt)} · โดย {detail.staffName ?? "—"}</span>

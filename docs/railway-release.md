@@ -21,14 +21,14 @@ References: [Railway pre-deploy commands](https://docs.railway.com/deployments/p
 
 ## Account identity
 
-Email addresses remain the account identifier and login credential. Signup creates an authenticated session immediately and has no outbound email or email ownership verification dependency. Password recovery remains operator-managed through the existing database access procedure.
+Email addresses remain the account identifier and login credential. Signup creates an authenticated session immediately and has no outbound email or email ownership verification dependency. Password recovery uses Resend when the backend has `FRONTEND_URL` (the HTTPS frontend origin), `RESEND_API_KEY`, and `RECOVERY_EMAIL_FROM` (a verified sender). Without these settings, recovery reports that it is unavailable. Confirm delivery using a controlled mailbox before advertising recovery as operational; provider delivery runs asynchronously and failures are logged.
 
 ## Release sequence
 
 1. Review the complete change and its verification evidence. Confirm the exact API and frontend commits to deploy.
 2. Before a schema change, confirm the PostgreSQL backup/recovery configuration and take a restorable backup using existing authorized database access. Record its identifier and retention without logging connection strings.
-3. Apply migrations in the API pre-deploy step. Migration `0019_remove_email_verification` removes verification state and token storage. Historical migrations `0013_password_reset`, `0014_email_verification`, `0015_remove_email_auth_state`, and `0016_restore_email_verification` remain unchanged. Migration `0012_checkout_idempotency` adds nullable columns and a unique index. Migration `0011_clear_demo_promptpay` changes only the known demo shop placeholder; it intentionally has no schema snapshot.
-4. Wait for API deployment success and `/health/ready`. Only then deploy the frontend that uses the new API behavior.
+3. Apply all pending migrations through `0022_password_recovery` in the API pre-deploy step. Migration `0020_business_invariants` adds business constraints, `0021_order_item_line_no` adds and backfills receipt ordering, and `0022_password_recovery` adds reset-token storage. Migration `0019_remove_email_verification` removes verification state and token storage. Historical migrations `0013_password_reset`, `0014_email_verification`, `0015_remove_email_auth_state`, and `0016_restore_email_verification` remain unchanged. Migration `0012_checkout_idempotency` adds nullable columns and a unique index. Migration `0011_clear_demo_promptpay` changes only the known demo shop placeholder; it intentionally has no schema snapshot.
+4. Wait for API deployment success and `/health/ready`. Only then deploy the frontend that uses the new quote endpoint and checkout total validation. Retain the deployed commit and migration logs as evidence.
 5. Inspect owner settings, cash checkout, PromptPay availability, and an identical-key retry with disposable fixtures before accepting the release. Do not test transfers or create paid production orders as a smoke check.
 6. Record deployment IDs, commit IDs, migration evidence, and any environment-specific limitations.
 

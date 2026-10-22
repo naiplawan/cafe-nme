@@ -16,10 +16,9 @@ type PosHeaderProps = {
   staffRole: string;
   online: boolean;
   logoUrl: string | null;
-  onLogout: () => void;
 };
 
-export function PosHeader({ shopName, orderNo, staffName, staffRole, online, logoUrl, onLogout }: PosHeaderProps) {
+export function PosHeader({ shopName, orderNo, staffName, staffRole, online, logoUrl }: PosHeaderProps) {
   const [pending, startTransition] = useTransition();
   const headerRef = useRef<HTMLElement>(null);
   useGSAP(() => {
@@ -37,7 +36,7 @@ export function PosHeader({ shopName, orderNo, staffName, staffRole, online, log
   }, { scope: headerRef, dependencies: [online] });
 
   return (
-    <header ref={headerRef} className="flex h-[68px] shrink-0 items-center gap-4 bg-[#3B2A20] px-5 text-[#F5EDE3]">
+    <header ref={headerRef} className="flex min-h-[68px] shrink-0 flex-wrap items-center gap-2 py-2 lg:gap-4 lg:py-0 bg-[#3B2A20] px-5 text-[#F5EDE3]">
       <BrandLogo logoUrl={logoUrl} size={40} className="rounded-[10px]" />
       <div className="flex min-w-0 flex-col leading-tight">
         <span className="truncate text-lg font-bold">{shopName}</span>
@@ -48,16 +47,16 @@ export function PosHeader({ shopName, orderNo, staffName, staffRole, online, log
         <span data-network-dot className={`size-2.5 rounded-full ${online ? "bg-[#6FCF8E]" : "bg-[#B4441C]"}`} />
         {online ? "ออนไลน์" : "ออฟไลน์ — ชำระเงินไม่ได้"}
       </div>
-      <div className="ml-auto flex items-center gap-2.5">
-        <Link href="/pos/orders" className="flex h-12 items-center gap-2 rounded-xl bg-[#574235] px-[18px] text-base font-semibold text-[#F5EDE3]">
+      <div className="flex w-full max-w-full items-center gap-2 sm:ml-auto sm:w-auto sm:gap-2.5">
+        <Link href="/pos/orders" className="flex h-12 items-center gap-2 rounded-xl bg-[#574235] px-3 text-sm sm:px-[18px] sm:text-base font-semibold text-[#F5EDE3]">
           <ClipboardList aria-hidden="true" size={20} /> ออเดอร์วันนี้
         </Link>
-        <div className="flex h-12 items-center gap-2.5 rounded-xl bg-[#574235] px-3.5">
+        <div className="flex h-12 min-w-0 flex-1 items-center gap-2 rounded-xl bg-[#574235] px-2 sm:flex-none sm:gap-2.5 sm:px-3.5">
           <span className="flex size-8 items-center justify-center rounded-full bg-[#C69C72] font-bold text-[#3B2A20]">{thaiInitial(staffName)}</span>
-          <span className="text-[15px] leading-tight">{staffName}<br /><span className="text-xs text-[#E9D9C6]">{staffRole}</span></span>
+          <span className="min-w-0 truncate text-[13px] leading-tight sm:text-[15px]">{staffName}<br /><span className="text-xs text-[#E9D9C6]">{staffRole}</span></span>
         </div>
-        <button type="button" aria-label="ออกจากระบบ" disabled={pending} onClick={() => { onLogout(); startTransition(() => { void logoutPos(); }); }}
-          className="flex size-12 items-center justify-center rounded-xl bg-[#574235] disabled:opacity-60">
+        <button type="button" aria-label="ออกจากระบบ" disabled={pending} onClick={() => { startTransition(async () => { await logoutPos(); }); }}
+          className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-[#574235] disabled:opacity-60">
           <LogOut aria-hidden="true" size={22} />
         </button>
       </div>

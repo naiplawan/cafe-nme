@@ -93,7 +93,7 @@ export async function verifyLineIdToken(shopSlug: string, idToken: string): Prom
 
 export async function pushText(shopId: string, lineUserId: string, text: string): Promise<void> {
   const config = await getLineConfig(shopId);
-  if (!config.accessToken) { return; }
+  if (!config.accessToken) { throw new Error("LINE access token is not configured"); }
   const client = new messagingApi.MessagingApiClient({ channelAccessToken: config.accessToken });
   await client.pushMessage({ to: lineUserId, messages: [{ type: "text", text }] });
 }

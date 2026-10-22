@@ -95,7 +95,7 @@ export function CategoryManager({ categories }: { categories: Category[] }) {
 
 function CategoryRow({ category }: { category: Category }) {
   const rename = renameCategoryAction.bind(null, category.id);
-  const remove = deleteCategoryAction.bind(null, category.id);
+  const [removeState, remove, removing] = useActionState(deleteCategoryAction.bind(null, category.id), { message: null });
   const [state, action] = useActionState(rename, { message: null });
 
   return (
@@ -107,7 +107,8 @@ function CategoryRow({ category }: { category: Category }) {
         {state.success ? <p className="text-sm text-muted-foreground" role="status" aria-live="polite">บันทึกแล้ว</p> : null}
       </form>
       <ConfirmSubmit action={remove} destructive confirmLabel="ลบ" message={`ลบหมวดหมู่ “${category.name}” หรือไม่? สินค้าจะยังอยู่โดยไม่มีหมวดหมู่`}>
-        <Button type="submit" variant="destructive">ลบ</Button>
+        <Button type="submit" variant="destructive" disabled={removing}>ลบ</Button>
+        <ErrorMessage message={removeState.message} />
       </ConfirmSubmit>
     </li>
   );
@@ -495,10 +496,11 @@ export function addProductHref(search: string) {
 }
 
 export function DeleteProductForm({ productId, name }: { productId: string; name: string }) {
-  const action = deleteProductAction.bind(null, productId);
+  const [state, action, pending] = useActionState(deleteProductAction.bind(null, productId), { message: null });
   return (
     <ConfirmSubmit action={action} destructive confirmLabel="ลบ" message={`ลบสินค้า “${name}” หรือไม่?`}>
-      <Button type="submit" variant="destructive">ลบสินค้า</Button>
+      <Button type="submit" variant="destructive" disabled={pending}>ลบสินค้า</Button>
+      <ErrorMessage message={state.message} />
     </ConfirmSubmit>
   );
 }

@@ -1,5 +1,5 @@
 import { ApiStandardErrors } from "./common/api-errors.decorator.js";
-import { ApiSecurity, ApiTags } from "@nestjs/swagger";
+import { ApiCreatedResponse, ApiOkResponse, ApiSecurity, ApiTags } from "@nestjs/swagger";
 import { SetupShopDto } from "./common/request.dto.js";
 import {
   BadRequestException,
@@ -14,6 +14,7 @@ import {
 } from "@nestjs/common";
 import { InternalApiGuard } from "./internal-api.guard.js";
 import { ShopSetupService } from "./shop-setup.service.js";
+import { OwnerShopExistsDto, ShopCreatedDto } from "./core-response.dto.js";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const PROMPTPAY_ID = /^(0\d{9}|\d{13})$/;
@@ -76,11 +77,13 @@ export class ShopSetupController {
   constructor(@Inject(ShopSetupService) private readonly setup: ShopSetupService) {}
 
   @Get("auth-users/:authUserId/owner-shop")
+  @ApiOkResponse({ type: OwnerShopExistsDto })
   ownerShopExists(@Param("authUserId", new ParseUUIDPipe()) authUserId: string) {
     return this.setup.ownerShopExists(authUserId).then((exists) => ({ exists }));
   }
 
   @Post("shops/setup")
+  @ApiCreatedResponse({ type: ShopCreatedDto })
   createShop(@Body() body: SetupShopDto) {
     return this.setup.createShop(setupPayload(body));
   }

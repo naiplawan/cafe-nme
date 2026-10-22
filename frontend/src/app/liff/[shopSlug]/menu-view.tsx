@@ -10,7 +10,7 @@ import type { CSSProperties } from "react";
 export type LiffMenuCategory = {
   id: string;
   name: string;
-  products: { id: string; name: string; priceSatang: number; imageUrl: string | null }[];
+  products: { id: string; name: string; priceSatang: number; soldOut: boolean; imageUrl: string | null }[];
 };
 
 export function MenuView({ shopName, brand, categories, onShowCard }: {
@@ -54,7 +54,7 @@ export function MenuView({ shopName, brand, categories, onShowCard }: {
               <div className="relative aspect-square bg-muted">
                 {product.imageUrl ? <Image src={product.imageUrl} alt={product.name} fill sizes="(max-width: 448px) 45vw, 200px" className="object-cover" /> : <div className="flex h-full items-center justify-center text-sm text-muted-foreground">ไม่มีรูปภาพ</div>}
               </div>
-              <div className="space-y-1 p-3"><h3 className="line-clamp-2 min-h-10 font-medium">{product.name}</h3><p className="font-semibold text-primary">฿{(product.priceSatang / 100).toLocaleString("th-TH")}</p></div>
+              <div className="space-y-1 p-3">{product.soldOut && <p className="text-sm font-semibold text-destructive">หมดชั่วคราว</p>}<h3 className="line-clamp-2 min-h-10 font-medium">{product.name}</h3><p className="font-semibold text-primary">฿{(product.priceSatang / 100).toLocaleString("th-TH")}</p></div>
             </article>)}
           </div>
         </section>)}

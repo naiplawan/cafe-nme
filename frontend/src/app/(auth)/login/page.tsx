@@ -16,6 +16,7 @@ export default function LoginPage() {
           <svg aria-hidden="true" className="mx-auto mt-2 h-2 w-20 text-[#C69C72]" viewBox="0 0 80 4" fill="none"><path data-logo-line d="M1 2H79" stroke="currentColor" strokeWidth="3" strokeLinecap="round" /></svg>
         </div>
         <LoginForm />
+        <Link className="mt-4 block text-center text-sm underline" href="/forgot-password">ลืมรหัสผ่าน?</Link>
         <p className="mt-6 text-center text-sm text-muted-foreground">
           ยังไม่มีบัญชี? <Link className="font-medium text-foreground underline" href="/signup">สมัครสมาชิก</Link>
         </p>

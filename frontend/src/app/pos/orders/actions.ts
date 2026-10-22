@@ -27,7 +27,7 @@ export async function voidOrderAction(orderId: string, pin: string): Promise<Voi
       return { ok: false, message: "กรุณายกเลิกบิลที่ใช้รางวัลนี้ก่อน แล้วจึงยกเลิกบิลที่ได้รับรางวัล" };
     }
     const latest = await getOrder(session.shopId, orderId);
-    if (!latest || latest.status !== "paid") return { ok: false, message: "บิลนี้ยกเลิกไปแล้ว" };
+    if (latest?.status === "void") return { ok: true };
     throw error;
   }
 }

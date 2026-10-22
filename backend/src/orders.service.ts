@@ -1,30 +1,26 @@
-import { createHash, randomUUID } from "node:crypto";
-import {
-  BadRequestException,
-  ConflictException,
-  Inject,
-  Injectable,
-  NotFoundException,
-} from "@nestjs/common";
-import type { TransactionSql } from "postgres";
+import { createHash, randomUUID } from 'node:crypto';
+import { BadRequestException, ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import type { TransactionSql } from 'postgres';
 import {
   businessDate,
   calculatePrice,
   CheckoutDomainError,
+  MAX_CHECKOUT_UNITS,
   rewardDiscount,
   stampsForLines,
   type CheckoutCartLine,
   type CheckoutProduct,
-} from "./checkout-domain.js";
-import { DatabaseService } from "./database.service.js";
-import { clearExpiredSoldOut } from "./sold-out.js";
+} from './checkout-domain.js';
+import { DatabaseService } from './database.service.js';
+import { clearExpiredSoldOut } from './sold-out.js';
 
 export interface CheckoutInput {
   requestId?: string;
+  expectedTotalSatang?: number;
   lines: CheckoutCartLine[];
   memberId?: string | null;
   redeemRewardId?: string | null;
-  payment: { method: "cash"; cashReceivedSatang: number } | { method: "promptpay" };
+  payment: { method: 'cash'; cashReceivedSatang: number } | { method: 'promptpay' };
 }
 
 export interface CheckoutReceipt {
@@ -40,11 +36,21 @@ export interface CheckoutReceipt {
 }
 
 async function checkoutMenu(tx: TransactionSql, shopId: string) {
-  const rows = await tx<{
-    id: string; name: string; basePriceSatang: number; earnsStamp: boolean; soldOut: boolean;
-    groupId: string | null; minSelect: number | null; maxSelect: number | null;
-    modifierId: string | null; modifierName: string | null; priceDeltaSatang: number | null;
-  }[]>`
+  const rows = await tx<
+    {
+      id: string;
+      name: string;
+      basePriceSatang: number;
+      earnsStamp: boolean;
+      soldOut: boolean;
+      groupId: string | null;
+      minSelect: number | null;
+      maxSelect: number | null;
+      modifierId: string | null;
+      modifierName: string | null;
+      priceDeltaSatang: number | null;
+    }[]
+  >`
     select p.id::text as id, p.name, p.base_price_satang as "basePriceSatang",
       p.earns_stamp as "earnsStamp", p.sold_out as "soldOut",
       mg.id::text as "groupId", mg.min_select as "minSelect", mg.max_select as "maxSelect",
@@ -60,8 +66,14 @@ async function checkoutMenu(tx: TransactionSql, shopId: string) {
   for (const row of rows) {
     let product = byProduct.get(row.id);
     if (!product) {
-      product = { id: row.id, name: row.name, basePriceSatang: Number(row.basePriceSatang), earnsStamp: row.earnsStamp,
-        soldOut: row.soldOut, groups: [] };
+      product = {
+        id: row.id,
+        name: row.name,
+        basePriceSatang: Number(row.basePriceSatang),
+        earnsStamp: row.earnsStamp,
+        soldOut: row.soldOut,
+        groups: [],
+      };
       byProduct.set(row.id, product);
     }
     if (row.groupId && row.minSelect !== null && row.maxSelect !== null) {
@@ -71,7 +83,11 @@ async function checkoutMenu(tx: TransactionSql, shopId: string) {
         product.groups.push(group);
       }
       if (row.modifierId && row.modifierName !== null && row.priceDeltaSatang !== null) {
-        group.modifiers.push({ id: row.modifierId, name: row.modifierName, priceDeltaSatang: Number(row.priceDeltaSatang) });
+        group.modifiers.push({
+          id: row.modifierId,
+          name: row.modifierName,
+          priceDeltaSatang: Number(row.priceDeltaSatang),
+        });
       }
     }
   }
@@ -85,7 +101,7 @@ function requestIdForCheckout(input: CheckoutInput): string {
     return randomUUID();
   }
   if (!UUID_PATTERN.test(input.requestId)) {
-    throw new BadRequestException("requestId must be a valid UUID");
+    throw new BadRequestException('requestId must be a valid UUID');
   }
   return input.requestId.toLowerCase();
 }
@@ -101,30 +117,90 @@ function checkoutFingerprint(staffId: string, input: CheckoutInput): string {
     })),
     memberId: input.memberId?.toLowerCase() ?? null,
     redeemRewardId: input.redeemRewardId?.toLowerCase() ?? null,
-    payment: input.payment.method === "cash"
-      ? { method: "cash", cashReceivedSatang: input.payment.cashReceivedSatang }
-      : { method: "promptpay" },
+    ...(input.expectedTotalSatang === undefined ? {} : { expectedTotalSatang: input.expectedTotalSatang }),
+    payment:
+      input.payment.method === 'cash'
+        ? { method: 'cash', cashReceivedSatang: input.payment.cashReceivedSatang }
+        : { method: 'promptpay' },
   };
-  return createHash("sha256").update(JSON.stringify(canonical)).digest("hex");
+  return createHash('sha256').update(JSON.stringify(canonical)).digest('hex');
 }
 
 function parseCheckoutResult(value: unknown): CheckoutReceipt | null {
-  if (typeof value === "string") {
+  if (typeof value === 'string') {
     try {
       value = JSON.parse(value) as unknown;
     } catch {
       return null;
     }
   }
-  return value && typeof value === "object" ? value as CheckoutReceipt : null;
+  return value && typeof value === 'object' ? (value as CheckoutReceipt) : null;
+}
+
+async function checkoutPrice(tx: TransactionSql, shopId: string, input: Pick<CheckoutInput, 'lines' | 'memberId' | 'redeemRewardId'>) {
+  await clearExpiredSoldOut(tx, shopId);
+  const menu = await checkoutMenu(tx, shopId);
+  const lineProductIds = new Set(input.lines.map((line) => line.productId));
+  if (menu.some((product) => product.soldOut && lineProductIds.has(product.id))) {
+    throw new CheckoutDomainError('sold_out');
+  }
+  const priced = calculatePrice(input.lines, menu);
+  const { subtotalSatang } = priced;
+  let member: { id: string; stampGoal: number } | null = null;
+  if (input.memberId) {
+    const [row] = await tx<{ id: string; stampGoal: number }[]>`
+      select m.id::text as id, s.stamp_goal as "stampGoal" from members m
+      join shops s on s.id = m.shop_id
+      where m.id = ${input.memberId}::uuid and m.shop_id = ${shopId}::uuid and m.deleted_at is null limit 1
+    `;
+    if (!row) throw new CheckoutDomainError('member_not_found');
+    member = { id: row.id, stampGoal: Number(row.stampGoal) };
+  }
+
+  let discountSatang = 0;
+  if (input.redeemRewardId) {
+    if (!member) throw new CheckoutDomainError('reward_unavailable');
+    const [reward] = await tx<{ id: string }[]>`
+      select id::text as id from rewards where id = ${input.redeemRewardId}::uuid
+        and shop_id = ${shopId}::uuid and member_id = ${member.id}::uuid and status = 'available' limit 1
+    `;
+    if (!reward) throw new CheckoutDomainError('reward_unavailable');
+    discountSatang = Math.min(subtotalSatang, rewardDiscount(priced.lines));
+  }
+  const totalSatang = Math.max(0, subtotalSatang - discountSatang);
+  return { ...priced, discountSatang, totalSatang, member };
 }
 
 @Injectable()
 export class OrdersService {
   constructor(@Inject(DatabaseService) private readonly database: DatabaseService) {}
 
+  async quote(shopId: string, staffId: string, input: CheckoutInput) {
+    if (!input.lines.length) throw new BadRequestException({ code: 'empty_cart' });
+    try {
+      return await this.database.connection.begin(async (tx) => {
+        const [actor] = await tx`select id from staff where id = ${staffId}::uuid and shop_id = ${shopId}::uuid and is_active = true`;
+        if (!actor) throw new NotFoundException('Staff not found');
+        const { lines, subtotalSatang, discountSatang, totalSatang } = await checkoutPrice(tx, shopId, input);
+        return {
+          lines: lines.map(({ name, qty, lineTotalSatang, modifiers }) => ({
+            name, qty, lineTotalSatang,
+            modifiersText: modifiers.map((modifier) => modifier.name).join(', '),
+          })),
+          subtotalSatang, discountSatang, totalSatang,
+        };
+      });
+    } catch (error) {
+      if (error instanceof CheckoutDomainError) throw new BadRequestException({ code: error.code });
+      throw error;
+    }
+  }
+
   async checkout(shopId: string, staffId: string, input: CheckoutInput): Promise<CheckoutReceipt> {
-    if (input.lines.length === 0) throw new BadRequestException({ code: "empty_cart" });
+    if (input.lines.length === 0) throw new BadRequestException({ code: 'empty_cart' });
+    if (input.lines.length > 100 || input.lines.reduce((total, line) => total + line.qty, 0) > MAX_CHECKOUT_UNITS) {
+      throw new BadRequestException({ code: 'cart_limit_exceeded' });
+    }
     const requestId = requestIdForCheckout(input);
     const fingerprint = checkoutFingerprint(staffId, input);
     const lockShopId = shopId.toLowerCase();
@@ -136,68 +212,45 @@ export class OrdersService {
           select timezone, promptpay_id as "promptpayId"
           from shops where id = ${shopId}::uuid limit 1 for share
         `;
-        if (!shop) throw new NotFoundException("Shop not found");
+        if (!shop) throw new NotFoundException('Shop not found');
 
         const [actor] = await tx<{ id: string }[]>`
           select id::text as id from staff where id = ${staffId}::uuid and shop_id = ${shopId}::uuid and is_active = true limit 1
         `;
-        if (!actor) throw new NotFoundException("Staff not found");
+        if (!actor) throw new NotFoundException('Staff not found');
 
         const day = businessDate(new Date(), shop.timezone);
         await tx`select pg_advisory_xact_lock(hashtextextended(${`${lockShopId}:${requestId}`}, 0))`;
-        const [existing] = await tx<{
-          checkoutFingerprint: string | null;
-          checkoutResult: unknown;
-        }[]>`
+        const [existing] = await tx<
+          {
+            checkoutFingerprint: string | null;
+            checkoutResult: unknown;
+          }[]
+        >`
           select checkout_fingerprint as "checkoutFingerprint", checkout_result as "checkoutResult"
           from orders where shop_id = ${shopId}::uuid and checkout_key = ${requestId}::uuid limit 1
         `;
         if (existing) {
           const stored = parseCheckoutResult(existing.checkoutResult);
           if (existing.checkoutFingerprint !== fingerprint || !stored) {
-            throw new ConflictException({ code: "idempotency_key_reused" });
+            throw new ConflictException({ code: 'idempotency_key_reused' });
           }
           return { ...stored, replayed: true };
         }
 
         await tx`select pg_advisory_xact_lock(hashtext(${lockShopId + day}))`;
-        await clearExpiredSoldOut(tx, shopId);
-        const menu = await checkoutMenu(tx, shopId);
-        const lineProductIds = new Set(input.lines.map((line) => line.productId));
-        if (menu.some((product) => product.soldOut && lineProductIds.has(product.id))) {
-          throw new CheckoutDomainError("sold_out");
-        }
-        const priced = calculatePrice(input.lines, menu);
-        const { subtotalSatang } = priced;
+        const priced = await checkoutPrice(tx, shopId, input);
+        const { subtotalSatang, discountSatang, totalSatang, member } = priced;
         const stampsEarned = stampsForLines(priced.lines);
         let rewardsCreated = 0;
-        let member: { id: string; stampGoal: number } | null = null;
-        if (input.memberId) {
-          const [row] = await tx<{ id: string; stampGoal: number }[]>`
-            select m.id::text as id, s.stamp_goal as "stampGoal" from members m
-            join shops s on s.id = m.shop_id
-            where m.id = ${input.memberId}::uuid and m.shop_id = ${shopId}::uuid and m.deleted_at is null limit 1
-          `;
-          if (!row) throw new CheckoutDomainError("member_not_found");
-          member = { id: row.id, stampGoal: Number(row.stampGoal) };
+        if (input.expectedTotalSatang !== undefined && input.expectedTotalSatang !== totalSatang) {
+          throw new CheckoutDomainError('price_changed');
         }
-
-        let discountSatang = 0;
-        if (input.redeemRewardId) {
-          if (!member) throw new CheckoutDomainError("reward_unavailable");
-          const [reward] = await tx<{ id: string }[]>`
-            select id::text as id from rewards where id = ${input.redeemRewardId}::uuid
-              and shop_id = ${shopId}::uuid and member_id = ${member.id}::uuid and status = 'available' limit 1
-          `;
-          if (!reward) throw new CheckoutDomainError("reward_unavailable");
-          discountSatang = Math.min(subtotalSatang, rewardDiscount(priced.lines));
+        if (input.payment.method === 'cash' && input.payment.cashReceivedSatang < totalSatang) {
+          throw new CheckoutDomainError('cash_insufficient');
         }
-        const totalSatang = Math.max(0, subtotalSatang - discountSatang);
-        if (input.payment.method === "cash" && input.payment.cashReceivedSatang < totalSatang) {
-          throw new CheckoutDomainError("cash_insufficient");
-        }
-        if (input.payment.method === "promptpay" && !shop.promptpayId) {
-          throw new CheckoutDomainError("promptpay_not_configured");
+        if (input.payment.method === 'promptpay' && !shop.promptpayId) {
+          throw new CheckoutDomainError('promptpay_not_configured');
         }
         const [numberRow] = await tx<{ max: number | string }[]>`
           select coalesce(max(daily_no), 0) as max from orders
@@ -218,25 +271,41 @@ export class OrdersService {
             where id = ${input.redeemRewardId}::uuid and shop_id = ${shopId}::uuid
               and member_id = ${member.id}::uuid and status = 'available' returning id::text as id
           `;
-          if (redeemed.length === 0) throw new CheckoutDomainError("reward_unavailable");
+          if (redeemed.length === 0) throw new CheckoutDomainError('reward_unavailable');
         }
-        for (const line of priced.lines) {
-          const [product] = await tx<{ id: string }[]>`
-            select id::text as id from products where id = ${line.productId}::uuid and shop_id = ${shopId}::uuid limit 1
-          `;
-          const [item] = await tx<{ id: string }[]>`
-            insert into order_items (order_id, product_id, name_snapshot, unit_price_satang, qty, note)
-            values (${order.id}::uuid, ${product?.id ?? null}::uuid, ${line.name}, ${line.unitPriceSatang}, ${line.qty}, ${line.note})
-            returning id::text as id
-          `;
-          for (const modifier of line.modifiers) {
-            await tx`insert into order_item_modifiers (order_item_id, name_snapshot, price_delta_satang)
-              values (${item.id}::uuid, ${modifier.name}, ${modifier.priceDeltaSatang})`;
-          }
+        const itemIds = priced.lines.map(() => randomUUID());
+        await tx`
+          insert into order_items (id, order_id, product_id, name_snapshot, unit_price_satang, qty, note, line_no)
+          select input.id, ${order.id}::uuid, product.id, input.name, input.price, input.qty, input.note, input.line_no
+          from unnest(
+            ${itemIds}::uuid[],
+            ${priced.lines.map((line) => line.productId)}::uuid[],
+            ${priced.lines.map((line) => line.name)}::text[],
+            ${priced.lines.map((line) => line.unitPriceSatang)}::integer[],
+            ${priced.lines.map((line) => line.qty)}::integer[],
+            ${priced.lines.map((line) => line.note)}::text[]
+          ) with ordinality as input(id, product_id, name, price, qty, note, line_no)
+          left join products product on product.id = input.product_id and product.shop_id = ${shopId}::uuid
+          order by input.line_no
+        `;
+        const modifierRows = priced.lines.flatMap((line, index) =>
+          line.modifiers.map((modifier) => ({
+            itemId: itemIds[index],
+            name: modifier.name,
+            price: modifier.priceDeltaSatang,
+          })),
+        );
+        if (modifierRows.length) {
+          await tx`insert into order_item_modifiers (order_item_id, name_snapshot, price_delta_satang)
+            select input.item_id, input.name, input.price from unnest(
+              ${modifierRows.map((modifier) => modifier.itemId)}::uuid[],
+              ${modifierRows.map((modifier) => modifier.name)}::text[],
+              ${modifierRows.map((modifier) => modifier.price)}::integer[]
+            ) as input(item_id, name, price)`;
         }
         await tx`insert into payments (order_id, method, amount_satang, cash_received_satang, confirmed_by)
           values (${order.id}::uuid, ${input.payment.method}, ${totalSatang},
-            ${input.payment.method === "cash" ? input.payment.cashReceivedSatang : null}, ${staffId}::uuid)`;
+            ${input.payment.method === 'cash' ? input.payment.cashReceivedSatang : null}, ${staffId}::uuid)`;
         if (member) {
           if (stampsEarned > 0) {
             await tx`insert into stamp_ledger (shop_id, member_id, order_id, delta, reason, staff_id)
@@ -245,18 +314,23 @@ export class OrdersService {
           const [balance] = await tx<{ total: number | string }[]>`
             select coalesce(sum(delta), 0) as total from stamp_ledger where shop_id = ${shopId}::uuid and member_id = ${member.id}::uuid
           `;
-          let stampBalance = Number(balance?.total ?? 0);
-          while (stampBalance >= member.stampGoal) {
+          const stampBalance = Number(balance?.total ?? 0);
+          rewardsCreated = Math.floor(stampBalance / member.stampGoal);
+          if (rewardsCreated > 0) {
             await tx`insert into stamp_ledger (shop_id, member_id, order_id, delta, reason, staff_id)
-              values (${shopId}::uuid, ${member.id}::uuid, ${order.id}::uuid, ${-member.stampGoal}, 'redeem', ${staffId}::uuid)`;
-            await tx`insert into rewards (shop_id, member_id, earned_order_id) values (${shopId}::uuid, ${member.id}::uuid, ${order.id}::uuid)`;
-            stampBalance -= member.stampGoal;
-            rewardsCreated += 1;
+              select ${shopId}::uuid, ${member.id}::uuid, ${order.id}::uuid, ${-member.stampGoal}, 'redeem', ${staffId}::uuid
+              from generate_series(1, ${rewardsCreated})`;
+            await tx`insert into rewards (shop_id, member_id, earned_order_id)
+              select ${shopId}::uuid, ${member.id}::uuid, ${order.id}::uuid from generate_series(1, ${rewardsCreated})`;
           }
         }
         const receipt: CheckoutReceipt = {
-          orderId: order.id, dailyNo, subtotalSatang, discountSatang, totalSatang,
-          changeSatang: input.payment.method === "cash" ? input.payment.cashReceivedSatang - totalSatang : 0,
+          orderId: order.id,
+          dailyNo,
+          subtotalSatang,
+          discountSatang,
+          totalSatang,
+          changeSatang: input.payment.method === 'cash' ? input.payment.cashReceivedSatang - totalSatang : 0,
           stampsEarned: member ? stampsEarned : 0,
           rewardsCreated,
           replayed: false,
@@ -277,15 +351,21 @@ export class OrdersService {
           select id::text as id, member_id::text as "memberId" from orders
           where id = ${orderId}::uuid and shop_id = ${shopId}::uuid and status = 'paid' for update
         `;
-        if (!order) throw new ConflictException("Paid order not found");
+        if (!order) throw new ConflictException('Paid order not found');
         const [manager] = await tx<{ id: string }[]>`
           select id::text as id from staff where id = ${managerStaffId}::uuid and shop_id = ${shopId}::uuid
             and role in ('owner', 'manager') and is_active = true limit 1
         `;
-        if (!manager) throw new NotFoundException("Manager not found");
-        let earnedRewards: { id: string; status: "available" | "redeemed" | "expired"; redeemedOrderId: string | null }[] = [];
+        if (!manager) throw new NotFoundException('Manager not found');
+        let earnedRewards: {
+          id: string;
+          status: 'available' | 'redeemed' | 'expired';
+          redeemedOrderId: string | null;
+        }[] = [];
         if (order.memberId) {
-          earnedRewards = await tx<{ id: string; status: "available" | "redeemed" | "expired"; redeemedOrderId: string | null }[]>`
+          earnedRewards = await tx<
+            { id: string; status: 'available' | 'redeemed' | 'expired'; redeemedOrderId: string | null }[]
+          >`
             select id::text as id, status, redeemed_order_id::text as "redeemedOrderId"
             from rewards where shop_id = ${shopId}::uuid and member_id = ${order.memberId}::uuid
               and earned_order_id = ${orderId}::uuid order by id for update
@@ -300,8 +380,8 @@ export class OrdersService {
           `;
           if (activeRedemption) {
             throw new ConflictException({
-              code: "reward_redemption_active",
-              message: "Void the reward redemption order first",
+              code: 'reward_redemption_active',
+              message: 'Void the reward redemption order first',
             });
           }
         }
@@ -309,7 +389,7 @@ export class OrdersService {
           update orders set status = 'void', voided_at = now(), voided_by = ${managerStaffId}::uuid
           where id = ${orderId}::uuid and shop_id = ${shopId}::uuid and status = 'paid' returning id::text as id
         `;
-        if (!updated.length) throw new ConflictException("Paid order not found");
+        if (!updated.length) throw new ConflictException('Paid order not found');
         if (order.memberId) {
           const [stampDeltas] = await tx<{ earned: number | string; redeemed: number | string }[]>`
             select coalesce(sum(delta) filter (where reason = 'earn'), 0) as earned,
@@ -317,7 +397,7 @@ export class OrdersService {
             where shop_id = ${shopId}::uuid and member_id = ${order.memberId}::uuid
               and order_id = ${orderId}::uuid
           `;
-          const availableRewards = earnedRewards.filter((reward) => reward.status === "available");
+          const availableRewards = earnedRewards.filter((reward) => reward.status === 'available');
           const compensation = -Number(stampDeltas?.earned ?? 0) - Number(stampDeltas?.redeemed ?? 0);
           await tx`insert into stamp_ledger (shop_id, member_id, order_id, delta, reason, staff_id)
             values (${shopId}::uuid, ${order.memberId}::uuid, ${orderId}::uuid, ${compensation}, 'adjust', ${managerStaffId}::uuid)`;

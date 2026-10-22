@@ -7,7 +7,14 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": "Process is alive"
+            "description": "Process is alive",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthStatusDto"
+                }
+              }
+            }
           }
         },
         "summary": "Check process liveness",
@@ -22,7 +29,14 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": "Database is ready"
+            "description": "Database is ready",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthStatusDto"
+                }
+              }
+            }
           },
           "503": {
             "description": "Database is unavailable"
@@ -49,7 +63,14 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PosMenuResponseDto"
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid request",
@@ -147,7 +168,14 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MenuResponseDto"
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid request",
@@ -259,7 +287,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "$ref": "#/components/schemas/MenuSettingsResponseDto"
                 }
               }
             }
@@ -376,7 +404,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "type": "object"
+                    "$ref": "#/components/schemas/MenuCategoryResponseDto"
                   }
                 }
               }
@@ -488,7 +516,17 @@
         },
         "responses": {
           "201": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/IdResultDto"
+                  }
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid request",
@@ -610,7 +648,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "type": "object"
+                    "$ref": "#/components/schemas/MenuCategoryResponseDto"
                   }
                 }
               }
@@ -724,7 +762,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "type": "object"
+                    "$ref": "#/components/schemas/IdResultDto"
                   }
                 }
               }
@@ -842,7 +880,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "type": "object"
+                    "$ref": "#/components/schemas/MenuProductMutationResponseDto"
                   }
                 }
               }
@@ -952,7 +990,14 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MenuProductDetailResponseDto"
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid request",
@@ -1066,7 +1111,17 @@
         },
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/IdResultDto"
+                  }
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid request",
@@ -1176,7 +1231,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "type": "object"
+                    "$ref": "#/components/schemas/IdResultDto"
                   }
                 }
               }
@@ -1286,7 +1341,20 @@
         ],
         "responses": {
           "201": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "nullable": true,
+                  "type": "object",
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ProductSoldOutResponseDto"
+                    }
+                  ]
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid request",
@@ -1398,7 +1466,10 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/IdResultDto"
+                  }
                 }
               }
             }
@@ -1509,7 +1580,17 @@
         },
         "responses": {
           "201": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/IdResultDto"
+                  }
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid request",
@@ -1607,7 +1688,14 @@
         ],
         "responses": {
           "201": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StockImportResponseDto"
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid request",
@@ -1709,7 +1797,10 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/IdResultDto"
+                  }
                 }
               }
             }
@@ -1810,7 +1901,14 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminDashboardResponseDto"
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid request",
@@ -1908,7 +2006,17 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AdminModifierProductResponseDto"
+                  }
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid request",
@@ -2006,7 +2114,20 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "nullable": true,
+                  "type": "object",
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ShopProfileResponseDto"
+                    }
+                  ]
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid request",
@@ -2089,10 +2210,249 @@
         ]
       }
     },
+    "/v1/auth/password-reset/request": {
+      "post": {
+        "operationId": "AuthController_requestReset",
+        "parameters": [
+          {
+            "name": "x-client-address",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecoveryRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecoveryResultDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Dependency unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "internal-api-token": []
+          }
+        ],
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/v1/auth/password-reset/confirm": {
+      "post": {
+        "operationId": "AuthController_confirmReset",
+        "parameters": [
+          {
+            "name": "x-client-address",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecoveryConfirmDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecoveryResultDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Dependency unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "internal-api-token": []
+          }
+        ],
+        "tags": [
+          "auth"
+        ]
+      }
+    },
     "/v1/auth/signup": {
       "post": {
         "operationId": "AuthController_signUp",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "x-client-address",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -2105,7 +2465,14 @@
         },
         "responses": {
           "201": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthTokenDto"
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid request",
@@ -2191,7 +2558,16 @@
     "/v1/auth/login": {
       "post": {
         "operationId": "AuthController_signIn",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "x-client-address",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -2204,7 +2580,14 @@
         },
         "responses": {
           "201": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthTokenDto"
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid request",
@@ -2302,7 +2685,14 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthSessionDto"
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid request",
@@ -2400,7 +2790,14 @@
         ],
         "responses": {
           "201": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SignedOutDto"
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid request",
@@ -2499,7 +2896,14 @@
         },
         "responses": {
           "201": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimitResultDto"
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid request",
@@ -2597,7 +3001,14 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BrandResponseDto"
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid request",
@@ -2695,7 +3106,15 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "Brand image bytes. The content type is the stored image MIME type.",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid request",
@@ -2791,7 +3210,14 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResultDto"
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid request",
@@ -2887,7 +3313,14 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResultDto"
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid request",
@@ -2995,7 +3428,14 @@
         },
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResultDto"
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid request",
@@ -3093,7 +3533,20 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "nullable": true,
+                  "type": "object",
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/LiffShopResponseDto"
+                    }
+                  ]
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid request",
@@ -3205,7 +3658,14 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/LiffCardNotRegisteredResponseDto"
+                    },
+                    {
+                      "$ref": "#/components/schemas/LiffCardRegisteredResponseDto"
+                    }
+                  ]
                 }
               }
             }
@@ -3316,7 +3776,14 @@
         },
         "responses": {
           "201": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LiffRegistrationResponseDto"
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid request",
@@ -3424,7 +3891,14 @@
         },
         "responses": {
           "201": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LiffRegistrationResponseDto"
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid request",
@@ -3522,7 +3996,14 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LineConfigResponseDto"
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid request",
@@ -3628,7 +4109,14 @@
         },
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OkResultDto"
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid request",
@@ -3736,7 +4224,14 @@
         },
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OkResultDto"
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid request",
@@ -3842,7 +4337,14 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LineMemberResponseDto"
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid request",
@@ -3940,7 +4442,14 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LineChannelResponseDto"
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid request",
@@ -4042,7 +4551,13 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "nullable": true,
+                  "type": "object",
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/LineWebhookConfigResponseDto"
+                    }
+                  ]
                 }
               }
             }
@@ -4155,7 +4670,13 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "nullable": true,
+                  "type": "object",
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/MemberIdResponseDto"
+                    }
+                  ]
                 }
               }
             }
@@ -4270,7 +4791,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "type": "object"
+                    "$ref": "#/components/schemas/MemberResponseDto"
                   }
                 }
               }
@@ -4404,7 +4925,14 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemberListResponseDto"
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid request",
@@ -4514,7 +5042,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "$ref": "#/components/schemas/MemberResponseDto"
                 }
               }
             }
@@ -4623,7 +5151,14 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OkResultDto"
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid request",
@@ -4733,7 +5268,13 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "nullable": true,
+                  "type": "object",
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/MemberSummaryResponseDto"
+                    }
+                  ]
                 }
               }
             }
@@ -4854,7 +5395,10 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/StampLedgerResponseDto"
+                  }
                 }
               }
             }
@@ -4973,7 +5517,14 @@
         },
         "responses": {
           "201": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemberSummaryResponseDto"
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid request",
@@ -5071,7 +5622,17 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ModifierGroupResponseDto"
+                  }
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid request",
@@ -5183,7 +5744,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "$ref": "#/components/schemas/IdResultDto"
                 }
               }
             }
@@ -5284,7 +5845,14 @@
         ],
         "responses": {
           "201": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardGroupsResultDto"
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid request",
@@ -5406,7 +5974,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "type": "object"
+                    "$ref": "#/components/schemas/IdResultDto"
                   }
                 }
               }
@@ -5520,7 +6088,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "type": "object"
+                    "$ref": "#/components/schemas/IdResultDto"
                   }
                 }
               }
@@ -5640,7 +6208,14 @@
         },
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResultDto"
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid request",
@@ -5760,7 +6335,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "$ref": "#/components/schemas/IdResultDto"
                 }
               }
             }
@@ -5885,7 +6460,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "type": "object"
+                    "$ref": "#/components/schemas/IdResultDto"
                   }
                 }
               }
@@ -5999,7 +6574,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "type": "object"
+                    "$ref": "#/components/schemas/IdResultDto"
                   }
                 }
               }
@@ -6222,7 +6797,132 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OrderSummaryDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Dependency unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "internal-api-token": []
+          }
+        ],
+        "tags": [
+          "orders"
+        ]
+      }
+    },
+    "/v1/shops/{shopId}/orders/quote": {
+      "post": {
+        "operationId": "OrdersController_quote",
+        "parameters": [
+          {
+            "name": "shopId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckoutDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckoutQuoteDto"
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid request",
@@ -6324,7 +7024,13 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "nullable": true,
+                  "type": "object",
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/PromptPayIdDto"
+                    }
+                  ]
                 }
               }
             }
@@ -6433,7 +7139,20 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "nullable": true,
+                  "type": "object",
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ReceiptRecipientDto"
+                    }
+                  ]
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid request",
@@ -6543,7 +7262,13 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "nullable": true,
+                  "type": "object",
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/OrderDetailDto"
+                    }
+                  ]
                 }
               }
             }
@@ -6662,7 +7387,14 @@
         },
         "responses": {
           "201": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderVoidResultDto"
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid request",
@@ -6768,7 +7500,14 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentSettingsDto"
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid request",
@@ -6874,7 +7613,14 @@
         },
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessDto"
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid request",
@@ -6982,7 +7728,14 @@
         },
         "responses": {
           "201": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceCreatedResponseDto"
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid request",
@@ -7090,7 +7843,10 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PosDeviceListResponseDto"
+                  }
                 }
               }
             }
@@ -7209,7 +7965,14 @@
         },
         "responses": {
           "201": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PairingCodeResponseDto"
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid request",
@@ -7323,7 +8086,14 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OkResultDto"
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid request",
@@ -7422,7 +8192,20 @@
         },
         "responses": {
           "201": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "nullable": true,
+                  "type": "object",
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/PairedDeviceResponseDto"
+                    }
+                  ]
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid request",
@@ -7525,7 +8308,13 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "nullable": true,
+                  "type": "object",
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/PosDeviceResponseDto"
+                    }
+                  ]
                 }
               }
             }
@@ -7640,7 +8429,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PosLoginStaffResponseDto"
+                  },
+                  "nullable": true
                 }
               }
             }
@@ -7755,7 +8548,13 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "nullable": true,
+                  "type": "object",
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/StaffLoginResponseDto"
+                    }
+                  ]
                 }
               }
             }
@@ -7864,7 +8663,20 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "nullable": true,
+                  "type": "object",
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ActiveStaffResponseDto"
+                    }
+                  ]
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid request",
@@ -7976,7 +8788,13 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "nullable": true,
+                  "type": "object",
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/StaffIdResponseDto"
+                    }
+                  ]
                 }
               }
             }
@@ -8089,7 +8907,10 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PosStaffResponseDto"
+                  }
                 }
               }
             }
@@ -8198,7 +9019,14 @@
         },
         "responses": {
           "201": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IdResultDto"
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid request",
@@ -8314,7 +9142,14 @@
         },
         "responses": {
           "201": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IdResultDto"
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid request",
@@ -8430,7 +9265,14 @@
         },
         "responses": {
           "201": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IdResultDto"
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid request",
@@ -8544,7 +9386,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "$ref": "#/components/schemas/SalesSummaryResponseDto"
                 }
               }
             }
@@ -8657,7 +9499,17 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SalesByItemDto"
+                  }
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid request",
@@ -8767,7 +9619,17 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DailySalesDto"
+                  }
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid request",
@@ -8877,7 +9739,17 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/HourlySalesDto"
+                  }
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid request",
@@ -8987,7 +9859,17 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CategorySalesDto"
+                  }
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid request",
@@ -9097,7 +9979,17 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MemberGrowthDto"
+                  }
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid request",
@@ -9195,7 +10087,14 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemberOverviewDto"
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid request",
@@ -9311,7 +10210,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "type": "object"
+                    "$ref": "#/components/schemas/OrdersExportResponseDto"
                   }
                 }
               }
@@ -9413,7 +10312,14 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OwnerShopExistsDto"
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid request",
@@ -9512,7 +10418,14 @@
         },
         "responses": {
           "201": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShopCreatedDto"
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid request",
@@ -9614,7 +10527,240 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "nullable": true,
+                  "type": "object",
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/StaffMembershipDto"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Dependency unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "internal-api-token": []
+          }
+        ],
+        "tags": [
+          "staff-session"
+        ]
+      }
+    },
+    "/v1/auth-users/{authUserId}/shops": {
+      "get": {
+        "operationId": "StaffSessionController_listShops",
+        "parameters": [
+          {
+            "name": "authUserId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/StaffMembershipDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Dependency unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "internal-api-token": []
+          }
+        ],
+        "tags": [
+          "staff-session"
+        ]
+      }
+    },
+    "/v1/auth-users/{authUserId}/shops/{shopId}/staff-session": {
+      "get": {
+        "operationId": "StaffSessionController_getShopStaffSession",
+        "parameters": [
+          {
+            "name": "authUserId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "shopId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "nullable": true,
+                  "type": "object",
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/StaffMembershipDto"
+                    }
+                  ]
                 }
               }
             }
@@ -9718,6 +10864,21 @@
       }
     },
     "schemas": {
+      "HealthStatusDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "enum": [
+              "ok",
+              "ready"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
       "ApiErrorDto": {
         "type": "object",
         "properties": {
@@ -9748,6 +10909,306 @@
           "statusCode",
           "message",
           "error"
+        ]
+      },
+      "PosMenuCategoryResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "CatalogModifierResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "priceDeltaSatang": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "priceDeltaSatang"
+        ]
+      },
+      "CatalogModifierGroupResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "minSelect": {
+            "type": "number"
+          },
+          "maxSelect": {
+            "type": "number"
+          },
+          "modifiers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CatalogModifierResponseDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "minSelect",
+          "maxSelect",
+          "modifiers"
+        ]
+      },
+      "PosMenuProductResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "categoryId": {
+            "type": "string",
+            "nullable": true,
+            "format": "uuid"
+          },
+          "basePriceSatang": {
+            "type": "number"
+          },
+          "imageUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "tileColor": {
+            "type": "string",
+            "nullable": true
+          },
+          "earnsStamp": {
+            "type": "boolean"
+          },
+          "soldOut": {
+            "type": "boolean"
+          },
+          "groups": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CatalogModifierGroupResponseDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "categoryId",
+          "basePriceSatang",
+          "imageUrl",
+          "tileColor",
+          "earnsStamp",
+          "soldOut",
+          "groups"
+        ]
+      },
+      "PosMenuResponseDto": {
+        "type": "object",
+        "properties": {
+          "categories": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PosMenuCategoryResponseDto"
+            }
+          },
+          "products": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PosMenuProductResponseDto"
+            }
+          }
+        },
+        "required": [
+          "categories",
+          "products"
+        ]
+      },
+      "MenuCategoryResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "shopId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "sort": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "shopId",
+          "name",
+          "sort"
+        ]
+      },
+      "MenuProductRowResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "shopId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "categoryId": {
+            "type": "string",
+            "nullable": true,
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "basePriceSatang": {
+            "type": "number"
+          },
+          "imageUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "tileColor": {
+            "type": "string",
+            "nullable": true
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "soldOut": {
+            "type": "boolean"
+          },
+          "earnsStamp": {
+            "type": "boolean"
+          },
+          "sort": {
+            "type": "number"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "shopId",
+          "categoryId",
+          "name",
+          "basePriceSatang",
+          "imageUrl",
+          "tileColor",
+          "isActive",
+          "soldOut",
+          "earnsStamp",
+          "sort",
+          "createdAt"
+        ]
+      },
+      "MenuModifierGroupRowResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "minSelect": {
+            "type": "number"
+          },
+          "maxSelect": {
+            "type": "number"
+          },
+          "modifierNames": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "minSelect",
+          "maxSelect",
+          "modifierNames"
+        ]
+      },
+      "MenuSettingsResponseDto": {
+        "type": "object",
+        "properties": {
+          "autoClearSoldOut": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "autoClearSoldOut"
+        ]
+      },
+      "MenuResponseDto": {
+        "type": "object",
+        "properties": {
+          "categories": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MenuCategoryResponseDto"
+            }
+          },
+          "products": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MenuProductRowResponseDto"
+            }
+          },
+          "modifierGroups": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MenuModifierGroupRowResponseDto"
+            }
+          },
+          "settings": {
+            "$ref": "#/components/schemas/MenuSettingsResponseDto"
+          }
+        },
+        "required": [
+          "categories",
+          "products",
+          "modifierGroups",
+          "settings"
         ]
       },
       "MenuSettingsDto": {
@@ -9784,6 +11245,18 @@
         },
         "required": [
           "categoryIds"
+        ]
+      },
+      "IdResultDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "id"
         ]
       },
       "ProductDto": {
@@ -9838,6 +11311,149 @@
           "modifierGroupIds"
         ]
       },
+      "MenuProductMutationResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "shopId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "categoryId": {
+            "type": "string",
+            "nullable": true,
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "basePriceSatang": {
+            "type": "number"
+          },
+          "imageUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "tileColor": {
+            "type": "string",
+            "nullable": true
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "soldOut": {
+            "type": "boolean"
+          },
+          "earnsStamp": {
+            "type": "boolean"
+          },
+          "sort": {
+            "type": "number"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "shopId",
+          "categoryId",
+          "name",
+          "basePriceSatang",
+          "imageUrl",
+          "tileColor",
+          "isActive",
+          "soldOut",
+          "earnsStamp",
+          "sort",
+          "createdAt"
+        ]
+      },
+      "MenuProductDetailResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "shopId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "categoryId": {
+            "type": "string",
+            "nullable": true,
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "basePriceSatang": {
+            "type": "number"
+          },
+          "imageUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "tileColor": {
+            "type": "string",
+            "nullable": true
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "soldOut": {
+            "type": "boolean"
+          },
+          "earnsStamp": {
+            "type": "boolean"
+          },
+          "sort": {
+            "type": "number"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "modifierGroupIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "shopId",
+          "categoryId",
+          "name",
+          "basePriceSatang",
+          "imageUrl",
+          "tileColor",
+          "isActive",
+          "soldOut",
+          "earnsStamp",
+          "sort",
+          "createdAt",
+          "modifierGroupIds"
+        ]
+      },
+      "ProductSoldOutResponseDto": {
+        "type": "object",
+        "properties": {
+          "soldOut": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "soldOut"
+        ]
+      },
       "BulkProductUpdateDto": {
         "type": "object",
         "properties": {
@@ -9882,9 +11498,213 @@
           "productIds"
         ]
       },
+      "StockImportResponseDto": {
+        "type": "object",
+        "properties": {
+          "added": {
+            "type": "number"
+          },
+          "linkedProducts": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "added",
+          "linkedProducts"
+        ]
+      },
+      "AdminDashboardResponseDto": {
+        "type": "object",
+        "properties": {
+          "activeProducts": {
+            "type": "number"
+          },
+          "allProducts": {
+            "type": "number"
+          },
+          "categoryCount": {
+            "type": "number"
+          },
+          "groupCount": {
+            "type": "number"
+          },
+          "modifierSetup": {
+            "type": "number"
+          },
+          "ownerPinSetup": {
+            "type": "boolean"
+          },
+          "deviceSetup": {
+            "type": "boolean"
+          },
+          "lineSetup": {
+            "type": "boolean"
+          },
+          "brandSetup": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "activeProducts",
+          "allProducts",
+          "categoryCount",
+          "groupCount",
+          "modifierSetup",
+          "ownerPinSetup",
+          "deviceSetup",
+          "lineSetup",
+          "brandSetup"
+        ]
+      },
+      "AdminModifierProductResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "categoryId": {
+            "type": "string",
+            "nullable": true,
+            "format": "uuid"
+          },
+          "categoryName": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "categoryId",
+          "categoryName"
+        ]
+      },
+      "ShopProfileResponseDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "slug"
+        ]
+      },
+      "RecoveryRequestDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "email"
+        ]
+      },
+      "RecoveryResultDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "accepted",
+              "password_reset"
+            ]
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "RecoveryConfirmDto": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "token",
+          "password"
+        ]
+      },
       "CredentialsDto": {
         "type": "object",
         "properties": {}
+      },
+      "PublicUserDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          }
+        },
+        "required": [
+          "id",
+          "email"
+        ]
+      },
+      "AuthTokenDto": {
+        "type": "object",
+        "properties": {
+          "user": {
+            "$ref": "#/components/schemas/PublicUserDto"
+          },
+          "token": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "user",
+          "token"
+        ]
+      },
+      "AuthSessionDto": {
+        "type": "object",
+        "properties": {
+          "user": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PublicUserDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "user"
+        ]
+      },
+      "SignedOutDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "enum": [
+              "signed_out"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ]
       },
       "RateLimitDto": {
         "type": "object",
@@ -9910,6 +11730,39 @@
           "now"
         ]
       },
+      "RateLimitResultDto": {
+        "type": "object",
+        "properties": {
+          "allowed": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "allowed"
+        ]
+      },
+      "BrandResponseDto": {
+        "type": "object",
+        "properties": {
+          "accent": {
+            "type": "string",
+            "nullable": true
+          },
+          "hasCustomAccent": {
+            "type": "boolean"
+          },
+          "logoUpdatedAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "accent",
+          "hasCustomAccent",
+          "logoUpdatedAt"
+        ]
+      },
       "BrandAccentDto": {
         "type": "object",
         "properties": {
@@ -9919,6 +11772,106 @@
         },
         "required": [
           "accent"
+        ]
+      },
+      "SuccessResultDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "success"
+        ]
+      },
+      "LiffCardNotRegisteredResponseDto": {
+        "type": "object",
+        "properties": {
+          "registered": {
+            "type": "boolean",
+            "enum": [
+              false
+            ]
+          }
+        },
+        "required": [
+          "registered"
+        ]
+      },
+      "LiffCardMemberResponseDto": {
+        "type": "object",
+        "properties": {
+          "displayName": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "stampBalance": {
+            "type": "number"
+          },
+          "stampGoal": {
+            "type": "number"
+          },
+          "availableRewards": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "displayName",
+          "phone",
+          "stampBalance",
+          "stampGoal",
+          "availableRewards"
+        ]
+      },
+      "LiffCardRegisteredResponseDto": {
+        "type": "object",
+        "properties": {
+          "registered": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          },
+          "memberId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "member": {
+            "$ref": "#/components/schemas/LiffCardMemberResponseDto"
+          }
+        },
+        "required": [
+          "registered",
+          "memberId",
+          "member"
+        ]
+      },
+      "LiffShopResponseDto": {
+        "type": "object",
+        "properties": {
+          "shopId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "stampGoal": {
+            "type": "number"
+          },
+          "liffId": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "shopId",
+          "name",
+          "stampGoal",
+          "liffId"
         ]
       },
       "LiffTokenDto": {
@@ -9955,6 +11908,59 @@
           "consent"
         ]
       },
+      "LiffRegistrationResponseDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "success": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "message",
+          "success"
+        ]
+      },
+      "LineConfigResponseDto": {
+        "type": "object",
+        "properties": {
+          "messagingChannelId": {
+            "type": "string",
+            "nullable": true
+          },
+          "channelSecretEnc": {
+            "type": "string",
+            "nullable": true
+          },
+          "accessTokenEnc": {
+            "type": "string",
+            "nullable": true
+          },
+          "loginChannelId": {
+            "type": "string",
+            "nullable": true
+          },
+          "liffId": {
+            "type": "string",
+            "nullable": true
+          },
+          "richMenuId": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "messagingChannelId",
+          "channelSecretEnc",
+          "accessTokenEnc",
+          "loginChannelId",
+          "liffId",
+          "richMenuId"
+        ]
+      },
       "LineConfigDto": {
         "type": "object",
         "properties": {
@@ -9980,6 +11986,17 @@
           }
         }
       },
+      "OkResultDto": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "ok"
+        ]
+      },
       "RichMenuDto": {
         "type": "object",
         "properties": {
@@ -9989,6 +12006,121 @@
         },
         "required": [
           "richMenuId"
+        ]
+      },
+      "LineMemberResponseDto": {
+        "type": "object",
+        "properties": {
+          "lineUserId": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "lineUserId"
+        ]
+      },
+      "LineChannelResponseDto": {
+        "type": "object",
+        "properties": {
+          "loginChannelId": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "loginChannelId"
+        ]
+      },
+      "LineWebhookConfigResponseDto": {
+        "type": "object",
+        "properties": {
+          "channelSecretEnc": {
+            "type": "string",
+            "nullable": true
+          },
+          "accessTokenEnc": {
+            "type": "string",
+            "nullable": true
+          },
+          "liffId": {
+            "type": "string",
+            "nullable": true
+          },
+          "shopName": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "channelSecretEnc",
+          "accessTokenEnc",
+          "liffId",
+          "shopName"
+        ]
+      },
+      "MemberIdResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "MemberResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          },
+          "lineUserId": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "stampBalance": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "displayName",
+          "phone",
+          "lineUserId",
+          "createdAt",
+          "stampBalance"
+        ]
+      },
+      "MemberListResponseDto": {
+        "type": "object",
+        "properties": {
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MemberResponseDto"
+            }
+          },
+          "total": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "rows",
+          "total"
         ]
       },
       "CreateMemberDto": {
@@ -10004,6 +12136,94 @@
         "required": [
           "phone",
           "displayName"
+        ]
+      },
+      "AvailableRewardResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "createdAt"
+        ]
+      },
+      "MemberSummaryResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          },
+          "lineLinked": {
+            "type": "boolean"
+          },
+          "stampBalance": {
+            "type": "number"
+          },
+          "stampGoal": {
+            "type": "number"
+          },
+          "availableRewards": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AvailableRewardResponseDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "displayName",
+          "phone",
+          "lineLinked",
+          "stampBalance",
+          "stampGoal",
+          "availableRewards"
+        ]
+      },
+      "StampLedgerResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "delta": {
+            "type": "number"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "orderId": {
+            "type": "string",
+            "nullable": true,
+            "format": "uuid"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "delta",
+          "reason",
+          "orderId",
+          "createdAt"
         ]
       },
       "StampAdjustmentDto": {
@@ -10025,6 +12245,85 @@
           "staffId"
         ]
       },
+      "ModifierOptionResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "groupId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "priceDeltaSatang": {
+            "type": "number"
+          },
+          "sort": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "groupId",
+          "name",
+          "priceDeltaSatang",
+          "sort"
+        ]
+      },
+      "ModifierGroupResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "minSelect": {
+            "type": "number"
+          },
+          "maxSelect": {
+            "type": "number"
+          },
+          "sort": {
+            "type": "number"
+          },
+          "modifiers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ModifierOptionResponseDto"
+            }
+          },
+          "productIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "productNames": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "minSelect",
+          "maxSelect",
+          "sort",
+          "modifiers",
+          "productIds",
+          "productNames"
+        ]
+      },
       "ModifierGroupDto": {
         "type": "object",
         "properties": {
@@ -10042,6 +12341,21 @@
           "name",
           "minSelect",
           "maxSelect"
+        ]
+      },
+      "StandardGroupsResultDto": {
+        "type": "object",
+        "properties": {
+          "created": {
+            "type": "number"
+          },
+          "linkedProducts": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "created",
+          "linkedProducts"
         ]
       },
       "ModifierOptionDto": {
@@ -10105,6 +12419,10 @@
       "CheckoutDto": {
         "type": "object",
         "properties": {
+          "expectedTotalSatang": {
+            "type": "number",
+            "minimum": 0
+          },
           "requestId": {
             "type": "string",
             "format": "uuid"
@@ -10189,6 +12507,294 @@
           "replayed"
         ]
       },
+      "CheckoutQuoteLineDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "qty": {
+            "type": "number"
+          },
+          "lineTotalSatang": {
+            "type": "number"
+          },
+          "modifiersText": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "qty",
+          "lineTotalSatang",
+          "modifiersText"
+        ]
+      },
+      "CheckoutQuoteDto": {
+        "type": "object",
+        "properties": {
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CheckoutQuoteLineDto"
+            }
+          },
+          "subtotalSatang": {
+            "type": "number"
+          },
+          "discountSatang": {
+            "type": "number"
+          },
+          "totalSatang": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "lines",
+          "subtotalSatang",
+          "discountSatang",
+          "totalSatang"
+        ]
+      },
+      "PromptPayIdDto": {
+        "type": "object",
+        "properties": {
+          "promptpayId": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "promptpayId"
+        ]
+      },
+      "ReceiptRecipientDto": {
+        "type": "object",
+        "properties": {
+          "dailyNo": {
+            "type": "number"
+          },
+          "hasMember": {
+            "type": "boolean"
+          },
+          "lineUserId": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "dailyNo",
+          "hasMember",
+          "lineUserId"
+        ]
+      },
+      "OrderSummaryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "dailyNo": {
+            "type": "number"
+          },
+          "status": {
+            "enum": [
+              "open",
+              "paid",
+              "void"
+            ],
+            "type": "string"
+          },
+          "totalSatang": {
+            "type": "number"
+          },
+          "paymentMethod": {
+            "nullable": true,
+            "enum": [
+              "cash",
+              "promptpay"
+            ],
+            "type": "string"
+          },
+          "memberName": {
+            "type": "string",
+            "nullable": true
+          },
+          "staffName": {
+            "type": "string",
+            "nullable": true
+          },
+          "itemCount": {
+            "type": "number"
+          },
+          "paidAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "dailyNo",
+          "status",
+          "totalSatang",
+          "paymentMethod",
+          "memberName",
+          "staffName",
+          "itemCount",
+          "paidAt"
+        ]
+      },
+      "OrderItemModifierDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "priceDeltaSatang": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "name",
+          "priceDeltaSatang"
+        ]
+      },
+      "OrderItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "qty": {
+            "type": "number"
+          },
+          "unitPriceSatang": {
+            "type": "number"
+          },
+          "note": {
+            "type": "string",
+            "nullable": true
+          },
+          "modifiers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrderItemModifierDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "qty",
+          "unitPriceSatang",
+          "note",
+          "modifiers"
+        ]
+      },
+      "OrderDetailDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "dailyNo": {
+            "type": "number"
+          },
+          "status": {
+            "enum": [
+              "open",
+              "paid",
+              "void"
+            ],
+            "type": "string"
+          },
+          "totalSatang": {
+            "type": "number"
+          },
+          "paymentMethod": {
+            "nullable": true,
+            "enum": [
+              "cash",
+              "promptpay"
+            ],
+            "type": "string"
+          },
+          "memberName": {
+            "type": "string",
+            "nullable": true
+          },
+          "staffName": {
+            "type": "string",
+            "nullable": true
+          },
+          "itemCount": {
+            "type": "number"
+          },
+          "paidAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "subtotalSatang": {
+            "type": "number"
+          },
+          "discountSatang": {
+            "type": "number"
+          },
+          "cashReceivedSatang": {
+            "type": "number",
+            "nullable": true
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrderItemDto"
+            }
+          },
+          "voidedAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "businessDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "shopName": {
+            "type": "string"
+          },
+          "receiptFooter": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "dailyNo",
+          "status",
+          "totalSatang",
+          "paymentMethod",
+          "memberName",
+          "staffName",
+          "itemCount",
+          "paidAt",
+          "subtotalSatang",
+          "discountSatang",
+          "cashReceivedSatang",
+          "items",
+          "voidedAt",
+          "businessDate",
+          "shopName",
+          "receiptFooter"
+        ]
+      },
       "VoidOrderDto": {
         "type": "object",
         "properties": {
@@ -10198,6 +12804,29 @@
         },
         "required": [
           "managerStaffId"
+        ]
+      },
+      "OrderVoidResultDto": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "ok"
+        ]
+      },
+      "PaymentSettingsDto": {
+        "type": "object",
+        "properties": {
+          "promptpayId": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "promptpayId"
         ]
       },
       "PromptPaySettingsDto": {
@@ -10216,6 +12845,17 @@
           "promptpayId"
         ]
       },
+      "SuccessDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "success"
+        ]
+      },
       "DeviceCreateDto": {
         "type": "object",
         "properties": {
@@ -10231,6 +12871,48 @@
           "name"
         ]
       },
+      "DeviceCreatedResponseDto": {
+        "type": "object",
+        "properties": {
+          "deviceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "pairingCode": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "deviceId",
+          "pairingCode"
+        ]
+      },
+      "PosDeviceListResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "paired": {
+            "type": "boolean"
+          },
+          "lastSeenAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "paired",
+          "lastSeenAt"
+        ]
+      },
       "ActorDto": {
         "type": "object",
         "properties": {
@@ -10240,6 +12922,17 @@
         },
         "required": [
           "actorStaffId"
+        ]
+      },
+      "PairingCodeResponseDto": {
+        "type": "object",
+        "properties": {
+          "pairingCode": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "pairingCode"
         ]
       },
       "PairingCodeDto": {
@@ -10253,6 +12946,60 @@
           "code"
         ]
       },
+      "DeviceShopResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "promptpayId": {
+            "type": "string",
+            "nullable": true
+          },
+          "stampGoal": {
+            "type": "number"
+          },
+          "receiptFooter": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "promptpayId",
+          "stampGoal",
+          "receiptFooter"
+        ]
+      },
+      "PairedDeviceResponseDto": {
+        "type": "object",
+        "properties": {
+          "deviceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "deviceName": {
+            "type": "string"
+          },
+          "deviceToken": {
+            "type": "string"
+          },
+          "shop": {
+            "$ref": "#/components/schemas/DeviceShopResponseDto"
+          }
+        },
+        "required": [
+          "deviceId",
+          "deviceName",
+          "deviceToken",
+          "shop"
+        ]
+      },
       "DeviceTokenDto": {
         "type": "object",
         "properties": {
@@ -10262,6 +13009,55 @@
         },
         "required": [
           "deviceToken"
+        ]
+      },
+      "PosDeviceResponseDto": {
+        "type": "object",
+        "properties": {
+          "deviceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "deviceName": {
+            "type": "string"
+          },
+          "shop": {
+            "$ref": "#/components/schemas/DeviceShopResponseDto"
+          }
+        },
+        "required": [
+          "deviceId",
+          "deviceName",
+          "shop"
+        ]
+      },
+      "PosLoginStaffResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "owner",
+              "manager",
+              "barista"
+            ]
+          },
+          "hasPin": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "role",
+          "hasPin"
         ]
       },
       "StaffLoginDto": {
@@ -10283,6 +13079,53 @@
           "pin"
         ]
       },
+      "StaffLoginResponseDto": {
+        "type": "object",
+        "properties": {
+          "staffId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "deviceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "shopId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "staffId",
+          "deviceId",
+          "shopId"
+        ]
+      },
+      "ActiveStaffResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "role": {
+            "enum": [
+              "owner",
+              "manager",
+              "barista"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "role"
+        ]
+      },
       "ManagerPinDto": {
         "type": "object",
         "properties": {
@@ -10296,6 +13139,51 @@
         "required": [
           "actorStaffId",
           "pin"
+        ]
+      },
+      "StaffIdResponseDto": {
+        "type": "object",
+        "properties": {
+          "staffId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "staffId"
+        ]
+      },
+      "PosStaffResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "owner",
+              "manager",
+              "barista"
+            ]
+          },
+          "hasPin": {
+            "type": "boolean"
+          },
+          "isActive": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "role",
+          "hasPin",
+          "isActive"
         ]
       },
       "StaffCreateDto": {
@@ -10356,6 +13244,245 @@
           "active"
         ]
       },
+      "SalesSummaryMethodDto": {
+        "type": "object",
+        "properties": {
+          "cash": {
+            "type": "number"
+          },
+          "promptpay": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "cash",
+          "promptpay"
+        ]
+      },
+      "SalesSummaryResponseDto": {
+        "type": "object",
+        "properties": {
+          "orders": {
+            "type": "number"
+          },
+          "voided": {
+            "type": "number"
+          },
+          "grossSatang": {
+            "type": "number"
+          },
+          "discountSatang": {
+            "type": "number"
+          },
+          "netSatang": {
+            "type": "number"
+          },
+          "cups": {
+            "type": "number"
+          },
+          "byMethod": {
+            "$ref": "#/components/schemas/SalesSummaryMethodDto"
+          },
+          "memberOrders": {
+            "type": "number"
+          },
+          "stampsIssued": {
+            "type": "number"
+          },
+          "rewardsRedeemed": {
+            "type": "number"
+          },
+          "newMembers": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "orders",
+          "voided",
+          "grossSatang",
+          "discountSatang",
+          "netSatang",
+          "cups",
+          "byMethod",
+          "memberOrders",
+          "stampsIssued",
+          "rewardsRedeemed",
+          "newMembers"
+        ]
+      },
+      "SalesByItemDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "qty": {
+            "type": "number"
+          },
+          "revenueSatang": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "name",
+          "qty",
+          "revenueSatang"
+        ]
+      },
+      "DailySalesDto": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "orders": {
+            "type": "number"
+          },
+          "netSatang": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "date",
+          "orders",
+          "netSatang"
+        ]
+      },
+      "HourlySalesDto": {
+        "type": "object",
+        "properties": {
+          "hour": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 23
+          },
+          "orders": {
+            "type": "number"
+          },
+          "netSatang": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "hour",
+          "orders",
+          "netSatang"
+        ]
+      },
+      "CategorySalesDto": {
+        "type": "object",
+        "properties": {
+          "category": {
+            "type": "string"
+          },
+          "qty": {
+            "type": "number"
+          },
+          "revenueSatang": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "category",
+          "qty",
+          "revenueSatang"
+        ]
+      },
+      "MemberGrowthDto": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "newMembers": {
+            "type": "number"
+          },
+          "totalMembers": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "date",
+          "newMembers",
+          "totalMembers"
+        ]
+      },
+      "MemberOverviewDto": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "number"
+          },
+          "lineLinked": {
+            "type": "number"
+          },
+          "active30d": {
+            "type": "number"
+          },
+          "rewardsAvailable": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "total",
+          "lineLinked",
+          "active30d",
+          "rewardsAvailable"
+        ]
+      },
+      "OrdersExportResponseDto": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "orderNo": {
+            "type": "number"
+          },
+          "member": {
+            "type": "string"
+          },
+          "paymentMethod": {
+            "type": "string"
+          },
+          "grossSatang": {
+            "type": "number"
+          },
+          "discountSatang": {
+            "type": "number"
+          },
+          "netSatang": {
+            "type": "number"
+          },
+          "cups": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "date",
+          "orderNo",
+          "member",
+          "paymentMethod",
+          "grossSatang",
+          "discountSatang",
+          "netSatang",
+          "cups"
+        ]
+      },
+      "OwnerShopExistsDto": {
+        "type": "object",
+        "properties": {
+          "exists": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "exists"
+        ]
+      },
       "SetupShopDto": {
         "type": "object",
         "properties": {
@@ -10386,6 +13513,86 @@
           "ownerName",
           "promptpayId",
           "pin"
+        ]
+      },
+      "ShopCreatedDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "enum": [
+              "created"
+            ],
+            "type": "string"
+          },
+          "shopId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "status",
+          "shopId"
+        ]
+      },
+      "StaffMembershipUserDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "role": {
+            "enum": [
+              "owner",
+              "manager",
+              "barista"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "role"
+        ]
+      },
+      "StaffMembershipShopDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "StaffMembershipDto": {
+        "type": "object",
+        "properties": {
+          "staff": {
+            "$ref": "#/components/schemas/StaffMembershipUserDto"
+          },
+          "shop": {
+            "$ref": "#/components/schemas/StaffMembershipShopDto"
+          },
+          "shopId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "staff",
+          "shop",
+          "shopId"
         ]
       }
     }

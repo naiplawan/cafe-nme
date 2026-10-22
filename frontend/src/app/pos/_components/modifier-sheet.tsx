@@ -70,10 +70,10 @@ export function ModifierSheet({ product, initialModifierIds = [], initialQty = 1
   return <div className="fixed inset-0 z-40 flex items-center justify-center p-4">
     <button ref={backdropRef} type="button" tabIndex={-1} aria-label="ปิดหน้าต่าง" onClick={onClose} className="absolute inset-0 bg-[rgba(43,30,22,0.55)]" />
     <div ref={dialogRef} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby={`${id}-modifier-title`} onKeyDown={(event) => { trapDialogTab(event); if (event.key === "Escape") onClose(); }}
-      className="relative z-10 flex h-[min(660px,calc(100dvh-32px))] w-[min(900px,calc(100vw-32px))] overflow-hidden rounded-3xl border border-[#E4D6C6] bg-[#FFFBF6] shadow-[0_24px_70px_rgba(43,30,22,0.22)] outline-none">
-      <div className="flex w-[280px] shrink-0 flex-col gap-3 bg-[#F5EDE3] p-6">
-        {product.imageUrl ? <Image src={product.imageUrl} alt="" width={232} height={232} unoptimized className="size-[232px] object-contain" /> :
-          <ProductTile name={product.name} tileColor={product.tileColor} className="size-[232px] rounded-2xl text-[80px]" />}
+      className="relative z-10 flex flex-col md:flex-row max-h-[calc(100dvh-32px)] md:h-[min(660px,calc(100dvh-32px))] w-[min(900px,calc(100vw-32px))] overflow-y-auto md:overflow-hidden rounded-3xl border border-[#E4D6C6] bg-[#FFFBF6] shadow-[0_24px_70px_rgba(43,30,22,0.22)] outline-none">
+      <div className="flex w-full md:w-[280px] shrink-0 flex-col gap-3 bg-[#F5EDE3] p-6">
+        {product.imageUrl ? <Image src={product.imageUrl} alt="" width={232} height={232} unoptimized className="hidden md:block size-[232px] object-contain" /> :
+          <ProductTile name={product.name} tileColor={product.tileColor} className="hidden md:block size-[232px] rounded-2xl text-[80px]" />}
         <h2 id={`${id}-modifier-title`} className="text-[26px] font-bold">{product.name}</h2>
         {isEditing && <p className="-mt-2 text-sm font-medium text-[#8A6A4F]">แก้ไขรายการในออเดอร์</p>}
         <p className="text-[17px] text-[#6B5547]">ราคาเริ่มต้น {formatBaht(product.basePriceSatang)}</p>
@@ -87,7 +87,7 @@ export function ModifierSheet({ product, initialModifierIds = [], initialQty = 1
         </div>
       </div>
       <div className="flex min-w-0 flex-1 flex-col">
-        <div className="flex-1 space-y-[22px] overflow-y-auto p-6 min-[700px]:px-7">
+        <div className="flex-1 space-y-[22px] md:overflow-y-auto p-6 min-[700px]:px-7">
           {product.groups.map((group) => {
             const count = group.modifiers.filter((modifier) => chosen.has(modifier.id)).length;
             const missing = count < group.minSelect;
@@ -109,10 +109,10 @@ export function ModifierSheet({ product, initialModifierIds = [], initialQty = 1
             </section>;
           })}
         </div>
-        <div className="flex gap-3 border-t border-[#E4D6C6] p-4 min-[700px]:px-7 min-[700px]:pb-6">
-          <button type="button" onClick={onClose} className={`h-[68px] rounded-2xl border border-[#D9C5B0] bg-[#FFFBF6] text-lg font-semibold ${isEditing ? "w-28" : "w-40"}`}>ยกเลิก</button>
+        <div className="flex flex-wrap gap-3 border-t border-[#E4D6C6] p-4 min-[700px]:px-7 min-[700px]:pb-6">
+          <button type="button" onClick={onClose} className={`h-[68px] rounded-2xl border border-[#D9C5B0] bg-[#FFFBF6] text-lg font-semibold ${isEditing ? "w-20 md:w-28" : "w-20 md:w-40"}`}>ยกเลิก</button>
           {isEditing && <button type="button" onClick={onRemove} className="h-[68px] rounded-2xl px-3 text-sm font-semibold text-[#B4441C] hover:bg-[#F7DCD0]">ลบรายการนี้</button>}
-          <button type="button" onClick={() => valid ? onConfirm(selected, qty) : invalidAttemptRef.current()} className={`h-[68px] min-w-0 flex-1 rounded-2xl bg-[#B4441C] font-bold text-white shadow-sm ${isEditing ? "text-lg" : "text-xl"}`}>
+          <button type="button" onClick={() => valid ? onConfirm(selected, qty) : invalidAttemptRef.current()} className={`h-[68px] min-w-[140px] flex-1 rounded-2xl bg-[#B4441C] font-bold text-white shadow-sm ${isEditing ? "text-lg" : "text-xl"}`}>
             {valid ? `${isEditing ? "บันทึกการแก้ไข" : "เพิ่มลงออเดอร์"} · ${formatBaht(unitPrice * qty)}` : "เลือกตัวเลือกที่ต้องเลือกก่อน"}
           </button>
         </div>

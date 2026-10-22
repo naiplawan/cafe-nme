@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 import { requireStaff } from "@/lib/auth";
 import {
   categorySchema,
@@ -47,12 +48,17 @@ export async function createCategoryAction(
   formData: FormData,
 ): Promise<MenuActionState> {
   const { shopId } = await requireStaff();
-  const parsed = categorySchema.safeParse({ name: textField(formData, "name") });
-  if (!parsed.success) return { message: parsed.error.issues[0]?.message ?? "ข้อมูลไม่ถูกต้อง" };
-  if (await categoryNameExists(shopId, parsed.data.name)) return { message: "มีหมวดหมู่นี้แล้ว" };
-  const [created] = await createCategory(shopId, parsed.data.name);
-  revalidatePath("/admin/menu");
-  return { message: null, success: true, id: created?.id };
+  try {
+    const parsed = categorySchema.safeParse({ name: textField(formData, "name") });
+    if (!parsed.success) return { message: parsed.error.issues[0]?.message ?? "ข้อมูลไม่ถูกต้อง" };
+    if (await categoryNameExists(shopId, parsed.data.name)) return { message: "มีหมวดหมู่นี้แล้ว" };
+    const [created] = await createCategory(shopId, parsed.data.name);
+    revalidatePath("/admin/menu");
+    return { message: null, success: true, id: created?.id };
+  } catch (error) {
+    logger.error({ err: error, shopId }, "Menu mutation failed");
+    return { success: false, message: "บันทึกไม่สำเร็จ กรุณาตรวจสอบข้อมูลแล้วลองใหม่" };
+  }
 }
 
 export async function renameCategoryAction(
@@ -61,20 +67,31 @@ export async function renameCategoryAction(
   formData: FormData,
 ): Promise<MenuActionState> {
   const { shopId } = await requireStaff();
-  if (!uuidSchema.safeParse(categoryId).success) return { message: "หมวดหมู่ไม่ถูกต้อง" };
-  const parsed = categorySchema.safeParse({ name: textField(formData, "name") });
-  if (!parsed.success) return { message: parsed.error.issues[0]?.message ?? "ข้อมูลไม่ถูกต้อง" };
-  if (await categoryNameExists(shopId, parsed.data.name, categoryId)) return { message: "มีหมวดหมู่นี้แล้ว" };
-  await renameCategory(shopId, categoryId, parsed.data.name);
-  revalidatePath("/admin/menu");
-  return { message: null, success: true };
+  try {
+    if (!uuidSchema.safeParse(categoryId).success) return { message: "หมวดหมู่ไม่ถูกต้อง" };
+    const parsed = categorySchema.safeParse({ name: textField(formData, "name") });
+    if (!parsed.success) return { message: parsed.error.issues[0]?.message ?? "ข้อมูลไม่ถูกต้อง" };
+    if (await categoryNameExists(shopId, parsed.data.name, categoryId)) return { message: "มีหมวดหมู่นี้แล้ว" };
+    await renameCategory(shopId, categoryId, parsed.data.name);
+    revalidatePath("/admin/menu");
+    return { message: null, success: true };
+  } catch (error) {
+    logger.error({ err: error, shopId }, "Menu mutation failed");
+    return { success: false, message: "บันทึกไม่สำเร็จ กรุณาตรวจสอบข้อมูลแล้วลองใหม่" };
+  }
 }
 
-export async function deleteCategoryAction(categoryId: string) {
+export async function deleteCategoryAction(categoryId: string, _previous: MenuActionState, _formData: FormData): Promise<MenuActionState> {
   const { shopId } = await requireStaff();
-  if (!uuidSchema.safeParse(categoryId).success) return;
-  await deleteCategory(shopId, categoryId);
-  revalidatePath("/admin/menu");
+  try {
+    if (!uuidSchema.safeParse(categoryId).success) return { message: "หมวดหมู่ไม่ถูกต้อง" };
+    await deleteCategory(shopId, categoryId);
+    revalidatePath("/admin/menu");
+    return { message: null, success: true };
+  } catch (error) {
+    logger.error({ err: error, shopId }, "Menu mutation failed");
+    return { success: false, message: "บันทึกไม่สำเร็จ กรุณาตรวจสอบข้อมูลแล้วลองใหม่" };
+  }
 }
 
 function parseProduct(formData: FormData) {
@@ -99,14 +116,19 @@ export async function createProductAction(
   formData: FormData,
 ): Promise<MenuActionState> {
   const { shopId } = await requireStaff();
-  const { values, parsed } = parseProduct(formData);
-  const modifierGroupIds = formData.getAll("modifierGroupIds").filter((id): id is string => typeof id === "string");
-  const parsedModifierGroupIds = modifierGroupIdsSchema.safeParse(modifierGroupIds);
-  if (!parsed.success) return { message: parsed.error.issues[0]?.message ?? "ข้อมูลไม่ถูกต้อง", values: { ...values, modifierGroupIds }, revision: crypto.randomUUID() };
-  if (!parsedModifierGroupIds.success) return { message: "กลุ่มตัวเลือกไม่ถูกต้อง", values: { ...values, modifierGroupIds }, revision: crypto.randomUUID() };
-  const [created] = await createProduct(shopId, parsed.data, parsedModifierGroupIds.data);
-  revalidatePath("/admin/menu");
-  return { message: `เพิ่ม “${parsed.data.name}” แล้ว`, success: true, id: created?.id };
+  try {
+    const { values, parsed } = parseProduct(formData);
+    const modifierGroupIds = formData.getAll("modifierGroupIds").filter((id): id is string => typeof id === "string");
+    const parsedModifierGroupIds = modifierGroupIdsSchema.safeParse(modifierGroupIds);
+    if (!parsed.success) return { message: parsed.error.issues[0]?.message ?? "ข้อมูลไม่ถูกต้อง", values: { ...values, modifierGroupIds }, revision: crypto.randomUUID() };
+    if (!parsedModifierGroupIds.success) return { message: "กลุ่มตัวเลือกไม่ถูกต้อง", values: { ...values, modifierGroupIds }, revision: crypto.randomUUID() };
+    const [created] = await createProduct(shopId, parsed.data, parsedModifierGroupIds.data);
+    revalidatePath("/admin/menu");
+    return { message: `เพิ่ม “${parsed.data.name}” แล้ว`, success: true, id: created?.id };
+  } catch (error) {
+    logger.error({ err: error, shopId }, "Menu mutation failed");
+    return { success: false, message: "บันทึกไม่สำเร็จ กรุณาตรวจสอบข้อมูลแล้วลองใหม่", values: { ...parseProduct(formData).values, modifierGroupIds: formData.getAll("modifierGroupIds").filter((id): id is string => typeof id === "string") }, revision: crypto.randomUUID() };
+  }
 }
 
 export async function updateProductAction(
@@ -115,18 +137,23 @@ export async function updateProductAction(
   formData: FormData,
 ): Promise<MenuActionState> {
   const { shopId } = await requireStaff();
-  if (!uuidSchema.safeParse(productId).success) return { message: "สินค้าไม่ถูกต้อง" };
-  const { values, parsed } = parseProduct(formData);
-  if (!parsed.success) return { message: parsed.error.issues[0]?.message ?? "ข้อมูลไม่ถูกต้อง", values: { ...values, modifierGroupIds: formData.getAll("modifierGroupIds").filter((id): id is string => typeof id === "string") }, revision: crypto.randomUUID() };
-  const modifierGroupIds = formData.getAll("modifierGroupIds").filter((id): id is string => typeof id === "string");
-  const groupIds = modifierGroupIdsSchema.safeParse(modifierGroupIds);
-  if (!groupIds.success) return { message: "กลุ่มตัวเลือกไม่ถูกต้อง", values: { ...values, modifierGroupIds }, revision: crypto.randomUUID() };
+  try {
+    if (!uuidSchema.safeParse(productId).success) return { message: "สินค้าไม่ถูกต้อง" };
+    const { values, parsed } = parseProduct(formData);
+    if (!parsed.success) return { message: parsed.error.issues[0]?.message ?? "ข้อมูลไม่ถูกต้อง", values: { ...values, modifierGroupIds: formData.getAll("modifierGroupIds").filter((id): id is string => typeof id === "string") }, revision: crypto.randomUUID() };
+    const modifierGroupIds = formData.getAll("modifierGroupIds").filter((id): id is string => typeof id === "string");
+    const groupIds = modifierGroupIdsSchema.safeParse(modifierGroupIds);
+    if (!groupIds.success) return { message: "กลุ่มตัวเลือกไม่ถูกต้อง", values: { ...values, modifierGroupIds }, revision: crypto.randomUUID() };
 
-  const updated = await updateProductWithModifierGroups(shopId, productId, parsed.data, groupIds.data);
-  if (updated.length === 0) return { message: "ไม่พบสินค้า" };
-  revalidatePath("/admin/menu");
-  revalidatePath(`/admin/menu/${productId}`);
-  return { message: null, success: true };
+    const updated = await updateProductWithModifierGroups(shopId, productId, parsed.data, groupIds.data);
+    if (updated.length === 0) return { message: "ไม่พบสินค้า" };
+    revalidatePath("/admin/menu");
+    revalidatePath(`/admin/menu/${productId}`);
+    return { message: null, success: true };
+  } catch (error) {
+    logger.error({ err: error, shopId }, "Menu mutation failed");
+    return { success: false, message: "บันทึกไม่สำเร็จ กรุณาตรวจสอบข้อมูลแล้วลองใหม่", values: { ...parseProduct(formData).values, modifierGroupIds: formData.getAll("modifierGroupIds").filter((id): id is string => typeof id === "string") }, revision: crypto.randomUUID() };
+  }
 }
 
 export async function importStockMenuAction(
@@ -136,22 +163,32 @@ export async function importStockMenuAction(
   void _previous;
   void _formData;
   const { shopId } = await requireStaff();
-  const { added, linkedProducts } = await importStockMenu(shopId);
-  revalidatePath("/admin/menu");
-  return {
-    message: linkedProducts > 0
-      ? `เพิ่ม ${added} รายการ · ผูกตัวเลือกเสริมให้แล้ว`
-      : `เพิ่ม ${added} รายการแล้ว`,
-    success: true,
-  };
+  try {
+    const { added, linkedProducts } = await importStockMenu(shopId);
+    revalidatePath("/admin/menu");
+    return {
+      message: linkedProducts > 0
+        ? `เพิ่ม ${added} รายการ · ผูกตัวเลือกเสริมให้แล้ว`
+        : `เพิ่ม ${added} รายการแล้ว`,
+      success: true,
+    };
+  } catch (error) {
+    logger.error({ err: error, shopId }, "Menu mutation failed");
+    return { success: false, message: "บันทึกไม่สำเร็จ กรุณาตรวจสอบข้อมูลแล้วลองใหม่" };
+  }
 }
 
-export async function deleteProductAction(productId: string, _formData: FormData) {
+export async function deleteProductAction(productId: string, _previous: MenuActionState, _formData: FormData): Promise<MenuActionState> {
   void _formData;
   const { shopId } = await requireStaff();
-  if (!uuidSchema.safeParse(productId).success) return;
-  await deleteProduct(shopId, productId);
-  revalidatePath("/admin/menu");
+  try {
+    if (!uuidSchema.safeParse(productId).success) return { message: "สินค้าไม่ถูกต้อง" };
+    await deleteProduct(shopId, productId);
+    revalidatePath("/admin/menu");
+  } catch (error) {
+    logger.error({ err: error, shopId }, "Menu mutation failed");
+    return { success: false, message: "บันทึกไม่สำเร็จ กรุณาตรวจสอบข้อมูลแล้วลองใหม่" };
+  }
   redirect("/admin/menu");
 }
 
@@ -160,27 +197,32 @@ export async function bulkUpdateProductsAction(
   formData: FormData,
 ): Promise<MenuActionState> {
   const { shopId } = await requireStaff();
-  const ids = z.array(uuidSchema).min(1).max(200).safeParse(formData.getAll("productIds"));
-  const restoreForSale = textField(formData, "restoreForSale") === "true";
-  const isActiveValue = textField(formData, "isActive");
-  if (!ids.success) return { message: ids.error.issues[0]?.message ?? "เลือกสินค้าอย่างน้อย 1 รายการ" };
-  if (restoreForSale) {
-    const restored = await restoreProductsForSale(shopId, [...new Set(ids.data)]);
+  try {
+    const ids = z.array(uuidSchema).min(1).max(200).safeParse(formData.getAll("productIds"));
+    const restoreForSale = textField(formData, "restoreForSale") === "true";
+    const isActiveValue = textField(formData, "isActive");
+    if (!ids.success) return { message: ids.error.issues[0]?.message ?? "เลือกสินค้าอย่างน้อย 1 รายการ" };
+    if (restoreForSale) {
+      const restored = await restoreProductsForSale(shopId, [...new Set(ids.data)]);
+      revalidatePath("/admin/menu");
+      return { message: `เปิดขายแล้ว ${restored.length} รายการ` };
+    }
+    const modifierGroupAction = textField(formData, "modifierGroupAction");
+    if (modifierGroupAction === "add" || modifierGroupAction === "remove") {
+      const groupId = uuidSchema.safeParse(textField(formData, "modifierGroupId"));
+      if (!groupId.success) return { message: "กรุณาเลือกกลุ่มตัวเลือก" };
+      const changed = await updateProductsModifierGroup(shopId, [...new Set(ids.data)], modifierGroupAction, groupId.data);
+      revalidatePath("/admin/menu");
+      return { message: modifierGroupAction === "add" ? `เพิ่มกลุ่มตัวเลือกให้ ${changed.length} รายการ` : `เอากลุ่มตัวเลือกออกจาก ${changed.length} รายการ` };
+    }
+    if (isActiveValue !== "true" && isActiveValue !== "false") return { message: "กรุณาเลือกสถานะสินค้า" };
+    const changed = await setProductsActive(shopId, [...new Set(ids.data)], isActiveValue === "true");
     revalidatePath("/admin/menu");
-    return { message: `เปิดขายแล้ว ${restored.length} รายการ` };
+    return { message: `ปรับสถานะแล้ว ${changed.length} รายการ` };
+  } catch (error) {
+    logger.error({ err: error, shopId }, "Menu mutation failed");
+    return { success: false, message: "บันทึกไม่สำเร็จ กรุณาตรวจสอบข้อมูลแล้วลองใหม่" };
   }
-  const modifierGroupAction = textField(formData, "modifierGroupAction");
-  if (modifierGroupAction === "add" || modifierGroupAction === "remove") {
-    const groupId = uuidSchema.safeParse(textField(formData, "modifierGroupId"));
-    if (!groupId.success) return { message: "กรุณาเลือกกลุ่มตัวเลือก" };
-    const changed = await updateProductsModifierGroup(shopId, [...new Set(ids.data)], modifierGroupAction, groupId.data);
-    revalidatePath("/admin/menu");
-    return { message: modifierGroupAction === "add" ? `เพิ่มกลุ่มตัวเลือกให้ ${changed.length} รายการ` : `เอากลุ่มตัวเลือกออกจาก ${changed.length} รายการ` };
-  }
-  if (isActiveValue !== "true" && isActiveValue !== "false") return { message: "กรุณาเลือกสถานะสินค้า" };
-  const changed = await setProductsActive(shopId, [...new Set(ids.data)], isActiveValue === "true");
-  revalidatePath("/admin/menu");
-  return { message: `ปรับสถานะแล้ว ${changed.length} รายการ` };
 }
 
 export async function clearSoldOutProductsAction(
@@ -190,16 +232,28 @@ export async function clearSoldOutProductsAction(
   void _previous;
   void _formData;
   const { shopId } = await requireStaff();
-  const cleared = await clearSoldOutProducts(shopId);
-  revalidatePath("/admin/menu");
-  return { message: `เปิดขายแล้ว ${cleared.length} รายการ` };
+  try {
+    const cleared = await clearSoldOutProducts(shopId);
+    revalidatePath("/admin/menu");
+    return { message: `เปิดขายแล้ว ${cleared.length} รายการ` };
+  } catch (error) {
+    logger.error({ err: error, shopId }, "Menu mutation failed");
+    return { success: false, message: "บันทึกไม่สำเร็จ กรุณาตรวจสอบข้อมูลแล้วลองใหม่" };
+  }
 }
 
 export async function setAutoClearSoldOutAction(autoClearSoldOut: boolean) {
   const { shopId } = await requireStaff();
-  await updateMenuSettings(shopId, autoClearSoldOut === true);
-  revalidatePath("/admin/menu");
+  try {
+    await updateMenuSettings(shopId, autoClearSoldOut === true);
+    revalidatePath("/admin/menu");
+    return { message: null, success: true };
+  } catch (error) {
+    logger.error({ err: error, shopId }, "Menu mutation failed");
+    return { success: false, message: "บันทึกไม่สำเร็จ กรุณาตรวจสอบข้อมูลแล้วลองใหม่" };
+  }
 }
+
 
 const idListSchema = z.array(uuidSchema).max(1000);
 

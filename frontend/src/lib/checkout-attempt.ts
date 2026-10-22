@@ -34,6 +34,7 @@ export function checkoutAttempt(input: CheckoutInput, previous: CheckoutAttempt 
     lines: input.lines.map(({ productId, qty, modifierIds, note }) => ({ productId, qty, modifierIds, note })),
     memberId: input.memberId ?? null,
     redeemRewardId: input.redeemRewardId ?? null,
+    expectedTotalSatang: input.expectedTotalSatang,
     payment: input.payment,
   });
   return previous?.signature === signature ? previous : { requestId: crypto.randomUUID(), signature };
@@ -41,6 +42,7 @@ export function checkoutAttempt(input: CheckoutInput, previous: CheckoutAttempt 
 
 const pendingSchema = z.object({
   requestId: z.uuid(),
+  expectedTotalSatang: z.number().int().nonnegative().optional(),
   lines: z.array(z.object({
     productId: z.string().min(1),
     qty: z.number().int().positive(),

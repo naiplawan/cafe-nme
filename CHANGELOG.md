@@ -7,9 +7,28 @@ versioning (pre-1.0: minor = features, patch = fixes).
 ## [Unreleased]
 
 ### Added
+- Password recovery from the login page, with single-use links, request throttling, and admin session revocation after a reset.
+- Checkout now fetches current server prices before payment and asks staff to accept a changed total.
+
+### Fixed
+- Mobile POS screens, payment, modifiers, and member lookup now fit narrow viewports; cash entry preserves fractional baht and payment tabs respect reduced motion.
+- Cart contents survive logout; oversized carts and failed PIN, member lookup, menu edit, and order-detail requests show actionable feedback.
+- Order selection ignores stale responses, void controls recover from failed requests, and expired member QR codes offer a retry instead of remaining visible.
+- LINE delivery failures no longer report receipt success, and the member menu displays sold-out products correctly.
+
+### Changed
+- Menu input validation, availability, and stock import now have dedicated modules.
+- Checkout batches order-line, modifier, and loyalty writes; persisted line numbers preserve receipt ordering.
+
+### Operations
+- Apply migrations through `0022_password_recovery` in the API pre-deploy step, including `0021_order_item_line_no`, before deploying the frontend.
+- Configure backend `FRONTEND_URL`, `RESEND_API_KEY`, and `RECOVERY_EMAIL_FROM` to enable recovery email; signup remains independent of email delivery.
+
+### Added
 - Frontend server adapters share one internal API transport for URL construction, authentication, JSON headers, and uncached requests.
 - Database constraints enforce valid stamp goals, product and order prices, modifier selection bounds, and order quantities; migration `0020_business_invariants` applies them.
 - Isolated checkout pricing and reward calculations into a domain module with focused unit coverage.
+- Generated frontend TypeScript API types from the Nest OpenAPI document and added a CI freshness check for both generated artifacts.
 
 ### Changed
 - Order read queries now live in a dedicated service, separate from checkout and order mutations.
@@ -49,10 +68,10 @@ versioning (pre-1.0: minor = features, patch = fixes).
 - The menu-asset route and authenticated setup/branch-selection pages now build with Next.js 16 Cache Components and stream loading shells while checking the session.
 
 ### Breaking changes
-- Email ownership verification is removed. Signup no longer verifies mailbox ownership; password recovery remains operator-managed.
+- Email ownership verification is removed. Signup no longer verifies mailbox ownership; the new recovery flow requires the mail configuration described above.
 
 ### Removed
-- Removed Resend delivery, email verification tokens, and the email verification route; email addresses remain account identifiers and login credentials.
+- Removed signup verification delivery, email verification tokens, and the email verification route; email addresses remain account identifiers and login credentials.
 - Removed the obsolete Supabase agent skill files.
 
 ### Operations

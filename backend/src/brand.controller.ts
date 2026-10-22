@@ -1,5 +1,5 @@
 import { ApiStandardErrors } from "./common/api-errors.decorator.js";
-import { ApiSecurity, ApiTags } from "@nestjs/swagger";
+import { ApiOkResponse, ApiSecurity, ApiTags } from "@nestjs/swagger";
 import {
   BadRequestException,
   Body,
@@ -19,6 +19,7 @@ import type { Request, Response } from "express";
 import { BrandAccentDto } from "./common/request.dto.js";
 import { BrandService } from "./brand.service.js";
 import { InternalApiGuard } from "./internal-api.guard.js";
+import { BrandResponseDto, SuccessResultDto } from "./rest-response.dto.js";
 
 const MAX_BASE64_BYTES = Math.ceil((300 * 1024) / 3) * 4;
 
@@ -56,11 +57,16 @@ export class BrandController {
   constructor(@Inject(BrandService) private readonly brand: BrandService) {}
 
   @Get()
+  @ApiOkResponse({ type: BrandResponseDto })
   getBrand(@Param("shopId", new ParseUUIDPipe()) shopId: string) {
     return this.brand.getBrand(shopId);
   }
 
   @Get("logo")
+  @ApiOkResponse({
+    description: "Brand image bytes. The content type is the stored image MIME type.",
+    content: { "application/octet-stream": { schema: { type: "string", format: "binary" } } },
+  })
   async getLogo(
     @Param("shopId", new ParseUUIDPipe()) shopId: string,
     @Res() response: Response,
@@ -81,6 +87,7 @@ export class BrandController {
   }
 
   @Put("accent")
+  @ApiOkResponse({ type: SuccessResultDto })
   async saveAccent(
     @Param("shopId", new ParseUUIDPipe()) shopId: string,
     @Body() body: BrandAccentDto,
@@ -90,6 +97,7 @@ export class BrandController {
   }
 
   @Put("logo")
+  @ApiOkResponse({ type: SuccessResultDto })
   async saveLogo(
     @Param("shopId", new ParseUUIDPipe()) shopId: string,
     @Req() request: Request,
@@ -100,6 +108,7 @@ export class BrandController {
   }
 
   @Delete("logo")
+  @ApiOkResponse({ type: SuccessResultDto })
   async removeLogo(@Param("shopId", new ParseUUIDPipe()) shopId: string) {
     await this.brand.removeLogo(shopId);
     return { success: true };

@@ -98,6 +98,7 @@ export class CheckoutPaymentDto {
 }
 
 export class CheckoutDto {
+  @ApiPropertyOptional({ type: Number, minimum: 0 }) @Allow() expectedTotalSatang?: number;
   @ApiPropertyOptional({ type: String, format: "uuid" }) @Allow() requestId?: string;
   @ApiProperty({ type: [CheckoutLineDto] }) @Allow() @ValidateNested({ each: true }) @Type(() => CheckoutLineDto) lines!: CheckoutLineDto[];
   @ApiProperty({ type: CheckoutPaymentDto }) @Allow() @ValidateNested() @Type(() => CheckoutPaymentDto) payment!: CheckoutPaymentDto;

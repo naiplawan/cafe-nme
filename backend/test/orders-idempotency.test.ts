@@ -1,13 +1,13 @@
-import assert from "node:assert/strict";
-import { randomUUID } from "node:crypto";
-import { after, before, describe, it } from "node:test";
-import { ConflictException, NotFoundException } from "@nestjs/common";
-import postgres from "postgres";
-import type { DatabaseService } from "../src/database.service.js";
-import { OrdersService } from "../src/orders.service.js";
+import assert from 'node:assert/strict';
+import { randomUUID } from 'node:crypto';
+import { after, before, describe, it } from 'node:test';
+import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
+import postgres from 'postgres';
+import type { DatabaseService } from '../src/database.service.js';
+import { OrdersService } from '../src/orders.service.js';
 
-describe("checkout retries", { skip: !process.env.TEST_DATABASE_URL }, () => {
-  const sql = postgres(process.env.TEST_DATABASE_URL ?? "", { max: 5 });
+describe('checkout retries', { skip: !process.env.TEST_DATABASE_URL }, () => {
+  const sql = postgres(process.env.TEST_DATABASE_URL ?? '', { max: 5 });
   const shopId = randomUUID();
   const staffId = randomUUID();
   const productId = randomUUID();
@@ -33,18 +33,42 @@ describe("checkout retries", { skip: !process.env.TEST_DATABASE_URL }, () => {
     await sql.end();
   });
 
-  function input(requestId = randomUUID(), options: { productId?: string; memberId?: string | null; qty?: number } = {}) {
+  function input(
+    requestId = randomUUID(),
+    options: { productId?: string; memberId?: string | null; qty?: number } = {},
+  ) {
     return {
       requestId,
       memberId: options.memberId === undefined ? memberId : options.memberId,
       lines: [{ productId: options.productId ?? productId, qty: options.qty ?? 3, modifierIds: [] as string[] }],
-      payment: { method: "promptpay" as const },
+      payment: { method: 'promptpay' as const },
     };
   }
 
-  it("records one order, payment and earned reward for concurrent identical submissions", async () => {
+  it('quotes current prices and rejects changed totals without writing an order', async () => {
     const request = input();
-    const [first, retry] = await Promise.all([orders.checkout(shopId, staffId, request), orders.checkout(shopId, staffId, request)]);
+    const quote = await orders.quote(shopId, staffId, request);
+    assert.equal(quote.totalSatang, 15000);
+    await assert.rejects(orders.checkout(shopId, staffId, { ...request, expectedTotalSatang: 14000 }),
+      (error: unknown) => error instanceof BadRequestException && (error.getResponse() as { code?: string }).code === 'price_changed');
+    const rows = await sql`select id from orders where checkout_key = ${request.requestId}`;
+    assert.equal(rows.length, 0);
+    const confirmed = { ...request, expectedTotalSatang: quote.totalSatang };
+    const paid = await orders.checkout(shopId, staffId, confirmed);
+    await sql`update products set base_price_satang = 9000 where id = ${productId}`;
+    try {
+      const replay = await orders.checkout(shopId, staffId, confirmed);
+      assert.equal(replay.orderId, paid.orderId);
+      assert.equal(replay.totalSatang, 15000);
+    } finally { await sql`update products set base_price_satang = 5000 where id = ${productId}`; }
+  });
+
+  it('records one order, payment and earned reward for concurrent identical submissions', async () => {
+    const request = input();
+    const [first, retry] = await Promise.all([
+      orders.checkout(shopId, staffId, request),
+      orders.checkout(shopId, staffId, request),
+    ]);
     assert.notEqual(first.replayed, retry.replayed);
     const committed = first.replayed ? retry : first;
     const replay = first.replayed ? first : retry;
@@ -62,7 +86,28 @@ describe("checkout retries", { skip: !process.env.TEST_DATABASE_URL }, () => {
     assert.deepEqual(counts, { payments: 1, rewards: 1, earnings: 1 });
   });
 
-  it("serializes a same-key retry when UUID casing differs", async () => {
+  it('uses one item insert for a multi-line checkout', async () => {
+    const queries: string[] = [];
+    const measuredSql = postgres(process.env.TEST_DATABASE_URL ?? '', {
+      max: 1,
+      debug: (_connection, query) => queries.push(query),
+    });
+    try {
+      const measuredOrders = new OrdersService({ connection: measuredSql } as DatabaseService);
+      await measuredOrders.checkout(shopId, staffId, {
+        requestId: randomUUID(),
+        memberId: null,
+        lines: Array.from({ length: 20 }, () => ({ productId, qty: 1, modifierIds: [] })),
+        payment: { method: 'promptpay' },
+      });
+      assert.equal(queries.filter((query) => /insert into order_items/i.test(query)).length, 1);
+      assert.equal(queries.filter((query) => /select id::text as id from products/i.test(query)).length, 0);
+    } finally {
+      await measuredSql.end();
+    }
+  });
+
+  it('serializes a same-key retry when UUID casing differs', async () => {
     const requestId = randomUUID();
     const request = input(requestId);
     const [first, retry] = await Promise.all([
@@ -77,25 +122,32 @@ describe("checkout retries", { skip: !process.env.TEST_DATABASE_URL }, () => {
     assert.equal(Number(count.count), 1);
   });
 
-  it("rejects a reused key with a different quantity", async () => {
+  it('rejects a reused key with a different quantity', async () => {
     const request = input();
     await orders.checkout(shopId, staffId, request);
-    await assert.rejects(orders.checkout(shopId, staffId, { ...request, lines: [{ ...request.lines[0], qty: 1 }] }), (error: unknown) => {
-      assert.ok(error instanceof ConflictException);
-      assert.deepEqual(error.getResponse(), { code: "idempotency_key_reused" });
-      return true;
-    });
+    await assert.rejects(
+      orders.checkout(shopId, staffId, { ...request, lines: [{ ...request.lines[0], qty: 1 }] }),
+      (error: unknown) => {
+        assert.ok(error instanceof ConflictException);
+        assert.deepEqual(error.getResponse(), { code: 'idempotency_key_reused' });
+        return true;
+      },
+    );
   });
 
-  it("scopes the same request key independently per shop", async () => {
+  it('scopes the same request key independently per shop', async () => {
     const requestId = randomUUID();
     const first = await orders.checkout(shopId, staffId, input(requestId));
-    const other = await orders.checkout(otherShopId, otherStaffId, input(requestId, { productId: otherProductId, memberId: null, qty: 1 }));
+    const other = await orders.checkout(
+      otherShopId,
+      otherStaffId,
+      input(requestId, { productId: otherProductId, memberId: null, qty: 1 }),
+    );
     assert.notEqual(other.orderId, first.orderId);
     assert.equal(other.replayed, false);
   });
 
-  it("replays committed totals after prices, availability, receiving settings and business date change", async () => {
+  it('replays committed totals after prices, availability, receiving settings and business date change', async () => {
     const request = input();
     const first = await orders.checkout(shopId, staffId, request);
     await sql`update products set base_price_satang = 9000, sold_out = true where id = ${productId}`;
@@ -112,7 +164,7 @@ describe("checkout retries", { skip: !process.env.TEST_DATABASE_URL }, () => {
     }
   });
 
-  it("does not disclose a committed result to a subsequently inactive staff member", async () => {
+  it('does not disclose a committed result to a subsequently inactive staff member', async () => {
     const request = input();
     await orders.checkout(shopId, staffId, request);
     await sql`update staff set is_active = false where id = ${staffId}`;
@@ -123,12 +175,9 @@ describe("checkout retries", { skip: !process.env.TEST_DATABASE_URL }, () => {
     }
   });
 
-  it("does not disclose a committed result to staff from another shop", async () => {
+  it('does not disclose a committed result to staff from another shop', async () => {
     const request = input();
     await orders.checkout(shopId, staffId, request);
-    await assert.rejects(
-      orders.checkout(shopId, otherStaffId, request),
-      NotFoundException,
-    );
+    await assert.rejects(orders.checkout(shopId, otherStaffId, request), NotFoundException);
   });
 });

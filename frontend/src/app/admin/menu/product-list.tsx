@@ -271,15 +271,27 @@ function BulkActionBar({ selectedCount, hiddenCount, onClear, modifierGroups, ac
 
 function AutoClearSoldOutToggle({ initial }: { initial: boolean }) {
   const [enabled, setEnabled] = useState(initial);
+  const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const id = useId();
   return (
     <label htmlFor={id} className="flex min-h-11 items-center gap-2">
       <Checkbox id={id} checked={enabled} disabled={pending} onCheckedChange={(checked) => {
+        const previous = enabled;
         setEnabled(checked);
-        startTransition(() => setAutoClearSoldOutAction(checked));
+        setError(null);
+        startTransition(async () => {
+          try {
+            const result = await setAutoClearSoldOutAction(checked);
+            if (!result.success) { setEnabled(previous); setError(result.message); }
+          } catch {
+            setEnabled(previous);
+            setError("บันทึกไม่สำเร็จ กรุณาลองใหม่");
+          }
+        });
       }} />
       เปิดขายสินค้าที่หมดอัตโนมัติเมื่อขึ้นวันใหม่
+      {error && <span role="alert" className="text-destructive">{error}</span>}
     </label>
   );
 }

@@ -48,7 +48,7 @@ Next.js LINE integration ──── login verification / LIFF ── LINE Logi
 - NestJS owns application database access. Its services scope shop data by `shopId`; the frontend calls the API through `frontend/src/server/internal-api.ts`.
 - Order lines store a **snapshot** of names and prices, so menu edits never change past receipts.
 - LINE channel secrets and tokens are encrypted at rest.
-- `backend/openapi.json` is generated from NestJS decorators by `pnpm --filter @cafenme/backend openapi:generate`. Frontend server adapters also validate runtime responses with local Zod schemas; generated client types are not currently used.
+- `backend/openapi.json` is generated from NestJS decorators by `pnpm api:generate`; the command also creates `frontend/src/server/api-types.generated.ts`. CI runs `pnpm api:check` to catch stale artifacts. Frontend adapters still validate runtime responses with local Zod schemas.
 
 ## 3. Data model
 

@@ -5,6 +5,9 @@ export interface RuntimeEnvironment {
   APP_SECRET?: string;
   LINE_DEV_MOCK?: string;
   NODE_ENV?: string;
+  RESEND_API_KEY?: string;
+  RECOVERY_EMAIL_FROM?: string;
+  FRONTEND_URL?: string;
 }
 
 export function validateEnvironment(environment: Record<string, unknown>): RuntimeEnvironment {
@@ -42,6 +45,9 @@ export function validateEnvironment(environment: Record<string, unknown>): Runti
   }
 
   return {
+    ...(typeof environment.RESEND_API_KEY === "string" ? { RESEND_API_KEY: environment.RESEND_API_KEY } : {}),
+    ...(typeof environment.RECOVERY_EMAIL_FROM === "string" ? { RECOVERY_EMAIL_FROM: environment.RECOVERY_EMAIL_FROM } : {}),
+    ...(typeof environment.FRONTEND_URL === "string" ? { FRONTEND_URL: environment.FRONTEND_URL } : {}),
     API_PORT: port,
     DATABASE_URL: databaseUrl,
     INTERNAL_API_SECRET: internalApiSecret,

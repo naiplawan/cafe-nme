@@ -1,9 +1,10 @@
 import { ApiStandardErrors } from "./common/api-errors.decorator.js";
-import { ApiSecurity, ApiTags } from "@nestjs/swagger";
+import { ApiCreatedResponse, ApiSecurity, ApiTags } from "@nestjs/swagger";
 import { RateLimitDto } from "./common/request.dto.js";
 import { BadRequestException, Body, Controller, Inject, Post, UseGuards } from "@nestjs/common";
 import { InternalApiGuard } from "./internal-api.guard.js";
 import { RateLimitService } from "./rate-limit.service.js";
+import { RateLimitResultDto } from "./core-response.dto.js";
 
 const MAX_KEY_LENGTH = 4096;
 const MAX_LIMIT = 2_147_483_646;
@@ -44,6 +45,7 @@ export class RateLimitController {
   constructor(@Inject(RateLimitService) private readonly rateLimit: RateLimitService) {}
 
   @Post("consume")
+  @ApiCreatedResponse({ type: RateLimitResultDto })
   async consume(@Body() value: RateLimitDto): Promise<{ allowed: boolean }> {
     const input = parseRequest(value);
     return { allowed: await this.rateLimit.consume(input.key, input.limit, input.windowSeconds, input.now) };

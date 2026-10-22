@@ -11,6 +11,8 @@
     "start": "pnpm --filter @cafenme/frontend start",
     "typecheck": "pnpm --parallel --filter @cafenme/frontend --filter @cafenme/backend typecheck",
     "typecheck:api": "pnpm --filter @cafenme/backend typecheck",
+    "api:generate": "pnpm --filter @cafenme/backend openapi:generate && pnpm exec openapi-typescript backend/openapi.json --output frontend/src/server/api-types.generated.ts",
+    "api:check": "pnpm api:generate && git diff --exit-code -- backend/openapi.json frontend/src/server/api-types.generated.ts",
     "lint": "biome lint .",
     "check:boundaries": "node frontend/scripts/check-client-boundaries.cjs",
     "react:doctor": "pnpm --filter @cafenme/frontend react:doctor",
@@ -28,6 +30,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.15",
+    "openapi-typescript": "7.12.0",
     "prettier": "3.9.9",
     "prettier-plugin-tailwindcss": "0.8.1"
   },

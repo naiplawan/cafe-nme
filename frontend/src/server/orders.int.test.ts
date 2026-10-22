@@ -38,7 +38,7 @@ describe("orders integration", () => {
 
   it("rejects a client-supplied price instead of trusting it", async () => {
     await expect(checkout({ shopId, staffId }, { lines: [{ productId, qty: 1, modifierIds: [], unitPriceSatang: 1 } as never],
-      payment: { method: "promptpay" } })).rejects.toThrow("400");
+      payment: { method: "promptpay" } })).rejects.toMatchObject({ code: "invalid_checkout" });
   });
 
   it("reprices from the database, numbers daily orders, gives change, and earns stamps/reward", async () => {

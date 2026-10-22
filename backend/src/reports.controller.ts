@@ -1,5 +1,5 @@
 import { ApiStandardErrors } from "./common/api-errors.decorator.js";
-import { ApiSecurity, ApiTags } from "@nestjs/swagger";
+import { ApiOkResponse, ApiSecurity, ApiTags } from "@nestjs/swagger";
 import {
   BadRequestException,
   Controller,
@@ -12,6 +12,8 @@ import {
 } from "@nestjs/common";
 import { InternalApiGuard } from "./internal-api.guard.js";
 import { ReportsService } from "./reports.service.js";
+import { CategorySalesDto, DailySalesDto, HourlySalesDto, MemberGrowthDto, MemberOverviewDto, SalesByItemDto } from "./core-response.dto.js";
+import { OrdersExportResponseDto, SalesSummaryResponseDto } from "./rest-response.dto.js";
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const MAX_RANGE_DAYS = 365;
@@ -46,6 +48,7 @@ export class ReportsController {
   constructor(@Inject(ReportsService) private readonly reports: ReportsService) {}
 
   @Get("sales-summary")
+  @ApiOkResponse({ type: SalesSummaryResponseDto })
   salesSummary(
     @Param("shopId", new ParseUUIDPipe()) shopId: string,
     @Query("from") from: string | undefined,
@@ -55,6 +58,7 @@ export class ReportsController {
   }
 
   @Get("sales-by-item")
+  @ApiOkResponse({ type: SalesByItemDto, isArray: true })
   salesByItem(
     @Param("shopId", new ParseUUIDPipe()) shopId: string,
     @Query("from") from: string | undefined,
@@ -64,6 +68,7 @@ export class ReportsController {
   }
 
   @Get("daily-sales")
+  @ApiOkResponse({ type: DailySalesDto, isArray: true })
   dailySales(
     @Param("shopId", new ParseUUIDPipe()) shopId: string,
     @Query("from") from: string | undefined,
@@ -73,6 +78,7 @@ export class ReportsController {
   }
 
   @Get("hourly-sales")
+  @ApiOkResponse({ type: HourlySalesDto, isArray: true })
   hourlySales(
     @Param("shopId", new ParseUUIDPipe()) shopId: string,
     @Query("from") from: string | undefined,
@@ -82,6 +88,7 @@ export class ReportsController {
   }
 
   @Get("category-sales")
+  @ApiOkResponse({ type: CategorySalesDto, isArray: true })
   categorySales(
     @Param("shopId", new ParseUUIDPipe()) shopId: string,
     @Query("from") from: string | undefined,
@@ -91,6 +98,7 @@ export class ReportsController {
   }
 
   @Get("member-growth")
+  @ApiOkResponse({ type: MemberGrowthDto, isArray: true })
   memberGrowth(
     @Param("shopId", new ParseUUIDPipe()) shopId: string,
     @Query("from") from: string | undefined,
@@ -100,11 +108,13 @@ export class ReportsController {
   }
 
   @Get("member-overview")
+  @ApiOkResponse({ type: MemberOverviewDto })
   memberOverview(@Param("shopId", new ParseUUIDPipe()) shopId: string) {
     return this.reports.memberOverview(shopId);
   }
 
   @Get("orders-export")
+  @ApiOkResponse({ type: OrdersExportResponseDto, isArray: true })
   ordersForExport(
     @Param("shopId", new ParseUUIDPipe()) shopId: string,
     @Query("from") from: string | undefined,
