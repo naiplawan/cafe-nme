@@ -3,6 +3,7 @@ import { connection } from "next/server";
 import { notFound } from "next/navigation";
 import { z } from "zod";
 import { createInternalApiToken } from "@/lib/internal-api-token";
+import { readInternalJson } from "@/server/internal-api";
 import { getBrand } from "@/server/brand";
 import { getPosMenu } from "@/server/catalog";
 import { MemberApp } from "./member-app";
@@ -30,7 +31,7 @@ async function getLiffShop(shopSlug: string) {
     },
   );
   if (!response.ok) { throw new Error(`Nest LIFF API returned ${response.status}`); }
-  const parsed = shopSchema.safeParse(await response.json());
+  const parsed = shopSchema.safeParse(await readInternalJson(response));
   if (!parsed.success) { throw new Error("Nest LIFF API returned an invalid shop payload"); }
   return parsed.data;
 }

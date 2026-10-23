@@ -55,6 +55,12 @@ describe("checkout action recovery", () => {
     expect("retryable" in response && response.retryable).not.toBe(true);
   });
 
+  it("explains ineligible redemption and allows staff to correct the basket", async () => {
+    api.checkout.mockRejectedValue(new CheckoutError("reward_ineligible"));
+    const response = await checkoutAction({ ...input, expectedScope: scope });
+    expect(response).toEqual({ ok: false, message: "ออเดอร์นี้ยังไม่มีเครื่องดื่มที่ใช้รางวัลเป็นส่วนลดได้ กรุณาเพิ่มเครื่องดื่มหรือยกเลิกการใช้รางวัล" });
+  });
+
   it("requires the original staff and device scope before calling checkout", async () => {
     auth.session = { shopId: "shop-b", staff: { id: "staff-b" }, deviceId: "device-b" };
     api.checkout.mockResolvedValue(result);

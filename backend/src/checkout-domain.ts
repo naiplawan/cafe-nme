@@ -5,6 +5,7 @@ export type CheckoutFailure =
   | 'sold_out'
   | 'member_not_found'
   | 'reward_unavailable'
+  | 'reward_ineligible'
   | 'cash_insufficient'
   | 'promptpay_not_configured';
 

@@ -19,7 +19,7 @@ export default async function PaymentSettingsPage() {
   return <section className="space-y-6">
     <AdminPageHeader section="ตั้งค่าร้าน" title="การชำระเงิน" description="ตั้งค่าบัญชีรับเงินพร้อมเพย์ที่ใช้สร้าง QR ในหน้า POS" />
     <div className="max-w-3xl">
-      <PromptPaySettingsForm configured={Boolean(promptpayId)} maskedId={maskPromptPayId(promptpayId)} />
+      <PromptPaySettingsForm shopId={session.shopId} configured={Boolean(promptpayId)} maskedId={maskPromptPayId(promptpayId)} />
     </div>
   </section>;
 }

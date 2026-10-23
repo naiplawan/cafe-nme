@@ -15,6 +15,7 @@ export interface PromptPayActionState {
 export type PromptPayPreviewResult = { ok: true; svg: string } | { ok: false; message: string };
 
 const PROMPTPAY_ID = /^(0\d{9}|\d{13})$/;
+const SHOP_CHANGED_MESSAGE = "ร้านที่เลือกเปลี่ยนไป กรุณาโหลดหน้าใหม่ก่อนดำเนินการ";
 const inputSchema = z.string()
   .trim()
   .min(1, "กรุณากรอก PromptPay ID")
@@ -31,9 +32,10 @@ function revalidatePaymentPages() {
   revalidatePath("/admin");
 }
 
-export async function savePromptPayAction(_previous: PromptPayActionState, formData: FormData): Promise<PromptPayActionState> {
+export async function savePromptPayAction(expectedShopId: string, _previous: PromptPayActionState, formData: FormData): Promise<PromptPayActionState> {
   const session = await ownerSession();
   if (!session) return { message: "เฉพาะเจ้าของร้านเท่านั้นที่เปลี่ยนการตั้งค่านี้ได้", success: false };
+  if (session.shopId !== expectedShopId) { return { message: SHOP_CHANGED_MESSAGE, success: false }; }
   const value = formData.get("promptpayId");
   const parsed = inputSchema.safeParse(typeof value === "string" ? value : "");
   if (!parsed.success) {
@@ -50,10 +52,11 @@ export async function savePromptPayAction(_previous: PromptPayActionState, formD
   return { message: "บันทึก PromptPay ID แล้ว", success: true };
 }
 
-export async function clearPromptPayAction(_previous: PromptPayActionState): Promise<PromptPayActionState> {
+export async function clearPromptPayAction(expectedShopId: string, _previous: PromptPayActionState): Promise<PromptPayActionState> {
   void _previous;
   const session = await ownerSession();
   if (!session) return { message: "เฉพาะเจ้าของร้านเท่านั้นที่เปลี่ยนการตั้งค่านี้ได้", success: false };
+  if (session.shopId !== expectedShopId) { return { message: SHOP_CHANGED_MESSAGE, success: false }; }
 
   try {
     await savePromptPayId(session.shopId, session.staff.id, null);
@@ -64,11 +67,12 @@ export async function clearPromptPayAction(_previous: PromptPayActionState): Pro
   return { message: "ปิดการรับชำระด้วยพร้อมเพย์แล้ว", success: true };
 }
 
-export async function previewPromptPayAction(): Promise<PromptPayPreviewResult> {
+export async function previewPromptPayAction(expectedShopId: string): Promise<PromptPayPreviewResult> {
   const session = await ownerSession();
   if (!session) {
     return { ok: false, message: "เฉพาะเจ้าของร้านเท่านั้นที่ดู QR ทดสอบได้" };
   }
+  if (session.shopId !== expectedShopId) { return { ok: false, message: SHOP_CHANGED_MESSAGE }; }
 
   try {
     const settings = await getPromptPaySettings(session.shopId, session.staff.id);

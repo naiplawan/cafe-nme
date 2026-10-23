@@ -48,6 +48,8 @@ export function ModifierSheet({ product, initialModifierIds = [], initialQty = 1
   }, { scope: dialogRef, dependencies: [selected] });
 
   const chosen = useMemo(() => new Set(selected), [selected]);
+  const incomplete = product.groups.some((group) => group.modifiers.length < group.minSelect);
+  const unavailableLabel = incomplete ? "สินค้ายังไม่พร้อมขาย" : "เลือกตัวเลือกที่ต้องเลือกก่อน";
   const valid = product.groups.every((group) => {
     const count = group.modifiers.filter((modifier) => chosen.has(modifier.id)).length;
     return count >= group.minSelect && count <= group.maxSelect;
@@ -96,6 +98,7 @@ export function ModifierSheet({ product, initialModifierIds = [], initialQty = 1
               <div className="flex items-center gap-2.5"><h3 className="text-[19px] font-bold">{group.name}</h3>
                 <span data-required-badge data-missing={missing} className={`rounded-full px-2.5 py-1 text-[13px] font-semibold ${missing ? "bg-[#F7DCD0] text-[#8E3415]" : "bg-[#EFE3D5] text-[#6B5547]"}`}>{rule}</span>
               </div>
+              {group.modifiers.length < group.minSelect && <p role="alert" className="text-sm text-[#B4441C]">ตัวเลือกไม่ครบ สินค้านี้ยังไม่พร้อมขาย กรุณาให้ผู้จัดการตั้งค่าตัวเลือกในหลังร้าน</p>}
               <div className="grid grid-cols-2 gap-2.5 min-[700px]:grid-cols-4">
                 {group.modifiers.map((modifier) => {
                   const isSelected = chosen.has(modifier.id);
@@ -112,8 +115,8 @@ export function ModifierSheet({ product, initialModifierIds = [], initialQty = 1
         <div className="flex flex-wrap gap-3 border-t border-[#E4D6C6] p-4 min-[700px]:px-7 min-[700px]:pb-6">
           <button type="button" onClick={onClose} className={`h-[68px] rounded-2xl border border-[#D9C5B0] bg-[#FFFBF6] text-lg font-semibold ${isEditing ? "w-20 md:w-28" : "w-20 md:w-40"}`}>ยกเลิก</button>
           {isEditing && <button type="button" onClick={onRemove} className="h-[68px] rounded-2xl px-3 text-sm font-semibold text-[#B4441C] hover:bg-[#F7DCD0]">ลบรายการนี้</button>}
-          <button type="button" onClick={() => valid ? onConfirm(selected, qty) : invalidAttemptRef.current()} className={`h-[68px] min-w-[140px] flex-1 rounded-2xl bg-[#B4441C] font-bold text-white shadow-sm ${isEditing ? "text-lg" : "text-xl"}`}>
-            {valid ? `${isEditing ? "บันทึกการแก้ไข" : "เพิ่มลงออเดอร์"} · ${formatBaht(unitPrice * qty)}` : "เลือกตัวเลือกที่ต้องเลือกก่อน"}
+          <button type="button" disabled={incomplete} onClick={() => valid ? onConfirm(selected, qty) : invalidAttemptRef.current()} className={`h-[68px] min-w-[140px] flex-1 rounded-2xl bg-[#B4441C] font-bold text-white shadow-sm disabled:opacity-50 ${isEditing ? "text-lg" : "text-xl"}`}>
+            {valid ? `${isEditing ? "บันทึกการแก้ไข" : "เพิ่มลงออเดอร์"} · ${formatBaht(unitPrice * qty)}` : unavailableLabel}
           </button>
         </div>
       </div>

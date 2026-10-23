@@ -6,6 +6,16 @@ versioning (pre-1.0: minor = features, patch = fixes).
 
 ## [Unreleased]
 
+### Security
+- Upgrade Next.js to 16.4.1 to address the reported App Router denial-of-service advisory.
+
+### Fixed
+- Bind PromptPay save, clear, and preview actions to the branch displayed by the form so stale tabs cannot change another branch's settings.
+- Preserve loyalty rewards when an order has no eligible item or would receive no discount.
+- Handle empty HTTP 200 responses from nullable API lookups as missing records instead of JSON parse errors.
+- Keep required modifier groups visible in the POS and block items whose required options are not configured.
+- Authorize rich-menu previews against the requested branch membership, including branches outside the active admin cookie path.
+
 ### Added
 - Password recovery from the login page, with single-use links, request throttling, and admin session revocation after a reset.
 - Checkout now fetches current server prices before payment and asks staff to accept a changed total.

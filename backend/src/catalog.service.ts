@@ -106,7 +106,7 @@ export class CatalogService {
         ...product,
         groups: [...(groupsByProduct.get(product.id)?.values() ?? [])]
           .sort((a, b) => a.sort - b.sort)
-          .filter((group) => group.modifiers.length > 0)
+          .filter((group) => group.modifiers.length > 0 || group.minSelect > 0)
           .map(({ sort: _groupSort, modifiers, ...group }) => ({
             ...group,
             modifiers: modifiers

@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { sign, unsign } from "@/lib/signing";
-import { internalApiFetch } from "@/server/internal-api";
+import { readInternalJson, internalApiFetch } from "@/server/internal-api";
 
 const DEVICE_COOKIE = "pos_device";
 const STAFF_COOKIE = "pos_staff";
@@ -41,9 +41,7 @@ const deviceAdminSchema = z.object({ id: UUID, name: z.string(), paired: z.boole
 async function requestApi<T>(path: string, schema: z.ZodType<T>, init?: RequestInit): Promise<T> {
   const response = await internalApiFetch(path, init, "API_BASE_URL is required to access POS sessions");
   if (!response.ok) throw new Error(`Nest POS access API returned ${response.status}`);
-  // Nest sends a handler's `null` (e.g. a wrong PIN) as an empty body, which response.json() cannot parse.
-  const text = await response.text();
-  const parsed = schema.safeParse(text ? JSON.parse(text) : null);
+  const parsed = schema.safeParse(await readInternalJson(response));
   if (!parsed.success) throw new Error("Nest POS access API returned an invalid payload");
   return parsed.data;
 }
@@ -105,7 +103,7 @@ export async function pairDevice(code: string): Promise<PosDevice | null> {
   if (response.status === 404 || response.status === 400) return null;
   if (!response.ok) throw new Error(`Nest POS access API returned ${response.status}`);
   const pairedSchema = deviceSchema.extend({ deviceToken: z.string().min(32) }).strict().nullable();
-  const parsed = pairedSchema.safeParse(await response.json());
+  const parsed = pairedSchema.safeParse(await readInternalJson(response));
   if (!parsed.success) throw new Error("Nest POS access API returned an invalid pairing payload");
   if (!parsed.data) return null;
   const { deviceToken, ...device } = parsed.data;

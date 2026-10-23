@@ -1,6 +1,6 @@
 import 'server-only';
 import { z } from 'zod';
-import { internalApiFetch } from '@/server/internal-api';
+import { readInternalJson, internalApiFetch } from '@/server/internal-api';
 import type { components } from '@/server/api-types.generated';
 import { logger } from '@/lib/logger';
 import { getMemberSummary, type MemberSummary } from '@/server/loyalty';
@@ -33,6 +33,7 @@ export class CheckoutError extends Error {
     | 'sold_out'
     | 'member_not_found'
     | 'reward_unavailable'
+    | 'reward_ineligible'
     | 'cash_insufficient'
     | 'promptpay_not_configured'
     | 'idempotency_key_reused';
@@ -135,6 +136,7 @@ async function request<T>(path: string, schema: z.ZodType<T>, init?: RequestInit
         'sold_out',
         'member_not_found',
         'reward_unavailable',
+        'reward_ineligible',
         'cash_insufficient',
         'promptpay_not_configured',
         'idempotency_key_reused',
@@ -146,7 +148,7 @@ async function request<T>(path: string, schema: z.ZodType<T>, init?: RequestInit
     if (response.status === 400 || response.status === 422) throw new CheckoutError('invalid_checkout');
     throw new Error(`Nest orders API returned ${response.status}`);
   }
-  const parsed = schema.safeParse(await response.json());
+  const parsed = schema.safeParse(await readInternalJson(response));
   if (!parsed.success) {
     throw new Error('Nest orders API returned an invalid payload');
   }

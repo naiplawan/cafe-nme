@@ -4,7 +4,7 @@ import { after } from "next/server";
 import { z } from "zod";
 import { decryptSecret } from "@/lib/crypto";
 import { logger } from "@/lib/logger";
-import { internalApiFetch, internalApiUrl } from "@/server/internal-api";
+import { readInternalJson, internalApiFetch, internalApiUrl } from "@/server/internal-api";
 import { readBoundedBody } from "@/server/read-bounded-body";
 
 const UUID = z.uuid();
@@ -21,7 +21,7 @@ async function getWebhookConfig(shopId: string) {
     internalApiUrl(`/v1/shops/${encodeURIComponent(UUID.parse(shopId))}/line/webhook-config`, "API_BASE_URL is required to access LINE webhook configuration"),
   );
   if (!response.ok) { throw new Error(`Nest LINE API returned ${response.status}`); }
-  const value: unknown = await response.json();
+  const value: unknown = await readInternalJson(response);
   if (value === null) { return null; }
   const parsed = webhookConfigSchema.safeParse(value);
   if (!parsed.success) { throw new Error("Nest LINE API returned an invalid webhook configuration payload"); }

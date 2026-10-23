@@ -1,6 +1,6 @@
 import "server-only";
 import { z } from "zod";
-import { internalApiFetch, internalApiUrl } from "@/server/internal-api";
+import { readInternalJson, internalApiFetch, internalApiUrl } from "@/server/internal-api";
 
 const soldOutResultSchema = z.object({ soldOut: z.boolean() }).nullable();
 const promptPayConfigSchema = z.object({ promptpayId: z.string().nullable() }).nullable();
@@ -19,7 +19,7 @@ async function request<T>(path: string, schema: z.ZodType<T>, method = "GET"): P
     method,
   });
   if (!response.ok) throw new Error(`Nest POS API returned ${response.status}`);
-  const parsed = schema.safeParse(await response.json());
+  const parsed = schema.safeParse(await readInternalJson(response));
   if (!parsed.success) throw new Error("Nest POS API returned an invalid payload");
   return parsed.data;
 }

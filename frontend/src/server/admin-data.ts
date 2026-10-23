@@ -1,6 +1,6 @@
 import "server-only";
 import { z } from "zod";
-import { internalApiFetch, internalApiUrl } from "@/server/internal-api";
+import { readInternalJson, internalApiFetch, internalApiUrl } from "@/server/internal-api";
 const dashboardSchema = z.object({
   activeProducts: z.number(),
   allProducts: z.number(),
@@ -29,7 +29,7 @@ async function read<T>(shopId: string, resource: string, schema: z.ZodType<T>): 
   if (!response.ok) {
     throw new Error(`Nest admin-data API returned ${response.status}`);
   }
-  const parsed = schema.safeParse(await response.json());
+  const parsed = schema.safeParse(await readInternalJson(response));
   if (!parsed.success) {
     throw new Error("Nest admin-data API returned an invalid payload");
   }

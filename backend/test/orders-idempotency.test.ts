@@ -63,6 +63,40 @@ describe('checkout retries', { skip: !process.env.TEST_DATABASE_URL }, () => {
     } finally { await sql`update products set base_price_satang = 5000 where id = ${productId}`; }
   });
 
+  it('preserves rewards and writes no order when redemption has no discount', async () => {
+    for (const product of [{ earnsStamp: false, price: 5000 }, { earnsStamp: true, price: 0 }]) {
+      const ineligibleProductId = randomUUID();
+      const rewardId = randomUUID();
+      await sql`insert into products (id, shop_id, name, base_price_satang, earns_stamp)
+        values (${ineligibleProductId}, ${shopId}, 'Ineligible reward item', ${product.price}, ${product.earnsStamp})`;
+      await sql`insert into rewards (id, shop_id, member_id, status) values (${rewardId}, ${shopId}, ${memberId}, 'available')`;
+      const request = { ...input(randomUUID(), { productId: ineligibleProductId, qty: 1 }), redeemRewardId: rewardId };
+      for (const operation of [orders.quote.bind(orders), orders.checkout.bind(orders)]) {
+        await assert.rejects(operation(shopId, staffId, request),
+          (error: unknown) => error instanceof BadRequestException && (error.getResponse() as { code?: string }).code === 'reward_ineligible');
+      }
+      const [reward] = await sql`select status, redeemed_order_id from rewards where id = ${rewardId}`;
+      assert.deepEqual(reward, { status: 'available', redeemed_order_id: null });
+      assert.equal((await sql`select id from orders where checkout_key = ${request.requestId}`).length, 0);
+    }
+  });
+
+  it('redeems an eligible reward once and replays its original discount', async () => {
+    const rewardId = randomUUID();
+    await sql`insert into rewards (id, shop_id, member_id, status) values (${rewardId}, ${shopId}, ${memberId}, 'available')`;
+    const request = { ...input(randomUUID(), { qty: 1 }), redeemRewardId: rewardId };
+    const quote = await orders.quote(shopId, staffId, request);
+    assert.equal(quote.discountSatang, 5000);
+    assert.equal(quote.totalSatang, 0);
+    const first = await orders.checkout(shopId, staffId, request);
+    const replay = await orders.checkout(shopId, staffId, request);
+    assert.equal(replay.orderId, first.orderId);
+    assert.equal(replay.replayed, true);
+    assert.equal(replay.discountSatang, 5000);
+    const [reward] = await sql`select status, redeemed_order_id from rewards where id = ${rewardId}`;
+    assert.deepEqual(reward, { status: 'redeemed', redeemed_order_id: first.orderId });
+  });
+
   it('records one order, payment and earned reward for concurrent identical submissions', async () => {
     const request = input();
     const [first, retry] = await Promise.all([

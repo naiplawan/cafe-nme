@@ -41,6 +41,10 @@ describe("orders integration", () => {
       payment: { method: "promptpay" } })).rejects.toMatchObject({ code: "invalid_checkout" });
   });
 
+  it("returns null for a missing order through the HTTP API", async () => {
+    await expect(getOrder(shopId, randomUUID())).resolves.toBeNull();
+  });
+
   it("reprices from the database, numbers daily orders, gives change, and earns stamps/reward", async () => {
     const result = await checkout({ shopId, staffId }, { lines: [{ productId, qty: 3, modifierIds: [modifierId], note: "  ไม่หวาน " }], memberId,
       payment: { method: "cash", cashReceivedSatang: 20_000 } });

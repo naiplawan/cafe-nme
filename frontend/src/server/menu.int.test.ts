@@ -4,6 +4,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { db } from "@/db";
 import { categories, modifierGroups, productModifierGroups, products, shops } from "@/db/schema";
 import { getPosMenu } from "./catalog";
+import { priceCart } from "@/lib/pricing";
 import { togglePosProductSoldOut } from "./pos-operations";
 import { categoryNameExists, createProduct, getProduct, listProducts, reorderCategories, reorderProducts, restoreProductsForSale, updateMenuSettings, updateProductsModifierGroup } from "./menu";
 
@@ -31,6 +32,17 @@ describe("menu product creation", () => {
       .from(productModifierGroups).where(eq(productModifierGroups.productId, product.id));
 
     expect(links).toEqual([{ groupId }]);
+  });
+
+  it("keeps empty required groups so the POS cannot price an incomplete product", async () => {
+    const [required] = await db.insert(modifierGroups).values({ shopId, name: "Required size", minSelect: 1, maxSelect: 1 }).returning();
+    const [product] = await createProduct(shopId, {
+      name: "Incomplete coffee", price: 5000, categoryId: null, imageUrl: null, earnsStamp: true, isActive: true,
+    }, [required.id, groupId]);
+    const menu = await getPosMenu(shopId);
+    const served = menu.products.find((row) => row.id === product.id);
+    expect(served?.groups).toEqual([{ id: required.id, name: "Required size", minSelect: 1, maxSelect: 1, modifiers: [] }]);
+    expect(() => priceCart([{ productId: product.id, qty: 1, modifierIds: [] }], menu)).toThrow("group_min");
   });
 
   it("matches category names case-insensitively and can exclude the current category", async () => {

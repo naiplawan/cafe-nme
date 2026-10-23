@@ -30,4 +30,8 @@ describe("loyalty integration", () => {
     expect((await getMemberSummary(shopId, memberId))?.stampBalance).toBe(2);
     expect(await listLedger(shopId, memberId)).toMatchObject([{ delta: 2, reason: "adjust", orderId: null }]);
   });
+
+  it("returns null for a missing member through the HTTP API", async () => {
+    await expect(getMemberSummary(shopId, randomUUID())).resolves.toBeNull();
+  });
 });

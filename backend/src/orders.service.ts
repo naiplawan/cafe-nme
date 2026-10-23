@@ -166,6 +166,7 @@ async function checkoutPrice(tx: TransactionSql, shopId: string, input: Pick<Che
     `;
     if (!reward) throw new CheckoutDomainError('reward_unavailable');
     discountSatang = Math.min(subtotalSatang, rewardDiscount(priced.lines));
+    if (discountSatang === 0) { throw new CheckoutDomainError('reward_ineligible'); }
   }
   const totalSatang = Math.max(0, subtotalSatang - discountSatang);
   return { ...priced, discountSatang, totalSatang, member };

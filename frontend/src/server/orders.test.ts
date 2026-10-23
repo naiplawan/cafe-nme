@@ -94,7 +94,7 @@ describe("checkout transport boundary", () => {
 
 it("classifies validation rejection as definitive but retains uncertainty for server failures", async () => {
   const input = { lines: [{ productId, qty: 1, modifierIds: [] }], payment: { method: "promptpay" as const } };
-  for (const code of ["cart_limit_exceeded", "price_changed"]) {
+  for (const code of ["cart_limit_exceeded", "price_changed", "reward_ineligible"]) {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({ code }), { status: 400 })));
     await expect(checkout({ shopId, staffId }, input)).rejects.toMatchObject({ code });
   }

@@ -21,6 +21,7 @@ import { createPreviewRequestGuard, PromptPaySettingsForm } from "./forms";
 
 function render(configured: boolean) {
   return renderToStaticMarkup(createElement(PromptPaySettingsForm, {
+    shopId: "shop-1",
     configured,
     maskedId: configured ? "••••••••5678" : null,
   }));

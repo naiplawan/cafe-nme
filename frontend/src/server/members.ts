@@ -1,6 +1,6 @@
 import "server-only";
 import { z } from "zod";
-import { internalApiFetch } from "@/server/internal-api";
+import { readInternalJson, internalApiFetch } from "@/server/internal-api";
 import { verifyMemberToken } from "@/lib/member-token";
 
 const UUID = z.uuid();
@@ -24,9 +24,7 @@ async function requestApi(path: string, init?: RequestInit): Promise<unknown> {
     throw new Error(message ?? "Nest members API returned 409");
   }
   if (!response.ok) { throw new Error(`Nest members API returned ${response.status}`); }
-  // Nest sends a handler's `null` (e.g. an unknown member) as an empty body.
-  const text = await response.text();
-  return text ? JSON.parse(text) : null;
+  return readInternalJson(response);
 }
 
 const shopPath = (shopId: string) => `/v1/shops/${encodeURIComponent(UUID.parse(shopId))}/members`;

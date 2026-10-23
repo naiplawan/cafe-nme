@@ -1,6 +1,6 @@
 import "server-only";
 import { z } from "zod";
-import { internalApiFetch } from "@/server/internal-api";
+import { readInternalJson, internalApiFetch } from "@/server/internal-api";
 
 const UUID = z.uuid();
 const memberSummarySchema = z.object({
@@ -26,7 +26,7 @@ const ledgerEntrySchema = z.object({
 async function requestApi(path: string, init?: RequestInit): Promise<unknown> {
   const response = await internalApiFetch(path, init, "API_BASE_URL is required to access loyalty data");
   if (!response.ok) { throw new Error(`Nest loyalty API returned ${response.status}`); }
-  return response.json();
+  return readInternalJson(response);
 }
 
 function memberPath(shopId: string, memberId: string): string {

@@ -1,6 +1,6 @@
 import "server-only";
 import { z } from "zod";
-import { internalApiFetch, internalApiUrl } from "@/server/internal-api";
+import { readInternalJson, internalApiFetch, internalApiUrl } from "@/server/internal-api";
 const UUID = z.uuid();
 const staffSessionSchema = z.object({
   staff: z.object({
@@ -26,7 +26,7 @@ export async function findStaffShops(authUserId: string) {
   if (!response.ok) {
     throw new Error(`Nest staff shops API returned ${response.status}`);
   }
-  const parsed = staffShopsSchema.safeParse(await response.json());
+  const parsed = staffShopsSchema.safeParse(await readInternalJson(response));
   if (!parsed.success) {
     throw new Error("Nest staff shops API returned an invalid payload");
   }
@@ -43,7 +43,7 @@ export async function findStaffSession(authUserId: string, shopId: string) {
   if (!response.ok) {
     throw new Error(`Nest staff session API returned ${response.status}`);
   }
-  const parsed = staffSessionSchema.safeParse(await response.json());
+  const parsed = staffSessionSchema.safeParse(await readInternalJson(response));
   if (!parsed.success) {
     throw new Error("Nest staff session API returned an invalid payload");
   }

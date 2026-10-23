@@ -45,9 +45,9 @@ function ClearButton() {
   </Button>;
 }
 
-export function PromptPaySettingsForm({ configured, maskedId }: { configured: boolean; maskedId: string | null }) {
-  const [saveState, saveAction, savePending] = useActionState(savePromptPayAction, initialState);
-  const [clearState, clearAction, clearPending] = useActionState(clearPromptPayAction, initialState);
+export function PromptPaySettingsForm({ shopId, configured, maskedId }: { shopId: string; configured: boolean; maskedId: string | null }) {
+  const [saveState, saveAction, savePending] = useActionState(savePromptPayAction.bind(null, shopId), initialState);
+  const [clearState, clearAction, clearPending] = useActionState(clearPromptPayAction.bind(null, shopId), initialState);
   const [promptpayId, setPromptpayId] = useState("");
   const [preview, setPreview] = useState<PreviewState>({ status: "idle" });
   const [previewPending, startPreview] = useTransition();
@@ -69,7 +69,7 @@ export function PromptPaySettingsForm({ configured, maskedId }: { configured: bo
     setPreview({ status: "pending" });
     startPreview(async () => {
       try {
-        const result = await previewPromptPayAction();
+        const result = await previewPromptPayAction(shopId);
         if (!previewGuard.isCurrent(requestGeneration)) return;
         if (result.ok) setPreview({ status: "success", svg: result.svg });
         else setPreview({ status: "error", message: result.message });

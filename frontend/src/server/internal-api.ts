@@ -3,6 +3,12 @@ import { createInternalApiToken } from "@/lib/internal-api-token";
 
 const TRAILING_SLASH = /\/$/;
 
+export async function readInternalJson(response: Response): Promise<unknown> {
+  // Nest serializes nullable handler results as an empty HTTP body.
+  const body = await response.text();
+  return body ? JSON.parse(body) : null;
+}
+
 export function internalApiUrl(path: string, missingMessage = "API_BASE_URL is required to access internal API"): string {
   const baseUrl = process.env.API_BASE_URL ?? (
     process.env.NODE_ENV === "production" ? undefined : "http://127.0.0.1:3101"
