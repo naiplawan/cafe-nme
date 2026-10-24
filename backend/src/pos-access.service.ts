@@ -1,5 +1,6 @@
 import {
   ConflictException,
+  ForbiddenException,
   Inject,
   Injectable,
   NotFoundException,
@@ -177,7 +178,8 @@ export class PosAccessService {
   }
 
   async createStaff(shopId: string, actorStaffId: string, input: { name: string; role: string; pin: string }) {
-    await this.requireAdmin(shopId, actorStaffId);
+    const actor = await this.requireAdmin(shopId, actorStaffId);
+    if (actor.role === "manager" && input.role === "owner") throw new ForbiddenException("Cannot create a higher role");
     const pinHash = await hashPin(input.pin);
     const [staff] = await this.database.connection<{ id: string }[]>`
       insert into staff (shop_id, name, role, pin_hash)
@@ -187,7 +189,12 @@ export class PosAccessService {
   }
 
   async setStaffPin(shopId: string, actorStaffId: string, staffId: string, pin: string) {
-    await this.requireAdmin(shopId, actorStaffId);
+    const actor = await this.requireAdmin(shopId, actorStaffId);
+    const [target] = await this.database.connection<{ role: string }[]>`
+      select role from staff where shop_id = ${shopId}::uuid and id = ${staffId}::uuid limit 1
+    `;
+    if (!target) throw new NotFoundException("Staff not found");
+    if (actor.role === "manager" && target.role === "owner") throw new ForbiddenException("Cannot change a higher role");
     const result = await this.database.connection<{ id: string }[]>`
       update staff set pin_hash = ${await hashPin(pin)}
       where shop_id = ${shopId}::uuid and id = ${staffId}::uuid returning id::text as id
@@ -197,12 +204,13 @@ export class PosAccessService {
   }
 
   async setStaffActive(shopId: string, actorStaffId: string, staffId: string, active: boolean) {
-    await this.requireAdmin(shopId, actorStaffId);
+    const actor = await this.requireAdmin(shopId, actorStaffId);
+    const [target] = await this.database.connection<{ role: string }[]>`
+      select role from staff where shop_id = ${shopId}::uuid and id = ${staffId}::uuid limit 1
+    `;
+    if (!target) throw new NotFoundException("Staff not found");
+    if (actor.role === "manager" && target.role === "owner") throw new ForbiddenException("Cannot change a higher role");
     if (!active) {
-      const [target] = await this.database.connection<{ role: string }[]>`
-        select role from staff where shop_id = ${shopId}::uuid and id = ${staffId}::uuid limit 1
-      `;
-      if (!target) throw new NotFoundException("Staff not found");
       if (actorStaffId === staffId || target.role === "owner") throw new ConflictException("Cannot disable this account");
     }
     const result = await this.database.connection<{ id: string }[]>`
@@ -217,7 +225,8 @@ export class PosAccessService {
     const [actor] = await this.database.connection<{ role: string }[]>`
       select role from staff where shop_id = ${shopId}::uuid and id = ${actorStaffId}::uuid and is_active = true limit 1
     `;
-    if (!actor || actor.role === "barista") throw new NotFoundException("Staff not found");
+    if (!actor || (actor.role !== "owner" && actor.role !== "manager")) throw new NotFoundException("Staff not found");
+    return actor;
   }
 
   private async getDeviceWithoutTouch(token: string, shopId: string) {

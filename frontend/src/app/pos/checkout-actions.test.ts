@@ -101,3 +101,32 @@ describe("checkout action recovery", () => {
     expect(response).toMatchObject({ ok: false, retryable: true });
   });
 });
+
+it("delivers a sanitized alert for unexpected checkout failures without losing recovery behavior", async () => {
+  const { createServer } = await import("node:http");
+  const messages: unknown[] = [];
+  const server = createServer(async (request, response) => {
+    let body = "";
+    for await (const chunk of request) { body += chunk; }
+    messages.push(JSON.parse(body));
+    response.writeHead(204).end();
+  });
+  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const address = server.address();
+  if (!address || typeof address === "string") { throw new Error("missing test port"); }
+  vi.stubEnv("OPERATIONAL_ALERT_WEBHOOK_URL", `http://127.0.0.1:${address.port}`);
+  auth.session = { shopId: "shop", staff: { id: "staff" }, deviceId: "device" };
+  try {
+    api.checkout.mockRejectedValue(new CheckoutError("cash_insufficient"));
+    await checkoutAction({ ...input, expectedScope: scope });
+    expect(messages).toHaveLength(0);
+    api.checkout.mockRejectedValue(new Error("secret connection string"));
+    expect(await checkoutAction({ ...input, expectedScope: scope })).toMatchObject({ ok: false, retryable: true });
+    expect(messages).toEqual([expect.objectContaining({ kind: "checkout_failure", shopIdHash: expect.stringMatching(/^[a-f0-9]{64}$/) })]);
+    expect(JSON.stringify(messages)).not.toContain("secret");
+  } finally {
+    vi.unstubAllEnvs();
+    server.closeAllConnections();
+    await new Promise<void>((resolve) => server.close(() => resolve()));
+  }
+});

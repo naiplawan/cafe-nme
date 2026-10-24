@@ -13,7 +13,7 @@ import {
 import { InternalApiGuard } from "./internal-api.guard.js";
 import { ReportsService } from "./reports.service.js";
 import { CategorySalesDto, DailySalesDto, HourlySalesDto, MemberGrowthDto, MemberOverviewDto, SalesByItemDto } from "./core-response.dto.js";
-import { OrdersExportResponseDto, SalesSummaryResponseDto } from "./rest-response.dto.js";
+import { OrdersExportResponseDto, RefundSummaryResponseDto, SalesSummaryResponseDto } from "./rest-response.dto.js";
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const MAX_RANGE_DAYS = 365;
@@ -55,6 +55,16 @@ export class ReportsController {
     @Query("to") to: string | undefined,
   ) {
     return this.reports.salesSummary(shopId, parseRange(from, to));
+  }
+
+  @Get("refund-summary")
+  @ApiOkResponse({ type: RefundSummaryResponseDto })
+  refundSummary(
+    @Param("shopId", new ParseUUIDPipe()) shopId: string,
+    @Query("from") from: string | undefined,
+    @Query("to") to: string | undefined,
+  ) {
+    return this.reports.refundSummary(shopId, parseRange(from, to));
   }
 
   @Get("sales-by-item")

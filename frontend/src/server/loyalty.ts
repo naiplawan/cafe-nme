@@ -10,7 +10,8 @@ const memberSummarySchema = z.object({
   lineLinked: z.boolean(),
   stampBalance: z.number().int(),
   stampGoal: z.number().int(),
-  availableRewards: z.array(z.object({ id: UUID, createdAt: z.coerce.date() })),
+  nextStampExpiryAt: z.coerce.date().nullable().default(null),
+  availableRewards: z.array(z.object({ id: UUID, createdAt: z.coerce.date(), expiresAt: z.coerce.date().nullable().default(null) })),
 });
 
 export type MemberSummary = z.infer<typeof memberSummarySchema>;
@@ -19,6 +20,8 @@ const ledgerEntrySchema = z.object({
   id: UUID,
   delta: z.number().int(),
   reason: z.string(),
+  expiresAt: z.coerce.date().nullable().default(null),
+  sourceEntryId: UUID.nullable().default(null),
   orderId: UUID.nullable(),
   createdAt: z.coerce.date(),
 });

@@ -16,8 +16,10 @@ export class AdminDataService {
       pos_device: boolean;
       line_configured: boolean;
       brand_configured: boolean;
+      trial_setup: boolean;
     }[]>`
       SELECT
+        EXISTS (SELECT 1 FROM audit_log a WHERE a.shop_id = ${shopId}::uuid AND a.action = 'setup.trial-checkout') AS trial_setup,
         (SELECT count(*) FROM products p WHERE p.shop_id = ${shopId}::uuid AND p.is_active = true) AS active_products,
         (SELECT count(*) FROM products p WHERE p.shop_id = ${shopId}::uuid) AS all_products,
         (SELECT count(*) FROM categories c WHERE c.shop_id = ${shopId}::uuid) AS categories,
@@ -42,6 +44,7 @@ export class AdminDataService {
       deviceSetup: row.pos_device,
       lineSetup: row.line_configured,
       brandSetup: row.brand_configured,
+      trialSetup: row.trial_setup,
     };
   }
 

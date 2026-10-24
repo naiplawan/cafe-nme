@@ -162,6 +162,62 @@
       "when": 1792682311273,
       "tag": "0022_password_recovery",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1792755389114,
+      "tag": "0023_payment_reviews",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1792755722461,
+      "tag": "0024_shifts_and_preparation",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1792755892663,
+      "tag": "0025_loyalty_expiry",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1792756110856,
+      "tag": "0026_self_orders_and_inventory",
+      "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1792756150820,
+      "tag": "0027_partial_refunds",
+      "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1792756563478,
+      "tag": "0028_shared_loyalty",
+      "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1792756719190,
+      "tag": "0029_subscriptions",
+      "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1792757523637,
+      "tag": "0030_fluffy_dracula",
+      "breakpoints": true
     }
   ]
 }

@@ -15,6 +15,10 @@ export interface SalesSummary {
   rewardsRedeemed: number;
   newMembers: number;
 }
+export interface RefundSummary {
+  approvedSatang: number; approvedCount: number; paidSatang: number; paidCount: number;
+  unpaidApprovedSatang: number; cashPaidSatang: number; promptpayPaidSatang: number;
+}
 
 const shopIdSchema = z.uuid();
 const rangeSchema = z.object({ from: z.iso.date(), to: z.iso.date() }).refine(({ from, to }) => {
@@ -33,6 +37,10 @@ const salesSummarySchema = z.object({
   stampsIssued: z.number(),
   rewardsRedeemed: z.number(),
   newMembers: z.number(),
+});
+const refundSummarySchema: ReportSchema<RefundSummary> = z.object({
+  approvedSatang: z.number(), approvedCount: z.number(), paidSatang: z.number(), paidCount: z.number(),
+  unpaidApprovedSatang: z.number(), cashPaidSatang: z.number(), promptpayPaidSatang: z.number(),
 });
 const salesByItemSchema = z.array(z.object({ name: z.string(), qty: z.number(), revenueSatang: z.number() }));
 const dailySalesSchema = z.array(z.object({ date: z.iso.date(), orders: z.number(), netSatang: z.number() }));
@@ -95,6 +103,10 @@ async function requestReport<T>(
 
 export function salesSummary(shopId: string, from: string, to: string): Promise<SalesSummary> {
   return requestReport(shopId, "sales-summary", salesSummarySchema, { from, to });
+}
+
+export function refundSummary(shopId: string, from: string, to: string): Promise<RefundSummary> {
+  return requestReport(shopId, "refund-summary", refundSummarySchema, { from, to });
 }
 
 export function salesByItem(shopId: string, from: string, to: string): Promise<{ name: string; qty: number; revenueSatang: number }[]> {

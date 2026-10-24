@@ -7,6 +7,7 @@ import { getMemberSummary, type MemberSummary } from '@/server/loyalty';
 import { pushRewardUnlocked } from '@/server/line';
 
 export type CheckoutInput = Omit<components['schemas']['CheckoutDto'], 'staffId' | 'payment'> & {
+  selfOrderId?: string;
   payment: { method: 'cash'; cashReceivedSatang: number } | { method: 'promptpay' };
 };
 
@@ -36,7 +37,8 @@ export class CheckoutError extends Error {
     | 'reward_ineligible'
     | 'cash_insufficient'
     | 'promptpay_not_configured'
-    | 'idempotency_key_reused';
+    | 'idempotency_key_reused'
+    | 'self_order_unavailable';
 
   constructor(code: CheckoutError['code']) {
     super(code);
@@ -140,6 +142,7 @@ async function request<T>(path: string, schema: z.ZodType<T>, init?: RequestInit
         'cash_insufficient',
         'promptpay_not_configured',
         'idempotency_key_reused',
+        'self_order_unavailable',
       ];
       if (knownCodes.includes(code as CheckoutError['code'])) {
         throw new CheckoutError(code as CheckoutError['code']);

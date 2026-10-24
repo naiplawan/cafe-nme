@@ -31,7 +31,7 @@ import { type CheckoutInput, OrdersService } from './orders.service.js';
 type CheckoutRequest = CheckoutInput & { staffId: string };
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
-const CHECKOUT_KEYS = ['expectedTotalSatang', 'requestId', 'lines', 'payment', 'staffId', 'memberId', 'redeemRewardId'];
+const CHECKOUT_KEYS = ['selfOrderId', 'expectedTotalSatang', 'requestId', 'lines', 'payment', 'staffId', 'memberId', 'redeemRewardId'];
 const CHECKOUT_LINE_KEYS = ['productId', 'qty', 'modifierIds', 'note'];
 const CHECKOUT_PAYMENT_KEYS = ['method', 'cashReceivedSatang'];
 
@@ -85,6 +85,7 @@ function parseCheckout(value: unknown): CheckoutRequest {
     !validLines ||
     !validPayment ||
     !uuid(body.staffId) ||
+    (body.selfOrderId !== undefined && !uuid(body.selfOrderId)) ||
     (body.expectedTotalSatang !== undefined && (!Number.isSafeInteger(body.expectedTotalSatang) || Number(body.expectedTotalSatang) < 0)) ||
     (body.requestId !== undefined && !uuid(body.requestId)) ||
     (body.memberId !== undefined && body.memberId !== null && !uuid(body.memberId)) ||

@@ -31,6 +31,7 @@ export interface PendingCheckoutResolution {
 
 export function checkoutAttempt(input: CheckoutInput, previous: CheckoutAttempt | null): CheckoutAttempt {
   const signature = JSON.stringify({
+    selfOrderId: input.selfOrderId,
     lines: input.lines.map(({ productId, qty, modifierIds, note }) => ({ productId, qty, modifierIds, note })),
     memberId: input.memberId ?? null,
     redeemRewardId: input.redeemRewardId ?? null,
@@ -41,6 +42,7 @@ export function checkoutAttempt(input: CheckoutInput, previous: CheckoutAttempt 
 }
 
 const pendingSchema = z.object({
+  selfOrderId: z.uuid().optional(),
   requestId: z.uuid(),
   expectedTotalSatang: z.number().int().nonnegative().optional(),
   lines: z.array(z.object({
@@ -189,6 +191,10 @@ export async function submitPendingCheckout(
     return { kind: "unavailable", message: "มีรายการชำระเงินที่กำลังรอตรวจสอบอยู่บนอุปกรณ์อื่น" };
   }
   const key = cartStorageKey ? pendingCheckoutStorageKey(cartStorageKey) : null;
+  const existing = readPendingCheckout(storage, key);
+  if (!existing.available || (existing.input && serializePendingCheckout(existing.input) !== serializePendingCheckout(input))) {
+    return { kind: "unavailable", message: "มีรายการเดิมที่ยังไม่ยืนยัน กรุณาโหลดหน้าใหม่เพื่อตรวจสอบ" };
+  }
   if (!savePendingCheckout(storage, input, key)) {
     return { kind: "unavailable", message: "ไม่สามารถเตรียมรายการกู้คืนได้ กรุณาลองใหม่" };
   }
@@ -198,7 +204,8 @@ export async function submitPendingCheckout(
   try {
     const response = await submit(input);
     if (response.ok) {
-      completePendingCheckout(storage, cartStorageKey, key);
+      const completion = completePendingCheckout(storage, cartStorageKey, key);
+      if (!completion.pendingCleared) { return { kind: "uncertain", message: "บันทึกแล้ว แต่ยังล้างรายการกู้คืนไม่สำเร็จ กรุณาตรวจสอบรายการเดิม" }; }
       return { kind: "completed", result: response.result };
     }
     if (response.retryable) { return { kind: "uncertain", message: response.message }; }

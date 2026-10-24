@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { requireStaff } from "@/lib/auth";
 import { businessDate } from "@/lib/business-date";
 import { formatBaht } from "@/lib/money";
-import { getAdminDashboardData } from "@/server/admin-data";
+import { getAdminDashboardData, getShopProfile } from "@/server/admin-data";
 import { getPromptPaySettings } from "@/server/payment-settings";
 import { dailySales, hourlySales, salesByItem, salesSummary } from "@/server/reports";
 import { AdminPageHeader } from "./_components/page-header";
@@ -38,7 +38,7 @@ export default async function AdminDashboardPage() {
   const promptpaySetupPromise = currentStaff.role === "owner"
     ? getPromptPaySettings(shopId, currentStaff.id).then(({ promptpayId }) => Boolean(promptpayId)).catch(() => false)
     : Promise.resolve(false);
-  const [dashboard, todaySales, weeklySales, previousWeeklySales, daily, hourly, items, promptpaySetup] = await Promise.all([
+  const [dashboard, todaySales, weeklySales, previousWeeklySales, daily, hourly, items, promptpaySetup, profile] = await Promise.all([
     getAdminDashboardData(shopId),
     salesSummary(shopId, today, today),
     salesSummary(shopId, weekStart, today),
@@ -47,6 +47,7 @@ export default async function AdminDashboardPage() {
     hourlySales(shopId, today, today),
     salesByItem(shopId, weekStart, today),
     promptpaySetupPromise,
+    getShopProfile(shopId),
   ]);
 
   const dailyByDate = new Map(daily.map((day) => [day.date, day.netSatang]));
@@ -80,7 +81,14 @@ export default async function AdminDashboardPage() {
         line: dashboard.lineSetup,
         brand: dashboard.brandSetup,
         promptpay: promptpaySetup,
+        trial: dashboard.trialSetup,
       }} role={currentStaff.role} />
+
+      {profile ? <Card><CardContent className="flex flex-wrap items-center justify-between gap-4 p-5">
+        <div><h2 className="font-semibold">เมนูสำหรับลูกค้า</h2><p className="text-sm text-muted-foreground">เปิดดูเมนูผ่านลิงก์หรือ QR ได้โดยไม่ต้องเชื่อมต่อ LINE</p></div>
+        <div className="flex gap-4"><Link href={`/menu/${encodeURIComponent(profile.slug)}`} target="_blank" rel="noopener noreferrer" className="underline">เปิดเมนูสาธารณะ</Link>
+          {currentStaff.role !== "barista" ? <Link href="/admin/setup" className="underline">ดาวน์โหลด QR / ทดลองออกบิล</Link> : null}</div>
+      </CardContent></Card> : null}
 
       <section aria-label="สรุปข้อมูลร้าน" className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
         <Card className="col-span-2 xl:order-last xl:col-span-1">

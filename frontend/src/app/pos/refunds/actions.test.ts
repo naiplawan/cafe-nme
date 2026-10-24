@@ -1,0 +1,10 @@
+import { beforeEach,expect,it,vi } from "vitest";
+const {requirePosStaff,createRefund,recordRefundPayout}=vi.hoisted(()=>({requirePosStaff:vi.fn(),createRefund:vi.fn(),recordRefundPayout:vi.fn()}));
+vi.mock("@/server/pos-session",()=>({requirePosStaff}));vi.mock("@/server/refunds",()=>({createRefund,recordRefundPayout}));vi.mock("next/cache",()=>({revalidatePath:vi.fn()}));vi.mock("@/lib/logger",()=>({logger:{error:vi.fn()}}));
+import { refundAction,payoutAction } from "./actions";
+const id="11111111-1111-4111-8111-111111111111";
+function form() {const data=new FormData();for(const [k,v] of Object.entries({orderId:id,requestId:id,reason:"คืนแก้วหนึ่ง",[`qty:${id}`]:"1",refundId:id,method:"cash",reference:"handover",paidInReality:"yes"})) {data.set(k,v);}return data;}
+beforeEach(()=>{vi.resetAllMocks();requirePosStaff.mockResolvedValue({shopId:"shop",staff:{id:"manager",role:"manager"}});createRefund.mockResolvedValue({id,amountSatang:6500});recordRefundPayout.mockResolvedValue({success:true});});
+it("records selected quantities with authenticated manager and no automatic payout",async()=>{expect((await refundAction({message:null},form())).success).toBe(true);expect(createRefund).toHaveBeenCalledWith("shop","manager",id,{requestId:id,reason:"คืนแก้วหนึ่ง",lines:[{itemId:id,qty:1}]});expect(recordRefundPayout).not.toHaveBeenCalled();});
+it("requires explicit actual payout confirmation and rejects baristas",async()=>{const data=form();data.delete("paidInReality");expect((await payoutAction({message:null},data)).success).toBe(false);expect(recordRefundPayout).not.toHaveBeenCalled();requirePosStaff.mockResolvedValue({shopId:"shop",staff:{id:"barista",role:"barista"}});expect((await refundAction({message:null},form())).success).toBe(false);expect(createRefund).not.toHaveBeenCalled();});
+it("records payout separately without calling any bank provider",async()=>{expect((await payoutAction({message:null},form())).success).toBe(true);expect(recordRefundPayout).toHaveBeenCalledWith("shop","manager",id,"cash","handover");});

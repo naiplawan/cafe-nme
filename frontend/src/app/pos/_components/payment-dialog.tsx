@@ -4,12 +4,13 @@ import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react"
 import { formatBaht, parseBahtToSatang } from "@/lib/money";
 import { suggestCashAmounts } from "@/lib/pricing";
 import type { CheckoutInput, CheckoutResult, CheckoutQuote } from "@/server/orders";
+import { submitBrowserCheckout } from "@/lib/browser-checkout";
 import { checkoutAction, quoteCheckoutAction } from "@/app/pos/checkout-actions";
 import { gsap, MOTION, prefersReducedMotion, useGSAP } from "@/components/motion/gsap";
 import { Keypad } from "./keypad";
 import { PromptPayQr } from "./promptpay-qr";
 import { trapDialogTab } from "@/lib/dialog-focus";
-import { checkoutAttempt, submitPendingCheckout, type CheckoutAttempt, type CheckoutSessionScope } from "@/lib/checkout-attempt";
+import { checkoutAttempt, type CheckoutAttempt, type CheckoutSessionScope } from "@/lib/checkout-attempt";
 
 type PaymentLine = { key: string; name: string; qty: number; modifiersText: string; lineTotalSatang: number };
 type PaymentDialogProps = {
@@ -99,14 +100,6 @@ export function PaymentDialog({ orderLabel, lines: cartLines, subtotalSatang: ca
   const shortBySatang = Math.max(0, -changeSatang);
   const quickAmounts = useMemo(() => suggestCashAmounts(totalSatang), [totalSatang]);
 
-  function getSessionStorage(): Storage | null {
-    try {
-      return window.sessionStorage;
-    } catch {
-      return null;
-    }
-  }
-
   useGSAP(() => {
     if (prefersReducedMotion()) return;
     gsap.fromTo(rootRef.current, { opacity: 0 }, { opacity: 1, duration: MOTION.base, ease: "power1.out" });
@@ -173,7 +166,7 @@ export function PaymentDialog({ orderLabel, lines: cartLines, subtotalSatang: ca
       const attempt = checkoutAttempt(input, attemptRef.current);
       attemptRef.current = attempt;
       const pendingInput = { ...input, requestId: attempt.requestId, expectedScope };
-      const response = await submitPendingCheckout(pendingInput, getSessionStorage(), cartStorageKey, checkoutAction);
+      const response = await submitBrowserCheckout(pendingInput, cartStorageKey, checkoutAction);
       if (response.kind !== "completed") {
         setError(response.message);
         if (response.kind === "uncertain") {

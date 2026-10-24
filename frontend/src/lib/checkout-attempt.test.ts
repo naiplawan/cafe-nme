@@ -281,3 +281,8 @@ describe("payment submission recovery", () => {
     expect(data.get(pointerKey)).toBe(cartKey);
   });
 });
+
+it("retains the accepted draft identity in durable pending recovery", () => {
+  const draftInput = { ...pendingInput, selfOrderId: "77777777-7777-4777-8777-777777777777" };
+  expect(deserializePendingCheckout(serializePendingCheckout(draftInput))).toEqual(draftInput);
+});

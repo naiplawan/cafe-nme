@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useRef, useState } from "react";
 import { checkoutAction } from "@/app/pos/checkout-actions";
-import { submitPendingCheckout, type PendingCheckoutInput } from "@/lib/checkout-attempt";
+import type { PendingCheckoutInput } from "@/lib/checkout-attempt";
+import { submitBrowserCheckout } from "@/lib/browser-checkout";
 import type { CheckoutResult } from "@/server/orders";
 
 interface CheckoutRecoveryProps {
@@ -23,9 +24,7 @@ export function CheckoutRecovery({ pending, cartStorageKey = null, onRecovered, 
     active.current = true;
     setBusy(true);
     try {
-      let storage: Storage | null = null;
-      try { storage = window.sessionStorage; } catch { /* Submission fails before the API when storage is unavailable. */ }
-      const outcome = await submitPendingCheckout(pending, storage, cartStorageKey, checkoutAction);
+      const outcome = await submitBrowserCheckout(pending, cartStorageKey, checkoutAction);
       if (outcome.kind === "completed") { onRecovered(outcome.result, pending.payment.method); }
       else if (outcome.kind === "rejected") { onRejected(outcome.message); }
       else { setMessage(outcome.message); }

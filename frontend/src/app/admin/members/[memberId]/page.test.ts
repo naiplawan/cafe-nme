@@ -11,7 +11,8 @@ vi.mock("@/server/loyalty", () => ({
     lineLinked: false,
     stampBalance: 10,
     stampGoal: 10,
-    availableRewards: [{ id: "reward", createdAt: new Date("2026-10-17T03:00:00.000Z") }],
+    nextStampExpiryAt: new Date("2027-10-17T03:00:00Z"),
+    availableRewards: [{ id: "reward", createdAt: new Date("2026-10-17T03:00:00.000Z"), expiresAt: new Date("2027-10-17T03:00:00Z") }],
   })),
   listLedger: vi.fn(async () => []),
 }));
@@ -25,4 +26,12 @@ describe("member reward guidance", () => {
     expect(markup).toContain("หน้าขาย (POS)");
     expect(markup).not.toContain("type=\"submit\"");
   });
+});
+
+it("shows stamp and reward expiry dates", async () => {
+  const { default: MemberDetailPage } = await import("./page");
+  const markup = renderToStaticMarkup(await MemberDetailPage({ params: Promise.resolve({ memberId: "member" }) }));
+  expect(markup).toContain("แสตมป์หมดอายุครั้งถัดไป");
+  expect(markup).toContain("หมดอายุวันที่");
+  expect(markup).toContain("2570");
 });

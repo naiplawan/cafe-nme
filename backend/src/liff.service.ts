@@ -1,5 +1,6 @@
 import { BadRequestException, Inject, Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
+import { resolveSharedLoyalty } from "./loyalty-groups.service.js";
 import { DatabaseService } from "./database.service.js";
 
 const SHOP_SLUG = /^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$/i;
@@ -62,34 +63,39 @@ export class LiffService {
     const identity = await this.identify(shopSlug, idToken);
     if (!identity) { return { registered: false as const }; }
 
-    const [row] = await this.database.connection<{
-      id: string; displayName: string; phone: string | null; stampGoal: number;
-      stampBalance: number; availableRewards: number;
-    }[]>`
-      select m.id::text as id, m.display_name as "displayName", m.phone,
-        s.stamp_goal as "stampGoal",
-        coalesce(sum(sl.delta), 0)::int as "stampBalance",
-        (select count(*)::int from rewards r
-          where r.shop_id = s.id and r.member_id = m.id and r.status = 'available') as "availableRewards"
-      from members m
-      join shops s on s.id = m.shop_id
-      left join stamp_ledger sl on sl.shop_id = s.id and sl.member_id = m.id
-      where s.slug = ${shopSlug} and m.line_user_id = ${identity.lineUserId} and m.deleted_at is null
-      group by m.id, s.id
-      limit 1
-    `;
-    if (!row?.phone) { return { registered: false as const }; }
-    return {
-      registered: true as const,
-      memberId: row.id,
-      member: {
-        displayName: row.displayName,
-        phone: row.phone,
-        stampBalance: Number(row.stampBalance),
-        stampGoal: Number(row.stampGoal),
-        availableRewards: Number(row.availableRewards),
-      },
-    };
+    return this.database.connection.begin(async (tx) => {
+      const [row] = await tx<{
+        id: string; shopId: string; displayName: string; phone: string | null; stampGoal: number;
+      }[]>`
+        select m.id::text as id, s.id::text as "shopId", m.display_name as "displayName", m.phone,
+          s.stamp_goal as "stampGoal"
+        from members m join shops s on s.id = m.shop_id
+        where s.slug = ${shopSlug} and m.line_user_id = ${identity.lineUserId} and m.deleted_at is null
+        limit 1
+      `;
+      if (!row?.phone) { return { registered: false as const }; }
+      const state = await resolveSharedLoyalty(tx, row.shopId, row.id);
+      if (!state) { return { registered: false as const }; }
+      const history = await tx<{ id: string; delta: number; reason: string; createdAt: Date; expiresAt: Date | null; sourceEntryId: string | null; orderId: string | null }[]>`
+        select id::text as id, delta, reason, created_at as "createdAt", expires_at as "expiresAt", source_entry_id::text as "sourceEntryId", order_id::text as "orderId"
+        from stamp_ledger where member_id = any(${state.aliases.map((alias) => alias.memberId)}::uuid[])
+        order by created_at desc, id desc limit 20
+      `;
+      return {
+        registered: true as const,
+        memberId: row.id,
+        member: {
+          displayName: row.displayName,
+          phone: row.phone,
+          stampBalance: state.stampBalance,
+          stampGoal: Number(row.stampGoal),
+          availableRewards: state.availableRewards.length,
+          nextStampExpiryAt: state.nextStampExpiryAt,
+          nextRewardExpiryAt: state.nextRewardExpiryAt,
+          history,
+        },
+      };
+    });
   }
 
   async register(shopSlug: string, value: unknown): Promise<{ message: string | null; success: boolean }> {

@@ -6,7 +6,7 @@ import { createInternalApiToken } from "@/lib/internal-api-token";
 import { createMemberToken } from "@/lib/member-token";
 
 export interface MemberCardData {
-  member: { displayName: string; phone: string | null; stampBalance: number; stampGoal: number; availableRewards: number };
+  member: { displayName: string; phone: string | null; stampBalance: number; stampGoal: number; availableRewards: number; nextStampExpiryAt?: string | null; nextRewardExpiryAt?: string | null; history?: { id: string; delta: number; reason: string; createdAt: string; expiresAt: string | null }[] };
   qrToken: string;
 }
 export interface MemberActionState { message: string | null; success: boolean }
@@ -23,6 +23,9 @@ const cardResponseSchema = z.discriminatedUnion("registered", [
       stampBalance: z.number().int(),
       stampGoal: z.number().int().positive(),
       availableRewards: z.number().int().nonnegative(),
+      nextStampExpiryAt: z.iso.datetime().nullable().default(null),
+      nextRewardExpiryAt: z.iso.datetime().nullable().default(null),
+      history: z.array(z.object({ id: UUID, delta: z.number().int(), reason: z.string(), createdAt: z.iso.datetime(), expiresAt: z.iso.datetime().nullable() })).default([]),
     }),
   }),
 ]);

@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { requireStaff } from "@/lib/auth";
 import { businessDate } from "@/lib/business-date";
 import { formatBaht } from "@/lib/money";
-import { categorySales, dailySales, hourlySales, salesByItem, salesSummary } from "@/server/reports";
+import { categorySales, dailySales, hourlySales, refundSummary, salesByItem, salesSummary } from "@/server/reports";
 import { AdminPageHeader } from "../_components/page-header";
 import { bangkokHour, dailyChartData, hourlyChartData, isSelectedPreset } from "./chart-data";
 import { ReportsCharts } from "./charts-section";
@@ -71,9 +71,10 @@ export default async function ReportsPage({ searchParams }: { searchParams: Sear
   const periodDays = (Date.parse(`${range.to}T00:00:00Z`) - Date.parse(`${range.from}T00:00:00Z`)) / 86_400_000 + 1;
   const previousTo = shiftDate(range.from, -1);
   const previousFrom = shiftDate(range.from, -periodDays);
-  const [summary, previousSummary, days, items, hours, categories] = await Promise.all([
+  const [summary, previousSummary, refunds, days, items, hours, categories] = await Promise.all([
     salesSummary(shopId, range.from, range.to),
     salesSummary(shopId, previousFrom, previousTo),
+    refundSummary(shopId, range.from, range.to),
     dailySales(shopId, range.from, range.to),
     salesByItem(shopId, range.from, range.to),
     hourlySales(shopId, range.from, range.to),
@@ -83,7 +84,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Sear
   const chartDays = dailyChartData(days, range.from, range.to);
   const chartHours = hourlyChartData(hours, bangkokHour(new Date()), range.from === today && range.to === today);
   const statCards = [
-    { label: "ยอดขายสุทธิ", value: formatBaht(summary.netSatang), comparison: periodChange(summary.netSatang, previousSummary.netSatang) },
+    { label: "ยอดขายหลังส่วนลด ก่อนคืนเงิน", value: formatBaht(summary.netSatang), comparison: periodChange(summary.netSatang, previousSummary.netSatang) },
     { label: "ออเดอร์", value: summary.orders, comparison: periodChange(summary.orders, previousSummary.orders) },
     { label: "แก้วที่ขาย", value: summary.cups, comparison: periodChange(summary.cups, previousSummary.cups) },
     { label: "ยอดก่อนหักส่วนลด", value: formatBaht(summary.grossSatang) },
@@ -102,6 +103,14 @@ export default async function ReportsPage({ searchParams }: { searchParams: Sear
       <AdminPageHeader section="ยอดขาย" title="รายงาน" description="สรุปยอดขาย ออเดอร์ และสมาชิกตามช่วงวันที่" action={<Link href={`/admin/reports/export?from=${range.from}&to=${range.to}`} className={buttonVariants({ variant: "outline" })}>ดาวน์โหลด CSV</Link>} />
 
       <ReportDateControls range={range} today={today} />
+
+      <section aria-label="สรุปการคืนเงิน" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {[
+          { label: "อนุมัติคืนเงิน", value: formatBaht(refunds.approvedSatang), detail: `${refunds.approvedCount} รายการ · วันที่อนุมัติ` },
+          { label: "จ่ายคืนแล้ว", value: formatBaht(refunds.paidSatang), detail: `${refunds.paidCount} รายการ · เงินสด ${formatBaht(refunds.cashPaidSatang)} · PromptPay ${formatBaht(refunds.promptpayPaidSatang)}` },
+          { label: "อนุมัติแต่ยังไม่จ่าย", value: formatBaht(refunds.unpaidApprovedSatang), detail: "บันทึกอนุมัติแยกจากการโอนหรือจ่ายเงินจริง" },
+        ].map((stat) => <Card key={stat.label}><CardContent className="p-4"><p className="text-sm text-muted-foreground">{stat.label}</p><p className="mt-2 text-xl font-semibold">{stat.value}</p><p className="mt-1 text-xs text-muted-foreground">{stat.detail}</p></CardContent></Card>)}
+      </section>
 
       <section aria-label="ตัวเลขหลัก" className="grid gap-3 sm:grid-cols-3">
         {statCards.slice(0, 3).map((stat) => <Card key={stat.label}><CardContent className="p-4 sm:p-5">
@@ -134,7 +143,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Sear
       />
 
       <section className="space-y-3">
-        <h2 className="text-xl font-semibold">ยอดขายรายวัน</h2>
+        <h2 className="text-xl font-semibold">ยอดขายรายวัน (ก่อนคืนเงิน)</h2>
         <Card><CardContent className="p-0">
           <div className="divide-y sm:hidden">
             {days.length > 0 ? days.map((day) => <div key={day.date} className="flex items-center justify-between gap-3 p-3">
@@ -143,7 +152,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Sear
             </div>) : <p className="py-8 text-center text-sm text-muted-foreground">ไม่มีรายการในช่วงวันที่นี้</p>}
           </div>
           <div className="hidden overflow-x-auto sm:block"><Table>
-            <TableHeader><TableRow><TableHead>วันที่</TableHead><TableHead>ออเดอร์</TableHead><TableHead className="text-right">ยอดขายสุทธิ</TableHead></TableRow></TableHeader>
+            <TableHeader><TableRow><TableHead>วันที่</TableHead><TableHead>ออเดอร์</TableHead><TableHead className="text-right">ยอดหลังส่วนลด ก่อนคืนเงิน</TableHead></TableRow></TableHeader>
             <TableBody>{days.length > 0 ? days.map((day) => <TableRow key={day.date}><TableCell>{day.date}</TableCell><TableCell>{day.orders}</TableCell><TableCell className="text-right">{formatBaht(day.netSatang)}</TableCell></TableRow>) : <TableRow><TableCell colSpan={3} className="py-8 text-center text-muted-foreground">ไม่มีรายการในช่วงวันที่นี้</TableCell></TableRow>}</TableBody>
           </Table></div>
         </CardContent></Card>

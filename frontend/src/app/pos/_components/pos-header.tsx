@@ -47,7 +47,10 @@ export function PosHeader({ shopName, orderNo, staffName, staffRole, online, log
         <span data-network-dot className={`size-2.5 rounded-full ${online ? "bg-[#6FCF8E]" : "bg-[#B4441C]"}`} />
         {online ? "ออนไลน์" : "ออฟไลน์ — ชำระเงินไม่ได้"}
       </div>
-      <div className="flex w-full max-w-full items-center gap-2 sm:ml-auto sm:w-auto sm:gap-2.5">
+      <div className="flex w-full max-w-full flex-wrap items-center gap-2 sm:ml-auto sm:w-auto sm:gap-2.5">
+        <Link href="/pos/requests" className="flex min-h-12 items-center rounded-xl bg-[#574235] px-3 text-sm font-semibold">คำสั่งจาก QR</Link>
+        <Link href="/pos/queue" className="flex min-h-12 items-center rounded-xl bg-[#574235] px-3 text-sm font-semibold">คิวเครื่องดื่ม</Link>
+        <Link href="/pos/shifts" className="flex min-h-12 items-center rounded-xl bg-[#574235] px-3 text-sm font-semibold">กะเงินสด</Link>
         <Link href="/pos/orders" className="flex h-12 items-center gap-2 rounded-xl bg-[#574235] px-3 text-sm sm:px-[18px] sm:text-base font-semibold text-[#F5EDE3]">
           <ClipboardList aria-hidden="true" size={20} /> ออเดอร์วันนี้
         </Link>

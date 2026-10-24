@@ -15,6 +15,9 @@ import { deleteMyData, getMyCard, register, type MemberCardData, type MemberActi
 import { MenuView, type LiffMenuCategory } from "./menu-view";
 import { readLiffView, type LiffView } from "./view";
 
+const loyaltyDateFormat = new Intl.DateTimeFormat("th-TH", { dateStyle: "medium", timeZone: "Asia/Bangkok" });
+const loyaltyLabels: Record<string, string> = { earn: "รับแสตมป์", redeem: "แลกรางวัล", expire: "แสตมป์หมดอายุ", adjust: "ปรับยอด" };
+
 type Card = { registered: false } | ({ registered: true } & MemberCardData);
 
 export function getLiffErrorMessage(error: unknown, liffId: string, isLiffFailure = false): string {
@@ -238,6 +241,18 @@ function MemberCardView({ shopSlug, shopName, idToken, initial, loadCard, brand,
       <section className={`relative flex items-center gap-4 overflow-hidden rounded-2xl border bg-card p-4 transition-shadow duration-300 ${highlightStamps ? "ring-2 ring-[#C69C72] shadow-[0_0_24px_rgba(198,156,114,0.32)]" : card.member.stampBalance === 0 && card.member.availableRewards > 0 ? "border-[#C69C72] shadow-[0_0_24px_rgba(198,156,114,0.24)]" : ""}`}><div data-reward-glow aria-hidden="true" className="pointer-events-none absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r from-transparent via-white/70 to-transparent opacity-0" /><Image src="/assets/reward-free-drink.png" alt="เครื่องดื่มฟรี" width={72} height={72} /><div><h2 className="font-semibold">รางวัลเครื่องดื่มฟรี</h2><p className="text-sm text-muted-foreground">{card.member.availableRewards > 0 ? `ใช้ได้ ${card.member.availableRewards} รางวัล` : `อีก ${Math.max(0, card.member.stampGoal - card.member.stampBalance)} แสตมป์ รับฟรี 1 แก้ว`}</p></div></section>
       </div>
       <section className="space-y-2 rounded-2xl border bg-white p-4 text-center"><p className="font-semibold">แสดง QR นี้ให้พนักงานสแกน</p><div className="relative mx-auto size-[276px] p-[18px]">{qrData && seconds > 0 && !refreshError && !refreshing && <Image ref={qrImageRef} key={card.qrToken} src={qrData} alt="QR สำหรับสะสมแสตมป์" width={240} height={240} unoptimized className="mx-auto" />}<svg aria-hidden="true" className="pointer-events-none absolute inset-0 size-full" viewBox="0 0 276 276"><rect x="3" y="3" width="270" height="270" rx="22" fill="none" stroke="#EADBC8" strokeWidth="3" /><rect ref={qrRingRef} x="3" y="3" width="270" height="270" rx="22" fill="none" stroke="var(--brand)" strokeWidth="3" strokeLinecap="round" /></svg></div>{refreshError ? <div role="alert"><p className="text-sm text-destructive">{refreshError}</p><Button type="button" onClick={() => void refreshCard()}>ลองใหม่</Button></div> : <p role="status" className="text-sm text-muted-foreground">{refreshing ? "กำลังอัปเดต QR…" : `ตรวจสอบ QR อีกครั้งใน ${seconds} วินาที`}</p>}</section>
+      {(card.member.nextStampExpiryAt || card.member.nextRewardExpiryAt) && <section className="space-y-2 rounded-2xl border bg-card p-4 text-sm">
+        {card.member.nextStampExpiryAt && <p>แสตมป์หมดอายุครั้งถัดไป: {loyaltyDateFormat.format(new Date(card.member.nextStampExpiryAt))}</p>}
+        {card.member.nextRewardExpiryAt && <p>รางวัลหมดอายุครั้งถัดไป: {loyaltyDateFormat.format(new Date(card.member.nextRewardExpiryAt))}</p>}
+      </section>}
+      {card.member.history && card.member.history.length > 0 && <section className="space-y-3 rounded-2xl border bg-card p-4">
+        <h2 className="font-semibold">ประวัติแสตมป์</h2>
+        <ul className="divide-y text-sm">{card.member.history.map((entry) => <li key={entry.id} className="py-2">
+          <div className="flex justify-between"><span>{loyaltyLabels[entry.reason] ?? entry.reason}</span><span>{entry.delta > 0 ? `+${entry.delta}` : entry.delta}</span></div>
+          <p className="text-xs text-muted-foreground">{loyaltyDateFormat.format(new Date(entry.createdAt))}</p>
+          {entry.expiresAt && <p className="text-xs text-muted-foreground">หมดอายุวันที่ {loyaltyDateFormat.format(new Date(entry.expiresAt))}</p>}
+        </li>)}</ul>
+      </section>}
       <Link href={`/liff/${shopSlug}/privacy`} className="block text-center text-sm text-muted-foreground underline">ประกาศความเป็นส่วนตัว</Link>
     </>}
   </main>;

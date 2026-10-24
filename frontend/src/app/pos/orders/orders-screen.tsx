@@ -292,6 +292,7 @@ export function OrdersScreen({ orders, initialDetail, netSalesSatang, todaySumma
             <Link href={`/pos/receipt/${detail.id}`} className="flex h-[68px] flex-1 items-center justify-center gap-2 rounded-2xl border border-[#D9C5B0] bg-[#FFFBF6] text-lg font-semibold text-[#3B2A20] no-underline">
               <Printer aria-hidden="true" size={22} /> พิมพ์ใบเสร็จซ้ำ
             </Link>
+            {detail.status === "paid" ? <Link href={`/pos/refunds/${detail.id}`} className="flex min-h-12 items-center justify-center rounded-xl border px-4 font-semibold">คืนเงินบางรายการ</Link> : null}
             {detail.status === "paid" ? <button type="button" onClick={openVoid} className="h-[68px] flex-1 rounded-2xl border-2 border-[#8E3415] bg-[#FFFBF6] text-lg font-bold text-[#8E3415]">ยกเลิกบิลนี้</button> : null}
           </div>
         </> : orders.length ? <p className="m-auto text-center text-[#6B5547]">{loadingDetail ? "กำลังโหลดรายละเอียด…" : "เลือกออเดอร์เพื่อดูรายละเอียด"}</p> : <div className="m-auto text-center text-[#6B5547]">ยังไม่มีรายละเอียดออเดอร์</div>}

@@ -3,6 +3,7 @@
 import "server-only";
 import QRCode from "qrcode";
 import generatePayload from "promptpay-qr";
+import { sendOperationalAlert } from "@/lib/operational-alert";
 import { logger } from "@/lib/logger";
 import { formatBaht } from "@/lib/money";
 import { getPosPromptPayConfig, getPosReceiptRecipient } from "@/server/pos-operations";
@@ -14,6 +15,7 @@ import type { CheckoutSessionScope } from "@/lib/checkout-attempt";
 export type CheckoutActionResult = { ok: true; result: CheckoutResult } | { ok: false; message: string; retryable?: boolean };
 
 const CHECKOUT_MESSAGES: Record<CheckoutError["code"], string> = {
+  self_order_unavailable: "รายการจาก QR เปลี่ยนไปหรือชำระแล้ว กรุณากลับไปตรวจสอบรายการก่อนรับเงิน",
   price_changed: "ราคาหรือส่วนลดเปลี่ยนไป กรุณากลับไปตรวจสอบยอดก่อนชำระอีกครั้ง",
   cart_limit_exceeded: "ออเดอร์ต้องไม่เกิน 100 รายการและ 500 ชิ้น กรุณาลดจำนวนหรือแยกออเดอร์",
   invalid_checkout: "รายการไม่ถูกต้อง กรุณากลับไปตรวจสอบตะกร้า",
@@ -54,6 +56,7 @@ export async function checkoutAction(input: CheckoutInput & { expectedScope?: Ch
       };
     }
     logger.error({ err: error, shopId: session.shopId }, "POS checkout failed");
+    await sendOperationalAlert({ kind: "checkout_failure", shopId: session.shopId, requestId: checkoutInput.requestId });
     return { ok: false, message: "ยังไม่ทราบผลการบันทึก กรุณาลองตรวจสอบรายการเดิมอีกครั้ง", retryable: true };
   }
 }

@@ -44,7 +44,7 @@ export function ReportsCharts({
       </div>
 
       <ChartCard title="ยอดขายตามหมวดหมู่">
-        <DonutChart data={categories} format="baht" ariaLabel="ยอดขายสุทธิตามหมวดหมู่ หน่วยบาท" />
+        <DonutChart data={categories} format="baht" ariaLabel="ยอดขายหลังส่วนลด ก่อนคืนเงินตามหมวดหมู่ หน่วยบาท" />
       </ChartCard>
 
       <ChartCard title="เมนูขายดี">

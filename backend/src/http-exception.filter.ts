@@ -7,6 +7,8 @@ import {
 } from "@nestjs/common";
 import type { Request, Response } from "express";
 
+import { sendOperationalAlert } from "./operational-alert.js";
+
 interface ErrorBody {
   statusCode: number;
   message: string | string[];
@@ -43,6 +45,9 @@ export class HttpExceptionFilter implements ExceptionFilter {
       : undefined;
 
     if (status >= 500) {
+      void sendOperationalAlert({ kind: "api_5xx", statusCode: status, requestId,
+        shopId: typeof request.params?.shopId === "string" ? request.params.shopId : undefined,
+      });
       const error = exception instanceof Error ? exception : null;
       const stack = error?.stack?.split("\n").slice(1).join("\n");
       const causeName = error?.cause instanceof Error ? error.cause.name : undefined;

@@ -16,7 +16,7 @@ vi.mock("@/server/pos-session", () => ({
 }));
 vi.mock("next/cache", () => ({ revalidatePath }));
 
-import { setStaffActiveAction, setStaffPinAction } from "./actions";
+import { createStaffAction, setStaffActiveAction, setStaffPinAction } from "./actions";
 
 const ownerSession = {
   shopId: "shop-1",
@@ -31,7 +31,8 @@ function pinFormData(pin: string) {
 
 describe("staff actions", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
+    listAdminStaff.mockResolvedValue([{ id: "staff-owner", role: "owner" }, { id: "staff-barista", role: "barista" }]);
     requireStaff.mockResolvedValue(ownerSession);
   });
 
@@ -62,5 +63,38 @@ describe("staff actions", () => {
     const result = await setStaffActiveAction("staff-barista", false, { message: null }, new FormData());
 
     expect(result).toEqual({ message: "ปิดใช้งานบัญชีแล้ว", success: true });
+  });
+});
+
+describe("staff role hierarchy", () => {
+  beforeEach(() => {
+    vi.resetAllMocks();
+    requireStaff.mockResolvedValue({ shopId: "shop-1", staff: { id: "staff-manager", role: "manager" } });
+    listAdminStaff.mockResolvedValue([{ id: "staff-owner", role: "owner", isActive: false }, { id: "staff-barista", role: "barista", isActive: true }]);
+  });
+  it("rejects owner creation by a manager", async () => {
+    const data = pinFormData("1234");
+    data.set("name", "Owner"); data.set("role", "owner");
+    expect((await createStaffAction({ message: null }, data)).success).not.toBe(true);
+    expect(createAdminStaff).not.toHaveBeenCalled();
+  });
+  it.each(["manager", "barista"])("allows manager to create %s", async (role) => {
+    const data = pinFormData("1234"); data.set("name", "New staff"); data.set("role", role);
+    expect((await createStaffAction({ message: null }, data)).success).toBe(true);
+    expect(createAdminStaff).toHaveBeenCalledWith("shop-1", "staff-manager", { name: "New staff", role, pin: "1234" });
+  });
+  it("rejects owner PIN reset by a manager", async () => {
+    expect((await setStaffPinAction("staff-owner", { message: null }, pinFormData("1234"))).success).not.toBe(true);
+    expect(setAdminStaffPin).not.toHaveBeenCalled();
+  });
+  it.each([true, false])("rejects owner activity change to %s by manager", async (active) => {
+    expect((await setStaffActiveAction("staff-owner", active, { message: null }, new FormData())).success).not.toBe(true);
+    expect(setAdminStaffActive).not.toHaveBeenCalled();
+  });
+  it("rejects targets outside the session shop", async () => {
+    expect((await setStaffPinAction("other-shop-staff", { message: null }, pinFormData("1234"))).success).not.toBe(true);
+    expect((await setStaffActiveAction("other-shop-staff", true, { message: null }, new FormData())).success).not.toBe(true);
+    expect(setAdminStaffPin).not.toHaveBeenCalled();
+    expect(setAdminStaffActive).not.toHaveBeenCalled();
   });
 });

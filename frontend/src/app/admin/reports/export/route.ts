@@ -33,7 +33,7 @@ export async function GET(request: Request) {
     { key: "paymentMethod", label: "วิธีชำระเงิน" },
     { key: "grossSatang", label: "ยอดก่อนส่วนลด (บาท)", money: true },
     { key: "discountSatang", label: "ส่วนลด (บาท)", money: true },
-    { key: "netSatang", label: "ยอดสุทธิ (บาท)", money: true },
+    { key: "netSatang", label: "ยอดหลังส่วนลดก่อนคืนเงิน (บาท)", money: true },
     { key: "cups", label: "จำนวนแก้ว" },
   ];
   const rows = [columns.map((column) => csvCell(column.label)).join(",")];

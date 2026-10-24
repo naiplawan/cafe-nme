@@ -6,6 +6,23 @@ versioning (pre-1.0: minor = features, patch = fixes).
 
 ## [Unreleased]
 
+### Added
+- Added a shop setup checklist for menu, POS, PromptPay, LINE, and a trial sale, plus a public QR menu that shows current prices and sold-out items without login.
+- Added cash reconciliation by payment method, payment review history, provider charge verification, and Omise PromptPay support for accepted QR orders. Staff-recorded PromptPay remains distinct from provider-confirmed payment.
+- Added shift opening and closing with opening float, expected and counted cash, variance, and handoff staff; added a preparation queue with order numbers, item notes, and received, preparing, and ready states.
+- Added ingredient recipes and stock movements, self-service QR order requests with staff acceptance, partial refunds with approval and separately recorded payouts, subscription trials and payment history, and explicitly grouped cross-branch loyalty.
+- Added configurable stamp and reward expiry with ledger history, plus checkout/API failure alerts and a repeatable isolated PostgreSQL restore drill.
+
+### Changed
+- Tightened staff role changes so managers cannot create owners or change higher-privilege PINs; expanded shop scoping across member, POS, order, and report operations.
+- Recover unresolved checkouts after reload using the original sale request and prevent duplicate order/payment creation on retries.
+- Extend the API schema and OpenAPI client types for payment review, shifts, preparation, expiry, self-orders, inventory, refunds, shared loyalty, subscriptions, and provider payment intents.
+
+### Operations
+- Apply migrations `0023_payment_reviews` through `0030_fluffy_dracula` before deploying the updated API.
+- Follow `docs/omise-payments.md` to configure per-shop Omise credentials and webhooks. Live charging remains disabled unless `OMISE_LIVE_ENABLED=true` is explicitly configured.
+- Follow `docs/operations-readiness.md` for the isolated restore drill and operator alert receiver. Local restore evidence does not establish production retention, alert delivery, or recovery objectives.
+
 ### Security
 - Upgrade Next.js to 16.4.1 to address the reported App Router denial-of-service advisory.
 

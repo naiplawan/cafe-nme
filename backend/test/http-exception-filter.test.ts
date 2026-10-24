@@ -49,3 +49,40 @@ test("server errors log request context and stack frames without returning excep
   assert.match(String(log.stack), /http-exception-filter\.test\.ts/);
   assert.equal(JSON.stringify(log).includes("private database detail"), false);
 });
+
+test("5xx sends a sanitized webhook while keeping the HTTP error response intact", async () => {
+  const { createServer } = await import("node:http");
+  const messages: unknown[] = [];
+  let notify: () => void = () => {};
+  const received = new Promise<void>((resolve) => { notify = resolve; });
+  const server = createServer(async (request, response) => {
+    let body = "";
+    for await (const chunk of request) { body += chunk; }
+    messages.push(JSON.parse(body));
+    response.writeHead(204).end();
+    notify();
+  });
+  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const address = server.address();
+  assert.ok(address && typeof address !== "string");
+  const previous = process.env.OPERATIONAL_ALERT_WEBHOOK_URL;
+  process.env.OPERATIONAL_ALERT_WEBHOOK_URL = `http://127.0.0.1:${address.port}`;
+  const response = { status: (_status: number) => response, json: (_body: unknown) => response };
+  const host = { switchToHttp: () => ({
+    getRequest: () => ({ header: () => "request-alert", method: "POST", path: "/private/path", params: { shopId: "private-shop" } }),
+    getResponse: () => response,
+  }) } as unknown as ArgumentsHost;
+  try {
+    new HttpExceptionFilter().catch(new Error("secret failure"), host);
+    await Promise.race([received, new Promise((_, reject) => setTimeout(() => reject(new Error("alert missing")), 1500))]);
+    const payload = messages[0] as Record<string, unknown>;
+    assert.equal(payload.kind, "api_5xx");
+    assert.match(String(payload.shopIdHash), /^[a-f0-9]{64}$/);
+    assert.equal(JSON.stringify(payload).includes("private"), false);
+    assert.equal(JSON.stringify(payload).includes("secret"), false);
+  } finally {
+    if (previous === undefined) { delete process.env.OPERATIONAL_ALERT_WEBHOOK_URL; } else { process.env.OPERATIONAL_ALERT_WEBHOOK_URL = previous; }
+    server.closeAllConnections();
+    await new Promise<void>((resolve) => server.close(() => resolve()));
+  }
+});

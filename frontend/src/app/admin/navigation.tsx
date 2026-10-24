@@ -22,15 +22,20 @@ const sections = [
   { label: "ร้านของคุณ", links: [{ href: "/admin", label: "ภาพรวม", icon: LayoutDashboard }] },
   { label: "ยอดขายและลูกค้า", links: [
     { href: "/admin/reports", label: "รายงาน", icon: BarChart3 },
+    { href: "/admin/reconciliation", label: "ตรวจยอดรับเงิน", icon: QrCode },
     { href: "/admin/members", label: "สมาชิก", icon: Users },
   ] },
   { label: "สินค้าและทีม", links: [
+    { href: "/admin/inventory", label: "สต็อกและสูตร", icon: Package },
     { href: "/admin/menu", label: "เมนู", icon: Package },
     { href: "/admin/modifiers", label: "ตัวเลือกเสริม", icon: SlidersHorizontal },
     { href: "/admin/staff", label: "พนักงาน", icon: UserRound },
     { href: "/admin/devices", label: "เครื่อง POS", icon: Tablet },
   ] },
   { label: "ตั้งค่าร้าน", links: [
+    { href: "/admin/setup", label: "ตั้งร้านและ QR เมนู", icon: LayoutDashboard },
+    { href: "/admin/subscription", label: "แพ็กเกจร้าน", icon: Package },
+    { href: "/admin/loyalty-groups", label: "แสตมป์ร่วมสาขา", icon: Users },
     { href: "/admin/payment", label: "การชำระเงิน", icon: QrCode },
     { href: "/admin/line", label: "เชื่อมต่อ LINE", icon: MessageCircle },
     { href: "/admin/brand", label: "แบรนด์", icon: Palette },
@@ -43,7 +48,8 @@ export function adminNavigationForRole(role: AdminRole) {
   return sections.map((section) => ({
     ...section,
     links: section.links.filter((link) => {
-      if (role === "barista" && ["/admin/staff", "/admin/devices", "/admin/line", "/admin/brand", "/admin/payment"].includes(link.href)) return false;
+      if (role !== "owner" && link.href === "/admin/loyalty-groups") return false;
+      if (role === "barista" && ["/admin/setup", "/admin/reconciliation", "/admin/staff", "/admin/devices", "/admin/line", "/admin/brand", "/admin/payment"].includes(link.href)) return false;
       if (role === "manager" && link.href === "/admin/payment") return false;
       return true;
     }),

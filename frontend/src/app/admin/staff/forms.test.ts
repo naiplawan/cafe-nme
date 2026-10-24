@@ -1,6 +1,8 @@
+// @vitest-environment jsdom
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("./actions", () => ({
   createStaffAction: async (state: unknown) => state,
@@ -14,8 +16,11 @@ import { StaffRow } from "./forms";
 const owner = { id: "staff-owner", name: "เจ้าของร้าน", role: "owner", hasPin: true, isActive: true };
 const barista = { id: "staff-barista", name: "บาริสต้า", role: "barista", hasPin: true, isActive: true };
 
-function renderRow(row: typeof owner, currentStaffId: string) {
-  return renderToStaticMarkup(createElement(StaffRow, { row, currentStaffId }));
+afterEach(cleanup);
+
+function renderRow(row: typeof owner, currentStaffId: string, currentStaffRole = "manager") {
+  const props = { row, currentStaffId, currentStaffRole };
+  return renderToStaticMarkup(createElement(StaffRow, props));
 }
 
 describe("staff forms", () => {
@@ -42,4 +47,21 @@ describe("staff forms", () => {
     expect(success).not.toContain('role="alert"');
     expect(error).toContain('role="alert"');
   });
+});
+
+it("hides owner PIN controls from managers but keeps them for owners", () => {
+  expect(renderRow(owner, "staff-manager")).not.toContain('name="pin"');
+  expect(renderRow(owner, "staff-owner", "owner")).toContain('name="pin"');
+  expect(renderRow(barista, "staff-manager")).toContain('name="pin"');
+});
+it.each(["owner", "manager"])("shows only permitted creation roles for %s", (currentStaffRole) => {
+  const props = { currentStaffRole };
+  render(createElement(staffForms.AddStaffForm, props));
+  fireEvent.click(screen.getByRole("combobox"));
+  expect(screen.getByRole("option", { name: "ผู้จัดการ" })).toBeTruthy();
+  if (currentStaffRole === "owner") {
+    expect(screen.getByRole("option", { name: "เจ้าของร้าน" })).toBeTruthy();
+  } else {
+    expect(screen.queryByRole("option", { name: "เจ้าของร้าน" })).toBeNull();
+  }
 });

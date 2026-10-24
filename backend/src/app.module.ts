@@ -1,3 +1,15 @@
+import { TrialCheckoutController } from "./trial-checkout.controller.js";
+import { TrialCheckoutService } from "./trial-checkout.service.js";
+import { LoyaltyGroupsController } from "./loyalty-groups.controller.js";
+import { LoyaltyGroupsService } from "./loyalty-groups.service.js";
+import { SubscriptionsController } from "./subscriptions.controller.js";
+import { SubscriptionsService } from "./subscriptions.service.js";
+import { InventoryController } from "./inventory.controller.js";
+import { InventoryService } from "./inventory.service.js";
+import { SelfOrdersController } from "./self-orders.controller.js";
+import { SelfOrdersService } from "./self-orders.service.js";
+import { ShiftsController } from "./shifts.controller.js";
+import { ShiftsService } from "./shifts.service.js";
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { CatalogController } from './catalog.controller.js';
@@ -25,8 +37,8 @@ import { StaffSessionModule } from './staff-session.module.js';
 import { validateEnvironment } from './config/validate-env.js';
 
 @Module({
-  controllers: [HealthController, CatalogController, MenuController],
-  providers: [CatalogService, MenuService, MenuAvailabilityService, MenuStockService],
+  controllers: [TrialCheckoutController, LoyaltyGroupsController, SubscriptionsController, InventoryController, SelfOrdersController, ShiftsController, HealthController, CatalogController, MenuController],
+  providers: [TrialCheckoutService, LoyaltyGroupsService, SubscriptionsService, InventoryService, SelfOrdersService, ShiftsService, CatalogService, MenuService, MenuAvailabilityService, MenuStockService],
   imports: [
     ConfigModule.forRoot({
       envFilePath: ['../frontend/.env.local', '.env'],

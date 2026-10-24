@@ -57,3 +57,10 @@ describe("cart storage", () => {
     expect(result.dropped).toBe(1);
   });
 });
+
+it("preserves accepted self-order source and exact lines when catalog changes", () => {
+  const saved = { ...snapshot, selfOrderId: "66666666-6666-4666-8666-666666666666", lines: [{ productId: "deleted", qty: 1, modifierIds: ["old"] }] };
+  const restored = deserializeCart(serializeCart(saved));
+  expect(restored).toEqual(saved);
+  expect(validateCart(restored!, menu)).toEqual({ snapshot: saved, dropped: 0 });
+});

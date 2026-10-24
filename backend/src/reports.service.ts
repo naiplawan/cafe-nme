@@ -2,6 +2,7 @@ import { Inject, Injectable } from "@nestjs/common";
 import { DatabaseService } from "./database.service.js";
 
 export interface DateRange { from: string; to: string }
+export interface RefundSummary { approvedSatang: number; approvedCount: number; paidSatang: number; paidCount: number; unpaidApprovedSatang: number; cashPaidSatang: number; promptpayPaidSatang: number }
 export interface SalesSummary {
   orders: number;
   voided: number;
@@ -21,6 +22,30 @@ const asNumber = (value: number | string) => Number(value);
 @Injectable()
 export class ReportsService {
   constructor(@Inject(DatabaseService) private readonly database: DatabaseService) {}
+
+  async refundSummary(shopId: string, { from, to }: DateRange): Promise<RefundSummary> {
+    const [row] = await this.database.connection<{
+      approved_satang: number | string; approved_count: number | string;
+      paid_satang: number | string; paid_count: number | string; unpaid_approved_satang: number | string;
+      cash_paid_satang: number | string; promptpay_paid_satang: number | string;
+    }[]>`
+      SELECT
+        coalesce(sum(r.amount_satang) FILTER (WHERE (r.created_at AT TIME ZONE 'Asia/Bangkok')::date BETWEEN ${from}::date AND ${to}::date), 0) AS approved_satang,
+        count(*) FILTER (WHERE (r.created_at AT TIME ZONE 'Asia/Bangkok')::date BETWEEN ${from}::date AND ${to}::date) AS approved_count,
+        coalesce(sum(r.amount_satang) FILTER (WHERE r.paid_at IS NOT NULL AND (r.paid_at AT TIME ZONE 'Asia/Bangkok')::date BETWEEN ${from}::date AND ${to}::date), 0) AS paid_satang,
+        count(*) FILTER (WHERE r.paid_at IS NOT NULL AND (r.paid_at AT TIME ZONE 'Asia/Bangkok')::date BETWEEN ${from}::date AND ${to}::date) AS paid_count,
+        coalesce(sum(r.amount_satang) FILTER (WHERE r.paid_at IS NULL AND (r.created_at AT TIME ZONE 'Asia/Bangkok')::date BETWEEN ${from}::date AND ${to}::date), 0) AS unpaid_approved_satang,
+        coalesce(sum(r.amount_satang) FILTER (WHERE r.paid_at IS NOT NULL AND r.payout_method = 'cash' AND (r.paid_at AT TIME ZONE 'Asia/Bangkok')::date BETWEEN ${from}::date AND ${to}::date), 0) AS cash_paid_satang,
+        coalesce(sum(r.amount_satang) FILTER (WHERE r.paid_at IS NOT NULL AND r.payout_method = 'promptpay' AND (r.paid_at AT TIME ZONE 'Asia/Bangkok')::date BETWEEN ${from}::date AND ${to}::date), 0) AS promptpay_paid_satang
+      FROM refunds r WHERE r.shop_id = ${shopId}::uuid
+    `;
+    return {
+      approvedSatang: asNumber(row.approved_satang), approvedCount: asNumber(row.approved_count),
+      paidSatang: asNumber(row.paid_satang), paidCount: asNumber(row.paid_count),
+      unpaidApprovedSatang: asNumber(row.unpaid_approved_satang), cashPaidSatang: asNumber(row.cash_paid_satang),
+      promptpayPaidSatang: asNumber(row.promptpay_paid_satang),
+    };
+  }
 
   async salesSummary(shopId: string, { from, to }: DateRange): Promise<SalesSummary> {
     const [row] = await this.database.connection<{

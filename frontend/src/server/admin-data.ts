@@ -2,6 +2,7 @@ import "server-only";
 import { z } from "zod";
 import { readInternalJson, internalApiFetch, internalApiUrl } from "@/server/internal-api";
 const dashboardSchema = z.object({
+  trialSetup: z.boolean().default(false),
   activeProducts: z.number(),
   allProducts: z.number(),
   categoryCount: z.number(),

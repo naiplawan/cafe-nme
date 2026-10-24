@@ -104,6 +104,7 @@ export class StockImportResponseDto {
   @ApiProperty() linkedProducts!: number;
 }
 export class AdminDashboardResponseDto {
+  @ApiProperty() trialSetup!: boolean;
   @ApiProperty() activeProducts!: number;
   @ApiProperty() allProducts!: number;
   @ApiProperty() categoryCount!: number;
@@ -190,19 +191,24 @@ export class MemberSummaryResponseDto {
   @ApiProperty({ nullable: true }) phone!: string | null;
   @ApiProperty() lineLinked!: boolean;
   @ApiProperty() stampBalance!: number;
+  @ApiProperty({ type: String, format: "date-time", nullable: true }) nextStampExpiryAt!: string | null;
   @ApiProperty() stampGoal!: number;
   @ApiProperty({ type: () => [AvailableRewardResponseDto] }) availableRewards!: AvailableRewardResponseDto[];
 }
 export class AvailableRewardResponseDto {
   @ApiProperty({ format: "uuid" }) id!: string;
   @ApiProperty({ type: String, format: "date-time" }) createdAt!: string;
+  @ApiProperty({ type: String, format: "date-time", nullable: true }) expiresAt!: string | null;
 }
 export class LiffCardMemberResponseDto {
   @ApiProperty() displayName!: string;
   @ApiProperty() phone!: string;
   @ApiProperty() stampBalance!: number;
+  @ApiProperty({ type: String, format: "date-time", nullable: true }) nextStampExpiryAt!: string | null;
   @ApiProperty() stampGoal!: number;
   @ApiProperty() availableRewards!: number;
+  @ApiProperty({ type: String, format: "date-time", nullable: true }) nextRewardExpiryAt!: string | null;
+  @ApiProperty({ type: () => [StampLedgerResponseDto] }) history!: StampLedgerResponseDto[];
 }
 export class LiffCardResponseDto {
   @ApiProperty() registered!: boolean;
@@ -233,6 +239,15 @@ export class SalesSummaryResponseDto {
   @ApiProperty() rewardsRedeemed!: number;
   @ApiProperty() newMembers!: number;
 }
+export class RefundSummaryResponseDto {
+  @ApiProperty() approvedSatang!: number;
+  @ApiProperty() approvedCount!: number;
+  @ApiProperty() paidSatang!: number;
+  @ApiProperty() paidCount!: number;
+  @ApiProperty() unpaidApprovedSatang!: number;
+  @ApiProperty() cashPaidSatang!: number;
+  @ApiProperty() promptpayPaidSatang!: number;
+}
 export class OrdersExportResponseDto {
   @ApiProperty({ format: "date" }) date!: string;
   @ApiProperty() orderNo!: number;
@@ -252,6 +267,8 @@ export class StampLedgerResponseDto {
   @ApiProperty({ format: "uuid" }) id!: string;
   @ApiProperty() delta!: number;
   @ApiProperty() reason!: string;
+  @ApiProperty({ type: String, format: "date-time", nullable: true }) expiresAt!: string | null;
+  @ApiProperty({ format: "uuid", nullable: true }) sourceEntryId!: string | null;
   @ApiProperty({ format: "uuid", nullable: true }) orderId!: string | null;
   @ApiProperty({ type: String, format: "date-time" }) createdAt!: string;
 }

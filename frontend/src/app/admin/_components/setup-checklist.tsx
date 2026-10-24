@@ -2,16 +2,18 @@ import { Check } from "lucide-react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-type SetupStepKey = "menu" | "modifiers" | "ownerPin" | "device" | "line" | "brand" | "promptpay";
+type SetupStepKey = "menu" | "modifiers" | "ownerPin" | "device" | "line" | "brand" | "promptpay" | "trial";
 
 const setupSteps: { key: SetupStepKey; title: string; description: string; href: string; action: string; optional?: boolean }[] = [
   { key: "menu", title: "เพิ่มเมนู", description: "เพิ่มเมนูที่เปิดขายอย่างน้อย 1 รายการ", href: "/admin/menu", action: "จัดการเมนู" },
   { key: "modifiers", title: "ตัวเลือกเสริม", description: "เพิ่มกลุ่มตัวเลือกพร้อมตัวเลือกอย่างน้อย 1 รายการ", href: "/admin/modifiers", action: "ตั้งค่าตัวเลือก" },
   { key: "ownerPin", title: "ตั้ง PIN เจ้าของร้าน", description: "ใช้ PIN สำหรับเข้าใช้งานหน้าขาย", href: "/admin/staff", action: "ตั้งค่า PIN" },
   { key: "device", title: "จับคู่แท็บเล็ต POS", description: "เชื่อมต่อแท็บเล็ตสำหรับรับออเดอร์", href: "/admin/devices", action: "จับคู่อุปกรณ์" },
-  { key: "line", title: "เชื่อมต่อ LINE", description: "ตั้งค่า LINE เพื่อให้สมาชิกใช้บัตรสะสมแต้ม", href: "/admin/line", action: "ตั้งค่า LINE" },
-  { key: "brand", title: "ตั้งค่าแบรนด์", description: "เพิ่มโลโก้หรือสีประจำร้าน", href: "/admin/brand", action: "ตั้งค่าแบรนด์", optional: true },
   { key: "promptpay", title: "ตั้งค่าพร้อมเพย์", description: "ลงทะเบียนหมายเลขรับเงิน บันทึก และตรวจชื่อผู้รับจาก QR 1 บาท", href: "/admin/payment", action: "ตั้งค่าพร้อมเพย์", optional: true },
+  { key: "line", title: "เชื่อมต่อ LINE", description: "ตั้งค่า LINE เพื่อให้สมาชิกใช้บัตรสะสมแต้ม", href: "/admin/line", action: "ตั้งค่า LINE" },
+  { key: "trial", title: "ทดลองออกบิล", description: "ทดสอบรับชำระโดยไม่บันทึกยอดขายหรือเปลี่ยนสต็อก", href: "/admin/setup", action: "ทดลองออกบิล" },
+  { key: "brand", title: "ตั้งค่าแบรนด์", description: "เพิ่มโลโก้หรือสีประจำร้าน", href: "/admin/brand", action: "ตั้งค่าแบรนด์", optional: true },
+
 ];
 
 export type AdminSetupRole = "owner" | "manager" | "barista";

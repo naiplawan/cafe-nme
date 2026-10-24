@@ -5,6 +5,7 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
+import { resolveSharedLoyalty } from "./loyalty-groups.service.js";
 import { DatabaseService } from "./database.service.js";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -71,7 +72,7 @@ export class MembersService {
   async findByPhone(shopId: string, phoneQuery: string): Promise<MemberRow[]> {
     const digits = phoneDigits(phoneQuery);
     if (!digits) { return []; }
-    return this.database.connection<MemberRow[]>`
+    const rows = await this.database.connection<MemberRow[]>`
       select m.id::text as id, m.display_name as "displayName", m.phone,
         m.line_user_id as "lineUserId", m.created_at as "createdAt",
         coalesce(sum(l.delta), 0)::int as "stampBalance"
@@ -83,6 +84,10 @@ export class MembersService {
       order by m.phone
       limit 10
     `;
+    return Promise.all(rows.map(async (row) => {
+      const state = await this.database.connection.begin((tx) => resolveSharedLoyalty(tx, shopId, row.id));
+      return { ...row, stampBalance: state?.stampBalance ?? 0 };
+    }));
   }
 
   async createByPhone(shopId: string, value: unknown): Promise<MemberRow> {
@@ -117,6 +122,12 @@ export class MembersService {
     const hasPhoneDigits = digits.length > 0;
     const availableReward = opts.availableReward === "true";
     const db = this.database.connection;
+    const eligibleReward = db`select 1 from rewards r where r.status='available' and (r.expires_at is null or r.expires_at>clock_timestamp()) and (
+      (r.member_id=m.id and r.shop_id=m.shop_id) or (m.line_user_id is not null and exists (
+        select 1 from members peer join loyalty_group_shops local_group on local_group.shop_id=m.shop_id
+        join loyalty_group_shops peer_group on peer_group.shop_id=peer.shop_id and peer_group.group_id=local_group.group_id
+        where peer.id=r.member_id and peer.shop_id=r.shop_id and peer.line_user_id=m.line_user_id and peer.deleted_at is null
+      )))`;
     const [rows, counts] = await Promise.all([
       db<MemberRow[]>`
         select m.id::text as id, m.display_name as "displayName", m.phone,
@@ -128,7 +139,7 @@ export class MembersService {
           and (${search}::text is null or m.display_name like ${search ? `%${search}%` : ""}
             ${hasPhoneDigits ? db`or m.phone like ${`%${digits}%`}` : db``})
           and (not ${availableReward}::boolean or exists (
-            select 1 from rewards r where r.member_id = m.id and r.shop_id = ${shopId}::uuid and r.status = 'available'
+            ${eligibleReward}
           ))
         group by m.id
         order by m.created_at asc
@@ -140,11 +151,15 @@ export class MembersService {
           and (${search}::text is null or m.display_name like ${search ? `%${search}%` : ""}
             ${hasPhoneDigits ? db`or m.phone like ${`%${digits}%`}` : db``})
           and (not ${availableReward}::boolean or exists (
-            select 1 from rewards r where r.member_id = m.id and r.shop_id = ${shopId}::uuid and r.status = 'available'
+            ${eligibleReward}
           ))
       `,
     ]);
-    return { rows, total: Number(counts[0]?.total ?? 0) };
+    const currentRows = await Promise.all(rows.map(async (row) => {
+      const state = await db.begin((tx) => resolveSharedLoyalty(tx, shopId, row.id));
+      return { ...row, stampBalance: state?.stampBalance ?? 0 };
+    }));
+    return { rows: currentRows, total: Number(counts[0]?.total ?? 0) };
   }
 
   async deletePersonalData(shopId: string, memberId: string): Promise<{ ok: true }> {
@@ -156,50 +171,51 @@ export class MembersService {
   }
 
   async getSummary(shopId: string, memberId: string) {
-    const db = this.database.connection;
-    const [member] = await db<{
-      id: string; displayName: string; phone: string | null; lineUserId: string | null; stampGoal: number;
-    }[]>`
-      select m.id::text as id, m.display_name as "displayName", m.phone,
-        m.line_user_id as "lineUserId", s.stamp_goal as "stampGoal"
-      from members m join shops s on s.id = m.shop_id
-      where m.id = ${memberId}::uuid and m.shop_id = ${shopId}::uuid and m.deleted_at is null
-      limit 1
-    `;
-    if (!member) { return null; }
-    const [balance] = await db<{ value: number }[]>`
-      select coalesce(sum(delta), 0)::int as value from stamp_ledger
-      where shop_id = ${shopId}::uuid and member_id = ${memberId}::uuid
-    `;
-    const availableRewards = await db<{ id: string; createdAt: Date }[]>`
-      select id::text as id, created_at as "createdAt" from rewards
-      where shop_id = ${shopId}::uuid and member_id = ${memberId}::uuid and status = 'available'
-      order by created_at asc
-    `;
-    return {
-      id: member.id,
-      displayName: member.displayName,
-      phone: member.phone,
-      lineLinked: member.lineUserId !== null,
-      stampBalance: Number(balance?.value ?? 0),
-      stampGoal: Number(member.stampGoal),
-      availableRewards,
-    };
+    return this.database.connection.begin(async (db) => {
+      const state = await resolveSharedLoyalty(db, shopId, memberId);
+      if (!state) { return null; }
+      const [member] = await db<{
+        id: string; displayName: string; phone: string | null; lineUserId: string | null; stampGoal: number;
+      }[]>`
+        select m.id::text as id, m.display_name as "displayName", m.phone,
+          m.line_user_id as "lineUserId", s.stamp_goal as "stampGoal"
+        from members m join shops s on s.id = m.shop_id
+        where m.id = ${memberId}::uuid and m.shop_id = ${shopId}::uuid and m.deleted_at is null
+        limit 1
+      `;
+      if (!member) { return null; }
+      const { availableRewards } = state;
+      return {
+        id: member.id,
+        displayName: member.displayName,
+        phone: member.phone,
+        lineLinked: member.lineUserId !== null,
+        stampBalance: state.stampBalance,
+        nextStampExpiryAt: state.nextStampExpiryAt,
+        stampGoal: Number(member.stampGoal),
+        availableRewards,
+      };
+    });
   }
+
 
   async listLedger(shopId: string, memberId: string, rawLimit?: string) {
     const limit = parseLimit(rawLimit, 50, 0, 500, "limit");
-    return this.database.connection<{
-      id: string; delta: number; reason: string; orderId: string | null; createdAt: Date;
-    }[]>`
-      select l.id::text as id, l.delta, l.reason, l.order_id::text as "orderId", l.created_at as "createdAt"
-      from stamp_ledger l
-      join members m on m.id = l.member_id and m.shop_id = ${shopId}::uuid
-      where l.shop_id = ${shopId}::uuid and l.member_id = ${memberId}::uuid
-      order by l.created_at desc
-      limit ${limit}
-    `;
+    return this.database.connection.begin(async (tx) => {
+      const state = await resolveSharedLoyalty(tx, shopId, memberId);
+      if (!state) { return []; }
+      return tx<{
+        id: string; delta: number; reason: string; orderId: string | null; createdAt: Date; expiresAt: Date | null; sourceEntryId: string | null;
+      }[]>`
+        select l.id::text as id, l.delta, l.reason, l.order_id::text as "orderId", l.created_at as "createdAt", l.expires_at as "expiresAt", l.source_entry_id::text as "sourceEntryId"
+        from stamp_ledger l
+        where l.member_id = any(${state.aliases.map((alias) => alias.memberId)}::uuid[])
+        order by l.created_at desc
+        limit ${limit}
+      `;
+    });
   }
+
 
   async adjustStamps(shopId: string, memberId: string, value: unknown) {
     const body = object(value);
@@ -227,9 +243,12 @@ export class MembersService {
         select id::text as id from staff where id = ${staffId}::uuid and shop_id = ${shopId}::uuid limit 1
       `;
       if (!member || !actor) { throw new NotFoundException("Member or staff not found"); }
+      const state = await resolveSharedLoyalty(tx, shopId, memberId);
+      if (!state) { throw new NotFoundException("Member not found"); }
       await tx`
-        insert into stamp_ledger (shop_id, member_id, delta, reason, staff_id)
-        values (${shopId}::uuid, ${memberId}::uuid, ${delta}, 'adjust', ${staffId}::uuid)
+        insert into stamp_ledger (shop_id, member_id, delta, reason, staff_id, expires_at, created_at)
+        values (${shopId}::uuid, ${memberId}::uuid, ${delta}, 'adjust', ${staffId}::uuid,
+          ${delta > 0 ? state.newExpiresAt : null}, ${state.asOf})
       `;
       await tx`
         insert into audit_log (shop_id, actor, action, payload)

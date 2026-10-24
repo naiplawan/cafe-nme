@@ -39,6 +39,7 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ m
         <Card><CardHeader><CardTitle>ข้อมูลสมาชิก</CardTitle></CardHeader><CardContent className="space-y-2">
           <p>เบอร์โทร: {member.phone ?? "—"}</p>
           <p>แสตมป์คงเหลือ: <span className="font-semibold">{member.stampBalance}</span> / {member.stampGoal}</p>
+          {member.nextStampExpiryAt && <p>แสตมป์หมดอายุครั้งถัดไป: {rewardDateFormat.format(member.nextStampExpiryAt)}</p>}
           <p>รางวัลพร้อมใช้: {member.availableRewards.length}</p>
         </CardContent></Card>
         {canManage && <Card><CardHeader><CardTitle>ปรับแสตมป์</CardTitle></CardHeader><CardContent><AdjustStampsForm memberId={member.id} currentBalance={member.stampBalance} /></CardContent></Card>}
@@ -46,7 +47,7 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ m
 
       <Card><CardHeader><CardTitle>รางวัลพร้อมใช้</CardTitle></CardHeader><CardContent className="space-y-4">
         {member.availableRewards.length > 0 ? <ul className="space-y-2 text-sm">
-          {member.availableRewards.map((reward, index) => <li key={reward.id} className="rounded-lg border px-3 py-2"><span className="font-medium">รางวัลที่ {index + 1}</span><span className="ml-2 text-muted-foreground">ได้รับวันที่ {rewardDateFormat.format(reward.createdAt)}</span></li>)}
+          {member.availableRewards.map((reward, index) => <li key={reward.id} className="rounded-lg border px-3 py-2"><span className="font-medium">รางวัลที่ {index + 1}</span><span className="ml-2 text-muted-foreground">ได้รับวันที่ {rewardDateFormat.format(reward.createdAt)}</span>{reward.expiresAt && <span className="ml-2 text-muted-foreground">หมดอายุวันที่ {rewardDateFormat.format(reward.expiresAt)}</span>}</li>)}
         </ul> : <p className="text-sm text-muted-foreground">ยังไม่มีรางวัลพร้อมใช้</p>}
         <p className="text-sm text-muted-foreground">{POS_REDEMPTION_GUIDANCE}</p>
       </CardContent></Card>
@@ -56,7 +57,7 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ m
         <Card><CardContent className="p-0">
           <div className="divide-y sm:hidden">
             {ledger.length > 0 ? ledger.map((entry) => <div key={entry.id} className="flex items-center justify-between gap-3 p-3">
-              <div className="min-w-0"><p className="font-medium">{ledgerLabels[entry.reason] ?? entry.reason}</p><p className="text-xs text-muted-foreground">{dateFormat.format(entry.createdAt)}{entry.orderId ? ` · ออเดอร์ ${entry.orderId.slice(0, 8)}` : ""}</p></div>
+              <div className="min-w-0"><p className="font-medium">{ledgerLabels[entry.reason] ?? entry.reason}</p>{entry.expiresAt && <p className="text-xs text-muted-foreground">หมดอายุวันที่ {rewardDateFormat.format(entry.expiresAt)}</p>}<p className="text-xs text-muted-foreground">{dateFormat.format(entry.createdAt)}{entry.orderId ? ` · ออเดอร์ ${entry.orderId.slice(0, 8)}` : ""}</p></div>
               <p className={`shrink-0 font-semibold tabular-nums ${entry.delta > 0 ? "text-emerald-700" : "text-destructive"}`}>{entry.delta > 0 ? `+${entry.delta}` : entry.delta}</p>
             </div>) : <p className="py-8 text-center text-sm text-muted-foreground">ยังไม่มีประวัติแสตมป์</p>}
           </div>
@@ -64,7 +65,7 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ m
             <TableHeader><TableRow><TableHead>วันที่</TableHead><TableHead>รายการ</TableHead><TableHead>จำนวน</TableHead><TableHead>ออเดอร์</TableHead></TableRow></TableHeader>
             <TableBody>{ledger.length > 0 ? ledger.map((entry) => <TableRow key={entry.id}>
               <TableCell>{dateFormat.format(entry.createdAt)}</TableCell>
-              <TableCell>{ledgerLabels[entry.reason] ?? entry.reason}</TableCell>
+              <TableCell>{ledgerLabels[entry.reason] ?? entry.reason}{entry.expiresAt && <p className="text-xs text-muted-foreground">หมดอายุวันที่ {rewardDateFormat.format(entry.expiresAt)}</p>}</TableCell>
               <TableCell className={entry.delta > 0 ? "text-emerald-700" : "text-destructive"}>{entry.delta > 0 ? `+${entry.delta}` : entry.delta}</TableCell>
               <TableCell>{entry.orderId ? entry.orderId.slice(0, 8) : "—"}</TableCell>
             </TableRow>) : <TableRow><TableCell colSpan={4} className="py-8 text-center text-muted-foreground">ยังไม่มีประวัติแสตมป์</TableCell></TableRow>}</TableBody>

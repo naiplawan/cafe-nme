@@ -1,5 +1,6 @@
 import { sql } from 'drizzle-orm';
 import {
+  bigint,
   boolean,
   check,
   customType,
@@ -203,15 +204,41 @@ export const members = pgTable(
   ],
 );
 
+export const shifts = pgTable('shifts', {
+  id: id(),
+  shopId: shopId(),
+  openedBy: uuid('opened_by').notNull().references(() => staff.id),
+  openingRequestId: uuid('opening_request_id').notNull(),
+  openingFloatSatang: integer('opening_float_satang').notNull(),
+  openedAt: timestamp('opened_at', { withTimezone: true }).notNull().defaultNow(),
+  closedAt: timestamp('closed_at', { withTimezone: true }),
+  closedBy: uuid('closed_by').references(() => staff.id),
+  closeRequestId: uuid('close_request_id'),
+  expectedCashSatang: bigint('expected_cash_satang', { mode: 'number' }),
+  countedCashSatang: integer('counted_cash_satang'),
+  handedToStaffId: uuid('handed_to_staff_id').references(() => staff.id),
+}, (t) => [
+  uniqueIndex('shifts_shop_open_uidx').on(t.shopId).where(sql`${t.closedAt} is null`),
+  uniqueIndex('shifts_shop_open_request_uidx').on(t.shopId, t.openingRequestId),
+  uniqueIndex('shifts_shop_close_request_uidx').on(t.shopId, t.closeRequestId),
+  check('shifts_float_nonnegative_check', sql`${t.openingFloatSatang} >= 0`),
+  check('shifts_count_nonnegative_check', sql`${t.countedCashSatang} is null or ${t.countedCashSatang} >= 0`),
+  check('shifts_closed_fields_check', sql`(${t.closedAt} is null and ${t.closedBy} is null and ${t.closeRequestId} is null and ${t.expectedCashSatang} is null and ${t.countedCashSatang} is null and ${t.handedToStaffId} is null) or (${t.closedAt} is not null and ${t.closedBy} is not null and ${t.closeRequestId} is not null and ${t.expectedCashSatang} is not null and ${t.countedCashSatang} is not null)`),
+]);
+
 export const orders = pgTable(
   'orders',
   {
     id: id(),
     shopId: shopId(),
+    shiftId: uuid('shift_id').references(() => shifts.id),
+    inventoryDeductedAt: timestamp('inventory_deducted_at', { withTimezone: true }),
     // Resets every day in the shop's timezone; businessDate is that day (YYYY-MM-DD).
     dailyNo: integer('daily_no').notNull(),
     businessDate: text('business_date').notNull(),
     status: orderStatus('status').notNull().default('open'),
+    prepStatus: text('prep_status').notNull().default('received'),
+    prepUpdatedAt: timestamp('prep_updated_at', { withTimezone: true }),
     memberId: uuid('member_id').references(() => members.id),
     staffId: uuid('staff_id').references(() => staff.id),
     subtotalSatang: integer('subtotal_satang').notNull().default(0),
@@ -231,6 +258,33 @@ export const orders = pgTable(
   ],
 );
 
+export const selfOrders = pgTable('self_orders', {
+  id: id(),
+  shopId: shopId(),
+  clientKey: uuid('client_key').notNull(),
+  tokenHash: text('token_hash').notNull(),
+  fingerprint: text('fingerprint').notNull(),
+  status: text('status').notNull().default('pending'),
+  mode: text('mode').notNull(),
+  tableLabel: text('table_label'),
+  lines: jsonb('lines').notNull(),
+  items: jsonb('items').notNull(),
+  totalSatang: integer('total_satang').notNull(),
+  decidedBy: uuid('decided_by').references(() => staff.id),
+  orderId: uuid('order_id').references(() => orders.id),
+  createdAt: createdAt(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  uniqueIndex('self_orders_shop_key_uidx').on(t.shopId, t.clientKey),
+  uniqueIndex('self_orders_shop_token_uidx').on(t.shopId, t.tokenHash),
+  uniqueIndex('self_orders_order_uidx').on(t.orderId),
+  index('self_orders_shop_status_created_idx').on(t.shopId, t.status, t.createdAt),
+  check('self_orders_status_check', sql`${t.status} in ('pending','accepted','rejected','completed')`),
+  check('self_orders_mode_check', sql`${t.mode} in ('pickup','table')`),
+  check('self_orders_total_check', sql`${t.totalSatang} >= 0`),
+  check('self_orders_completion_check', sql`(${t.status} = 'completed') = (${t.orderId} is not null)`),
+]);
+
 export const orderItems = pgTable(
   'order_items',
   {
@@ -245,6 +299,8 @@ export const orderItems = pgTable(
     unitPriceSatang: integer('unit_price_satang').notNull(),
     qty: integer('qty').notNull().default(1),
     lineNo: integer('line_no').notNull().default(0),
+    paidSatang: integer('paid_satang'),
+    stampsEarned: integer('stamps_earned'),
     note: text('note'),
   },
   (t) => [
@@ -274,6 +330,43 @@ export const payments = pgTable('payments', {
   createdAt: createdAt(),
 });
 
+// A cashier's payment record is separate from a later manual receipt check.
+export const paymentReviews = pgTable('payment_reviews', {
+  id: id(),
+  shopId: shopId(),
+  paymentId: uuid('payment_id').notNull().references(() => payments.id, { onDelete: 'cascade' }),
+  requestId: uuid('request_id').notNull(),
+  observedSatang: integer('observed_satang').notNull(),
+  reviewedBy: uuid('reviewed_by').notNull().references(() => staff.id),
+  note: text('note').notNull().default(''),
+  createdAt: createdAt(),
+}, (t) => [
+  uniqueIndex('payment_reviews_shop_request_uidx').on(t.shopId, t.requestId),
+  index('payment_reviews_payment_idx').on(t.paymentId, t.createdAt),
+  check('payment_reviews_observed_nonnegative_check', sql`${t.observedSatang} >= 0`),
+]);
+
+export const refunds = pgTable('refunds', {
+  id: id(),
+  shopId: shopId(),
+  orderId: uuid('order_id').notNull().references(() => orders.id, { onDelete: 'cascade' }),
+  requestId: uuid('request_id').notNull(),
+  amountSatang: integer('amount_satang').notNull(),
+  lines: jsonb('lines').notNull(),
+  reason: text('reason').notNull(),
+  approvedBy: uuid('approved_by').notNull().references(() => staff.id),
+  paidBy: uuid('paid_by').references(() => staff.id),
+  paidAt: timestamp('paid_at', { withTimezone: true }),
+  payoutMethod: paymentMethod('payout_method'),
+  payoutReference: text('payout_reference'),
+  cashShiftId: uuid('cash_shift_id').references(() => shifts.id),
+  createdAt: createdAt(),
+}, (t) => [
+  uniqueIndex('refunds_shop_request_uidx').on(t.shopId, t.requestId),
+  check('refunds_amount_nonnegative_check', sql`${t.amountSatang} >= 0`),
+  check('refunds_reason_check', sql`length(trim(${t.reason})) > 0`),
+]);
+
 // Append-only: a member's balance is SUM(delta).
 export const stampLedger = pgTable(
   'stamp_ledger',
@@ -286,10 +379,14 @@ export const stampLedger = pgTable(
     orderId: uuid('order_id').references(() => orders.id),
     delta: integer('delta').notNull(),
     reason: stampReason('reason').notNull(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }),
+    sourceEntryId: uuid('source_entry_id'),
     staffId: uuid('staff_id').references(() => staff.id),
     createdAt: createdAt(),
   },
-  (t) => [index('stamp_ledger_member_idx').on(t.memberId)],
+  (t) => [index('stamp_ledger_member_idx').on(t.memberId),
+    uniqueIndex('stamp_ledger_expire_source_uidx').on(t.sourceEntryId).where(sql`${t.reason} = 'expire'`),
+  ],
 );
 
 export const rewards = pgTable('rewards', {
@@ -299,6 +396,7 @@ export const rewards = pgTable('rewards', {
     .notNull()
     .references(() => members.id),
   status: rewardStatus('status').notNull().default('available'),
+  expiresAt: timestamp('expires_at', { withTimezone: true }),
   // The order whose stamps completed this card; voiding it cancels the reward if unused.
   earnedOrderId: uuid('earned_order_id').references(() => orders.id),
   redeemedOrderId: uuid('redeemed_order_id').references(() => orders.id),
@@ -348,3 +446,137 @@ export const rateLimitAttempts = pgTable(
   },
   (t) => [index('rate_limit_attempts_window_idx').on(t.windowStartedAt)],
 );
+
+export const ingredients = pgTable('ingredients', {
+  id: id(),
+  shopId: shopId(),
+  name: text('name').notNull(),
+  unit: text('unit').notNull(),
+  lowStockMilliunits: integer('low_stock_milliunits').notNull().default(0),
+  createdAt: createdAt(),
+}, (t) => [
+  uniqueIndex('ingredients_shop_name_uidx').on(t.shopId, t.name),
+  check('ingredients_unit_check', sql`${t.unit} in ('g','ml','unit')`),
+  check('ingredients_low_stock_check', sql`${t.lowStockMilliunits} >= 0`),
+]);
+
+export const recipeLines = pgTable('recipe_lines', {
+  shopId: shopId(),
+  productId: uuid('product_id').notNull().references(() => products.id, { onDelete: 'cascade' }),
+  ingredientId: uuid('ingredient_id').notNull().references(() => ingredients.id, { onDelete: 'cascade' }),
+  quantityMilliunits: integer('quantity_milliunits').notNull(),
+}, (t) => [
+  primaryKey({ columns: [t.productId, t.ingredientId] }),
+  check('recipe_lines_quantity_check', sql`${t.quantityMilliunits} > 0`),
+]);
+
+export const modifierRecipeLines = pgTable('modifier_recipe_lines', {
+  shopId: shopId(),
+  modifierId: uuid('modifier_id').notNull().references(() => modifiers.id, { onDelete: 'cascade' }),
+  ingredientId: uuid('ingredient_id').notNull().references(() => ingredients.id, { onDelete: 'cascade' }),
+  quantityMilliunits: integer('quantity_milliunits').notNull(),
+}, (t) => [
+  primaryKey({ columns: [t.modifierId, t.ingredientId] }),
+  check('modifier_recipe_lines_quantity_check', sql`${t.quantityMilliunits} > 0`),
+]);
+
+export const inventoryMovements = pgTable('inventory_movements', {
+  id: id(),
+  shopId: shopId(),
+  ingredientId: uuid('ingredient_id').notNull().references(() => ingredients.id, { onDelete: 'cascade' }),
+  kind: text('kind').notNull(),
+  quantityMilliunits: bigint('quantity_milliunits', { mode: 'number' }).notNull(),
+  actorStaffId: uuid('actor_staff_id').references(() => staff.id),
+  reason: text('reason').notNull(),
+  requestId: uuid('request_id'),
+  orderId: uuid('order_id').references(() => orders.id),
+  createdAt: createdAt(),
+}, (t) => [
+  uniqueIndex('inventory_movements_request_uidx').on(t.shopId, t.requestId),
+  uniqueIndex('inventory_movements_sale_uidx').on(t.orderId, t.ingredientId).where(sql`${t.kind} = 'sale'`),
+  index('inventory_movements_ingredient_idx').on(t.ingredientId, t.createdAt),
+  check('inventory_movements_kind_check', sql`${t.kind} in ('receive','waste','adjust','sale')`),
+  check('inventory_movements_quantity_check', sql`${t.quantityMilliunits} <> 0 and abs(${t.quantityMilliunits}) <= 9007199254740991`),
+  check('inventory_movements_reason_check', sql`length(trim(${t.reason})) between 1 and 500`),
+  check('inventory_movements_source_check', sql`(${t.kind} = 'sale' and ${t.orderId} is not null and ${t.requestId} is null and ${t.quantityMilliunits} < 0) or (${t.kind} <> 'sale' and ${t.orderId} is null and ${t.requestId} is not null and ${t.actorStaffId} is not null)`),
+  check('inventory_movements_direction_check', sql`(${t.kind} <> 'receive' or ${t.quantityMilliunits} > 0) and (${t.kind} <> 'waste' or ${t.quantityMilliunits} < 0)`),
+]);
+
+// Immutable, explicitly selected branch groups; one group per shop.
+export const loyaltyGroups = pgTable('loyalty_groups', {
+  id: id(),
+  name: text('name').notNull(),
+  createdBy: uuid('created_by').notNull().references(() => users.id),
+  createdAt: createdAt(),
+});
+export const loyaltyGroupShops = pgTable('loyalty_group_shops', {
+  shopId: uuid('shop_id').primaryKey().references(() => shops.id, { onDelete: 'cascade' }),
+  groupId: uuid('group_id').notNull().references(() => loyaltyGroups.id, { onDelete: 'cascade' }),
+}, (t) => [index('loyalty_group_shops_group_idx').on(t.groupId)]);
+
+export const shopSubscriptions = pgTable('shop_subscriptions', {
+  shopId: uuid('shop_id').primaryKey().references(() => shops.id, { onDelete: 'cascade' }),
+  plan: text('plan').notNull().default('basic'),
+  trialStartedAt: timestamp('trial_started_at', { withTimezone: true }).notNull().defaultNow(),
+  trialEndsAt: timestamp('trial_ends_at', { withTimezone: true }).notNull(),
+  paidUntil: timestamp('paid_until', { withTimezone: true }),
+}, (t) => [
+  check('shop_subscriptions_plan_check', sql`${t.plan} in ('basic','pro')`),
+  check('shop_subscriptions_trial_check', sql`${t.trialEndsAt} > ${t.trialStartedAt}`),
+]);
+
+export const subscriptionPayments = pgTable('subscription_payments', {
+  id: id(),
+  shopId: shopId(),
+  requestId: uuid('request_id').notNull(),
+  plan: text('plan').notNull(),
+  paidAmountSatang: integer('paid_amount_satang').notNull(),
+  periodDays: integer('period_days').notNull(),
+  periodStartsAt: timestamp('period_starts_at', { withTimezone: true }).notNull(),
+  periodEndsAt: timestamp('period_ends_at', { withTimezone: true }).notNull(),
+  externalReceiptRef: text('external_receipt_ref').notNull(),
+  recordedByStaffId: uuid('recorded_by_staff_id').notNull().references(() => staff.id),
+  recordedByUserId: uuid('recorded_by_user_id').notNull().references(() => users.id),
+  createdAt: createdAt(),
+}, (t) => [
+  uniqueIndex('subscription_payments_request_uidx').on(t.shopId, t.requestId),
+  uniqueIndex('subscription_payments_receipt_uidx').on(t.externalReceiptRef),
+  check('subscription_payments_plan_check', sql`${t.plan} in ('basic','pro')`),
+  check('subscription_payments_amount_check', sql`${t.paidAmountSatang} > 0`),
+  check('subscription_payments_period_check', sql`${t.periodDays} between 1 and 366 and ${t.periodEndsAt} > ${t.periodStartsAt}`),
+  check('subscription_payments_reference_check', sql`length(trim(${t.externalReceiptRef})) between 1 and 200`),
+]);
+
+export const providerPaymentIntents = pgTable('provider_payment_intents', {
+  id: id(),
+  shopId: shopId(),
+  selfOrderId: uuid('self_order_id').notNull().references(() => selfOrders.id, { onDelete: 'cascade' }),
+  staffId: uuid('staff_id').notNull().references(() => staff.id),
+  amountSatang: integer('amount_satang').notNull(),
+  currency: text('currency').notNull().default('thb'),
+  testMode: boolean('test_mode').notNull(),
+  checkoutInput: jsonb('checkout_input').notNull(),
+  providerAccountId: text('provider_account_id'),
+  providerChargeId: text('provider_charge_id'),
+  status: text('status').notNull().default('creating'),
+  qrImageUrl: text('qr_image_url'),
+  discrepancyCode: text('discrepancy_code'),
+  verifiedAt: timestamp('verified_at', { withTimezone: true }),
+  orderId: uuid('order_id').references(() => orders.id),
+  createdAt: createdAt(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  uniqueIndex('provider_intents_draft_uidx').on(t.selfOrderId),
+  uniqueIndex('provider_intents_charge_uidx').on(t.providerAccountId, t.providerChargeId),
+  check('provider_intents_amount_check', sql`${t.amountSatang} between 2000 and 15000000 and ${t.currency} = 'thb'`),
+  check('provider_intents_status_check', sql`${t.status} in ('creating','uncertain','pending','verified','paid_unfulfilled','discrepancy','completed','failed','expired')`),
+  check('provider_intents_completed_check', sql`${t.status} <> 'completed' or (${t.orderId} is not null and ${t.verifiedAt} is not null)`),
+]);
+
+export const providerWebhookEvents = pgTable('provider_webhook_events', {
+  shopId: shopId(),
+  eventId: text('event_id').notNull(),
+  intentId: uuid('intent_id').references(() => providerPaymentIntents.id, { onDelete: 'cascade' }),
+  outcome: text('outcome').notNull(),
+  createdAt: createdAt(),
+}, (t) => [primaryKey({ columns: [t.shopId, t.eventId] })]);

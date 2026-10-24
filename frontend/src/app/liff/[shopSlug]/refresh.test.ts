@@ -23,3 +23,22 @@ it("hides a stale QR after refresh failure and restores it only after a successf
   expect(screen.getByAltText("QR สำหรับสะสมแสตมป์")).toBeTruthy();
   expect(api.getMyCard).toHaveBeenCalledTimes(3);
 });
+
+it("shows expiry deadlines and dated earn/use/expire history", async () => {
+  api.getMyCard.mockResolvedValue({ registered: true, qrToken: "token", member: {
+    displayName: "Member", phone: "0812345678", stampBalance: 1, stampGoal: 10, availableRewards: 1,
+    nextStampExpiryAt: "2027-10-17T03:00:00Z", nextRewardExpiryAt: "2027-11-17T03:00:00Z",
+    history: [
+      { id: "earn", delta: 5, reason: "earn", createdAt: "2026-10-17T03:00:00Z", expiresAt: "2027-10-17T03:00:00Z" },
+      { id: "use", delta: -3, reason: "redeem", createdAt: "2026-10-18T03:00:00Z", expiresAt: null },
+      { id: "expire", delta: -1, reason: "expire", createdAt: "2026-10-19T03:00:00Z", expiresAt: null },
+    ],
+  } });
+  await act(async () => { render(React.createElement(MemberApp, { shopSlug: "cafe", shopName: "Cafe", liffId: "dev", devMock: true, menu: [], brand: { accent: "#123456", custom: false, logoUrl: null } })); });
+  expect(screen.getByText(/แสตมป์หมดอายุครั้งถัดไป/)).toBeTruthy();
+  expect(screen.getByText(/รางวัลหมดอายุครั้งถัดไป/)).toBeTruthy();
+  expect(screen.getByRole("heading", { name: "ประวัติแสตมป์" })).toBeTruthy();
+  expect(screen.getByText("รับแสตมป์")).toBeTruthy();
+  expect(screen.getByText("แลกรางวัล")).toBeTruthy();
+  expect(screen.getByText("แสตมป์หมดอายุ")).toBeTruthy();
+});

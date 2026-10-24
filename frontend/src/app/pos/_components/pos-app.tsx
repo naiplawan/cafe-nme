@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { priceCart, rewardDiscount, type CartLineInput, type PosMenu } from "@/lib/pricing";
 import type { MemberSummary } from "@/server/loyalty";
@@ -16,21 +17,16 @@ import { ProductGrid } from "@/app/pos/_components/product-grid";
 import { ScanDialog } from "@/app/pos/_components/scan-dialog";
 import { CheckoutRecovery } from "@/app/pos/_components/checkout-recovery";
 import { getPosDeviceId, lookupMemberById } from "@/app/pos/actions";
+import { getCheckoutStorage, resolveBrowserCheckout } from "@/lib/browser-checkout";
 import { deserializeCart, serializeCart, validateCart, type CartSnapshot } from "@/lib/cart-storage";
-import { resolvePendingCheckout, type CheckoutSessionScope, type PendingCheckoutInput } from "@/lib/checkout-attempt";
+import type { CheckoutSessionScope, PendingCheckoutInput } from "@/lib/checkout-attempt";
 
-type PosAppProps = { shop: PosShop; staff: { id: string; name: string; role: "owner" | "manager" | "barista" }; menu: PosMenu; orderNo: number; logoUrl: string | null };
+type PosAppProps = { acceptedSelfOrder?: { id: string; lines: CartLineInput[]; totalSatang: number } | null; selfOrderError?: string; shop: PosShop; staff: { id: string; name: string; role: "owner" | "manager" | "barista" }; menu: PosMenu; orderNo: number; logoUrl: string | null };
 type PaidOrder = { result: CheckoutResult; method: "cash" | "promptpay" };
 
-function getSessionStorage(): Storage | null {
-  try {
-    return window.sessionStorage;
-  } catch {
-    return null;
-  }
-}
-
-export function PosApp({ shop, staff, menu, orderNo: initialOrderNo, logoUrl }: PosAppProps) {
+export function PosApp({ shop, staff, menu, orderNo: initialOrderNo, logoUrl, acceptedSelfOrder = null, selfOrderError }: PosAppProps) {
+  const [selfOrderId, setSelfOrderId] = useState<string | undefined>();
+  const importedSource = useRef<string | null>(null);
   const [orderNo, setOrderNo] = useState(initialOrderNo);
   const [categoryId, setCategoryId] = useState<string | null>(null);
   const [cart, setCart] = useState<CartLineInput[]>([]);
@@ -91,7 +87,7 @@ export function PosApp({ shop, staff, menu, orderNo: initialOrderNo, logoUrl }: 
       setStorageReady(true);
       return () => { active = false; };
     }
-    const storage = getSessionStorage();
+    const storage = getCheckoutStorage();
     if (!storage) {
       setStorageBlocked(true);
       storageReadyRef.current = false;
@@ -101,68 +97,81 @@ export function PosApp({ shop, staff, menu, orderNo: initialOrderNo, logoUrl }: 
     setStorageBlocked(false);
     storageReadyRef.current = false;
     setStorageReady(false);
-    const pending = resolvePendingCheckout(storage, storageKey);
-    if (!pending.available) {
-      setStorageBlocked(true);
-      storageReadyRef.current = false;
-      setStorageReady(true);
-      return () => { active = false; };
-    }
-    if (pending.input) {
-      setRecoveryStorageKey(pending.cartStorageKey);
-      if (!hasPendingCheckout) setPendingCheckout(pending.input);
-      storageReadyRef.current = true;
-      setStorageReady(true);
-      return () => { active = false; };
-    }
-    if (hasPendingCheckout) setPendingCheckout(null);
-    let snapshot: CartSnapshot | null = null;
-    try {
-      snapshot = deserializeCart(storage?.getItem(storageKey) ?? null);
-    } catch {
-      setStorageBlocked(true);
-      storageReadyRef.current = false;
-      setStorageReady(true);
-      return () => { active = false; };
-    }
-    const restore = async () => {
-      if (snapshot) {
-        const validated = validateCart(snapshot, menu);
-        if (!active) return;
-        setCart(validated.snapshot.lines);
-        setRedeemRewardId(validated.snapshot.redeemRewardId);
-        if (validated.dropped) setCartNotice("บางรายการไม่มีขายแล้ว จึงถูกนำออก");
-        if (validated.snapshot.memberId) {
-          try {
-            const restoredMember = await lookupMemberById(validated.snapshot.memberId);
-            if (active && restoredMember) setMember(restoredMember);
-            else if (active) setRedeemRewardId(null);
-          } catch {
-            if (active) setRedeemRewardId(null);
-          }
-        }
+    const initialize = async () => {
+      const pending = await resolveBrowserCheckout(storageKey);
+      if (!active) return;
+      if (!pending.available) {
+        setStorageBlocked(true);
+        storageReadyRef.current = false;
+        setStorageReady(true);
+        return;
       }
-      if (active) {
+      if (pending.input) {
+        setRecoveryStorageKey(pending.cartStorageKey);
+        if (!hasPendingCheckout) setPendingCheckout(pending.input);
         storageReadyRef.current = true;
         setStorageReady(true);
+        return;
       }
+      if (hasPendingCheckout) setPendingCheckout(null);
+      let snapshot: CartSnapshot | null = null;
+      try {
+        snapshot = deserializeCart(storage?.getItem(storageKey) ?? null);
+      } catch {
+        setStorageBlocked(true);
+        storageReadyRef.current = false;
+        setStorageReady(true);
+        return;
+      }
+      if (acceptedSelfOrder && importedSource.current !== acceptedSelfOrder.id) {
+        if (!snapshot || (snapshot.lines.length === 0 && !snapshot.memberId && !snapshot.redeemRewardId)) {
+          snapshot = { selfOrderId: acceptedSelfOrder.id, lines: acceptedSelfOrder.lines, memberId: null, redeemRewardId: null };
+        } else if (snapshot.selfOrderId !== acceptedSelfOrder.id) {
+          setCartNotice("มีตะกร้าเดิมอยู่ กรุณาจัดการรายการเดิมก่อนนำรายการจาก QR เข้ามา");
+        }
+        importedSource.current = acceptedSelfOrder.id;
+      }
+      const restore = async () => {
+        if (snapshot) {
+          const validated = validateCart(snapshot, menu);
+          if (!active) return;
+          setSelfOrderId(validated.snapshot.selfOrderId);
+          setCart(validated.snapshot.lines);
+          setRedeemRewardId(validated.snapshot.redeemRewardId);
+          if (validated.dropped) setCartNotice("บางรายการไม่มีขายแล้ว จึงถูกนำออก");
+          if (validated.snapshot.memberId) {
+            try {
+              const restoredMember = await lookupMemberById(validated.snapshot.memberId);
+              if (active && restoredMember) setMember(restoredMember);
+              else if (active) setRedeemRewardId(null);
+            } catch {
+              if (active) setRedeemRewardId(null);
+            }
+          }
+        }
+        if (active) {
+          storageReadyRef.current = true;
+          setStorageReady(true);
+        }
+      };
+      await restore();
     };
-    void restore();
+    void initialize();
     return () => { active = false; };
-  }, [menu, paidOrder, pendingCheckout, storageKey]);
+  }, [acceptedSelfOrder, menu, paidOrder, pendingCheckout, storageKey]);
 
   useEffect(() => {
     if (storageBlocked || !storageReady || !storageReadyRef.current || !storageKey || pendingCheckout) return;
     try {
       if (paidOrder || (!cart.length && !member && !redeemRewardId)) window.sessionStorage.removeItem(storageKey);
       else {
-        const snapshot: CartSnapshot = { lines: cart, memberId: member?.id ?? null, redeemRewardId };
-        window.sessionStorage.setItem(storageKey, serializeCart(snapshot));
+        const snapshot: CartSnapshot = { ...(selfOrderId ? { selfOrderId } : {}), lines: cart, memberId: member?.id ?? null, redeemRewardId };
+        getCheckoutStorage()?.setItem(storageKey, serializeCart(snapshot));
       }
     } catch {
       // Storage can be unavailable in private browsing; the POS remains usable.
     }
-  }, [cart, member, paidOrder, pendingCheckout, redeemRewardId, storageBlocked, storageKey, storageReady]);
+  }, [cart, member, paidOrder, pendingCheckout, redeemRewardId, selfOrderId, storageBlocked, storageKey, storageReady]);
 
   useEffect(() => {
     if (!cartNotice) return;
@@ -231,6 +240,7 @@ export function PosApp({ shop, staff, menu, orderNo: initialOrderNo, logoUrl }: 
 
   const staffRole = staff.role === "owner" ? "เจ้าของ" : staff.role === "manager" ? "ผู้จัดการ" : "บาริสต้า";
   function onRecoveredCheckout(result: CheckoutResult, method: "cash" | "promptpay") {
+    if (pendingCheckout?.selfOrderId) { setSelfOrderId(pendingCheckout.selfOrderId); }
     setPendingCheckout(null);
     setPaidOrder({ result, method });
   }
@@ -244,6 +254,7 @@ export function PosApp({ shop, staff, menu, orderNo: initialOrderNo, logoUrl }: 
 
   if (paidOrder) return <DoneScreen result={paidOrder.result} method={paidOrder.method} onNewOrder={() => {
     clearSavedCart();
+    if (selfOrderId) { window.location.assign("/pos"); return; }
     setCart([]); setMember(null); setRedeemRewardId(null); setPaidOrder(null);
     setOrderNo(paidOrder.result.dailyNo + 1);
   }} />;
@@ -257,7 +268,27 @@ export function PosApp({ shop, staff, menu, orderNo: initialOrderNo, logoUrl }: 
     return <CheckoutRecovery pending={pendingCheckout} cartStorageKey={recoveryStorageKey} onRecovered={onRecoveredCheckout} onRejected={rejectPendingCheckout} />;
   }
 
+  if (selfOrderId) {
+    return <main className="min-h-dvh space-y-5 bg-[#F5EDE3] p-6 text-[#3B2A20]">
+      <h1 className="text-2xl font-bold">รายการจาก QR · รับชำระเงิน</h1>
+      <p>รับชำระตามรายการที่ลูกค้าส่งไว้ รายการนี้แก้ไขไม่ได้</p>
+      {cartNotice ? <p role="alert">{cartNotice}</p> : null}
+      <ul>{cart.map((line, index) => (
+        // biome-ignore lint/suspicious/noArrayIndexKey: Accepted draft lines are immutable and never reordered.
+        <li key={`${selfOrderId}:${index}`}>{line.qty} × {menu.products.find((product) => product.id === line.productId)?.name ?? "เมนูไม่พร้อมขาย"}{line.note ? ` · ${line.note}` : ""}</li>))}</ul>
+      <button type="button" onClick={() => setShowPayment(true)} disabled={!online} className="min-h-14 rounded-xl bg-[#2F6B3F] px-6 text-lg font-bold text-white disabled:opacity-50">ตรวจสอบยอดและรับชำระเงิน</button>
+      <Link href="/pos/requests" className="ml-4 underline">กลับรายการจาก QR</Link>
+      {!showPayment ? <button type="button" onClick={() => { clearSavedCart(); window.location.assign("/pos"); }} className="ml-4 underline">พักรายการนี้และกลับขายปกติ</button> : null}
+      {showPayment && checkoutScope ? <PaymentDialog orderLabel={`#${String(orderNo).padStart(3, "0")}`}
+        lines={pricing.lines.map((line) => ({ key: line.productId, name: line.name, qty: line.qty, modifiersText: line.modifiers.map((modifier) => modifier.name).join(" · "), lineTotalSatang: line.lineTotalSatang }))}
+        subtotalSatang={pricing.subtotalSatang} discountSatang={0} totalSatang={pricing.subtotalSatang}
+        checkoutInput={{ selfOrderId, lines: cart, memberId: null, redeemRewardId: null }} expectedScope={checkoutScope} cartStorageKey={storageKey} promptpayEnabled={Boolean(shop.promptpayId)}
+        shopName={shop.name} onClose={() => setShowPayment(false)} onPaid={(result, method) => { setShowPayment(false); setPaidOrder({ result, method }); }} /> : null}
+    </main>;
+  }
+
   return <div className="flex h-dvh min-h-0 flex-col overflow-hidden bg-[#F5EDE3]">
+    {selfOrderError ? <p role="alert" className="bg-amber-100 p-3">{selfOrderError}</p> : null}
     <PosHeader shopName={shop.name} orderNo={orderNo} staffName={staff.name} staffRole={staffRole} online={online} logoUrl={logoUrl} />
     <button type="button" aria-pressed={showCart} className="min-h-12 shrink-0 bg-[#E9D9C6] p-2 font-bold lg:hidden" onClick={() => setShowCart((value) => !value)}>{showCart ? "กลับไปเลือกเมนู" : `ดูตะกร้า (${cart.reduce((count, line) => count + line.qty, 0)} ชิ้น)`}</button>
     <div className="flex min-h-0 flex-1">
