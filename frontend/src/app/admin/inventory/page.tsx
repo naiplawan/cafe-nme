@@ -16,7 +16,8 @@ export default async function InventoryPage() {
     getSubscription(session.shopId, session.staff.id, session.userId),
   ]);
   const hasPro = subscription.allowedFeatures.includes("inventory-write");
-  const canEdit = hasPro && (session.staff.role === "owner" || session.staff.role === "manager");
+  const canManage = session.staff.role === "owner" || session.staff.role === "manager";
+  const canEdit = hasPro && canManage;
   const low = inventory.ingredients.filter((ingredient) => ingredient.lowStock);
   return <div className="space-y-6">
     <AdminPageHeader section="วัตถุดิบ" title="สต็อกและสูตร" description="รับเข้า บันทึกของเสีย และตัดวัตถุดิบตามสูตรเมื่อขาย" />
@@ -24,16 +25,16 @@ export default async function InventoryPage() {
       {low.length ? <><p className="font-semibold text-amber-800">วัตถุดิบถึงจุดเตือน {low.length} รายการ</p><p>{low.map((ingredient) => ingredient.name).join(" · ")}</p></> : <p>ไม่มีวัตถุดิบถึงจุดเตือน</p>}
       <p className="mt-2 text-sm text-muted-foreground">การยกเลิกหรือคืนเงินไม่เติมสต็อกกลับอัตโนมัติ หากคืนวัตถุดิบจริง ให้ผู้จัดการบันทึกปรับยอดพร้อมเหตุผล</p>
     </div>
-    {!hasPro ? <p className="rounded-xl border bg-card p-4">เปิดดูสต็อกเดิมได้ การแก้ไขสต็อกและสูตรต้องใช้ Pro หรือช่วงทดลอง · <Link href="/admin/subscription" className="underline">ดูแพ็กเกจร้าน</Link></p> : null}
+    {!hasPro ? <p className="rounded-xl border bg-card p-4">เปิดดูสต็อกเดิมและรับวัตถุดิบเข้าได้ การบันทึกของเสีย ปรับยอด เพิ่มวัตถุดิบ และแก้สูตรต้องใช้ Pro หรือช่วงทดลอง · <Link href="/admin/subscription" className="underline">ดูแพ็กเกจร้าน</Link></p> : null}
     {canEdit ? <CreateIngredientForm /> : null}
     <section aria-label="วัตถุดิบคงเหลือ" className="grid gap-4 lg:grid-cols-2">
       {inventory.ingredients.map((ingredient) => <article key={ingredient.id} className="rounded-xl border bg-card p-4">
         <h2 className="text-lg font-semibold">{ingredient.name}</h2>
         <p className={`mt-1 text-xl font-bold ${ingredient.lowStock ? "text-amber-800" : ""}`}>{formatQuantity(ingredient.onHandMilliunits)} {ingredient.unit}</p>
         <p className="text-sm text-muted-foreground">จุดเตือน {formatQuantity(ingredient.lowStockMilliunits)} {ingredient.unit}{ingredient.onHandMilliunits < 0 ? " · ยอดติดลบ กรุณาตรวจนับ" : ""}</p>
-        {canEdit ? <details className="mt-3"><summary className="cursor-pointer py-2 font-medium">รับเข้า / ของเสีย / ปรับยอด</summary>
-          <StockMovementForm ingredient={ingredient} requestId={randomUUID()} />
-          <ThresholdForm ingredient={ingredient} />
+        {canManage ? <details className="mt-3"><summary className="cursor-pointer py-2 font-medium">{hasPro ? "รับเข้า / ของเสีย / ปรับยอด" : "รับวัตถุดิบเข้า"}</summary>
+          <StockMovementForm ingredient={ingredient} requestId={randomUUID()} receiveOnly={!hasPro} />
+          {canEdit ? <ThresholdForm ingredient={ingredient} /> : null}
         </details> : null}
       </article>)}
       {inventory.ingredients.length === 0 ? <p>ยังไม่มีวัตถุดิบ เริ่มจากเพิ่มวัตถุดิบและหน่วยหลัก</p> : null}

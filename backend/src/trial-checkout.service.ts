@@ -4,6 +4,7 @@ import type { Sql, TransactionSql } from "postgres";
 import type { CheckoutCartLine } from "./checkout-domain.js";
 import { DatabaseService } from "./database.service.js";
 import { OrdersService } from "./orders.service.js";
+import { ShiftsService } from "./shifts.service.js";
 export interface TrialCheckoutInput { lines: CheckoutCartLine[]; method: "cash" | "promptpay" }
 export interface TrialCheckoutSummary { totalSatang: number; itemCount: number; method: "cash" | "promptpay" }
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -43,6 +44,12 @@ export class TrialCheckoutService {
         }) as unknown as Sql;
         const scopedDatabase = Object.defineProperty(Object.create(this.database), "connection", { value: connection }) as DatabaseService;
         const orders = new OrdersService(scopedDatabase);
+        if (input.method === "cash") {
+          const [activeShift] = await tx`select id from shifts where shop_id=${shop}::uuid and closed_at is null`;
+          if (!activeShift) {
+            await new ShiftsService(scopedDatabase).open(shop, actor, { requestId: randomUUID(), openingFloatSatang: 0 });
+          }
+        }
         const quote = await orders.quote(shop, actor, { lines: input.lines, payment: { method: "promptpay" } });
         const receipt = await orders.checkout(shop, actor, {
           requestId: randomUUID(), lines: input.lines, expectedTotalSatang: quote.totalSatang,

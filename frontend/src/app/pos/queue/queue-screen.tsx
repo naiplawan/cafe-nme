@@ -1,50 +1,70 @@
 "use client";
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { startTransition, useCallback, useEffect, useRef, useState } from "react";
 import type { PreparationRow } from "@/server/preparation";
 import { advancePreparationAction, loadQueueAction } from "./actions";
 
 interface QueueScreenProps { initial: PreparationRow[]; initialError?: string }
 const labels = { received: "รับออเดอร์แล้ว", preparing: "กำลังทำ", ready: "พร้อมรับแล้ว" };
+const REFRESH_INTERVAL_MS = 5000;
 
 export function QueueScreen({ initial, initialError }: QueueScreenProps) {
   const [rows, setRows] = useState(initial);
   const [error, setError] = useState(initialError ?? "");
   const [busy, setBusy] = useState(false);
   const active = useRef(false);
+  const mounted = useRef(false);
 
-  async function reload() {
-    const result = await loadQueueAction();
-    if (result.ok) { setRows(result.rows); }
-    else { setError(result.message); }
-  }
-
-  async function run(order?: PreparationRow) {
-    if (active.current) { return; }
+  const run = useCallback(async (order?: PreparationRow) => {
+    if (active.current || !mounted.current) { return; }
     active.current = true;
     setBusy(true);
     setError("");
+    async function reload() {
+      const result = await loadQueueAction();
+      if (!mounted.current) { return; }
+      if (result.ok) { setRows(result.rows); }
+      else { setError(result.message); }
+    }
     try {
       if (!order) { await reload(); }
       else if (order.status !== "ready") {
         const result = await advancePreparationAction(order.id, order.status, order.status === "received" ? "preparing" : "ready");
+        if (!mounted.current) { return; }
         if (result.ok) { setRows((current) => current.map((row) => row.id === result.update.id ? { ...row, ...result.update } : row)); }
         else { setError(result.message); await reload(); }
       }
     } catch {
-      setError("เชื่อมต่อไม่สำเร็จ กรุณารีเฟรชคิวแล้วลองใหม่");
+      if (mounted.current) { setError("เชื่อมต่อไม่สำเร็จ กรุณารีเฟรชคิวแล้วลองใหม่"); }
     } finally {
       active.current = false;
-      setBusy(false);
+      if (mounted.current) { setBusy(false); }
     }
-  }
+  }, []);
+
+  useEffect(() => {
+    mounted.current = true;
+    function refreshWhenAvailable() {
+      if (document.visibilityState === "hidden" || !navigator.onLine) { return; }
+      startTransition(async () => { await run(); });
+    }
+    const timer = window.setInterval(refreshWhenAvailable, REFRESH_INTERVAL_MS);
+    document.addEventListener("visibilitychange", refreshWhenAvailable);
+    window.addEventListener("online", refreshWhenAvailable);
+    return () => {
+      mounted.current = false;
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", refreshWhenAvailable);
+      window.removeEventListener("online", refreshWhenAvailable);
+    };
+  }, [run]);
 
   return <main className="min-h-dvh bg-[#F5EDE3] p-4 text-[#3B2A20] md:p-8" aria-busy={busy}>
     <header className="mb-6 flex flex-wrap items-center justify-between gap-4">
       <div><Link href="/pos" className="underline">กลับหน้าขาย</Link><h1 className="mt-2 text-3xl font-bold">คิวเครื่องดื่มวันนี้</h1></div>
       <button type="button" disabled={busy} onClick={() => void run()} className="min-h-12 rounded-xl bg-[#3B2A20] px-6 font-semibold text-white disabled:opacity-50">{busy ? "กำลังตรวจสอบ…" : "รีเฟรชคิว"}</button>
     </header>
-    <p className="mb-4 text-sm">กดรีเฟรชคิวเพื่อดูออเดอร์ใหม่และการเปลี่ยนสถานะจากเครื่องอื่น</p>
+    <p className="mb-4 text-sm">คิวอัปเดตอัตโนมัติทุก 5 วินาทีเมื่อเปิดหน้านี้และเชื่อมต่ออินเทอร์เน็ต</p>
     {error ? <p role="alert" className="mb-4 rounded-xl bg-red-100 p-4 text-red-900">{error}</p> : null}
     {rows.length === 0 ? <p className="rounded-xl bg-white p-8 text-center">{error ? "ยังโหลดคิวไม่ได้" : "ไม่มีคิววันนี้"}</p> : null}
     <section aria-label="รายการคิว" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">

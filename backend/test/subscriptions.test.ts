@@ -55,30 +55,36 @@ describe("manual pilot subscriptions", { skip: !process.env.TEST_DATABASE_URL },
     const { InventoryService } = await import("../src/inventory.service.js");
     const inventory = new InventoryService(fixture.database as never);
     ingredientId = (await inventory.createIngredient(fixture.shopId, fixture.ownerId, { name: 'Trial beans', unit: 'g', lowStockMilliunits: 0 })).id;
+    await inventory.move(fixture.shopId, fixture.ownerId, ingredientId, { requestId: randomUUID(), kind: 'receive', quantityMilliunits: 1000, reason: 'Opening stock' });
     const [product] = await fixture.database.connection`insert into products(shop_id,name,base_price_satang) values (${fixture.shopId},'Trial coffee',100) returning id`;
     productId = product.id;
     await inventory.setRecipe(fixture.shopId, fixture.ownerId, 'product', productId, [{ ingredientId, quantityMilliunits: 1000 }]);
   });
 
   it("keeps core recovery available but blocks expired pro writes", async () => {
+    const { InventoryService } = await import("../src/inventory.service.js");
+    const { OrdersService } = await import("../src/orders.service.js");
+    const { ShiftsService } = await import("../src/shifts.service.js");
+    const orders = new OrdersService(fixture.database as never);
+    const shifts = new ShiftsService(fixture.database as never);
+    await shifts.open(fixture.shopId, fixture.ownerId, { requestId: randomUUID(), openingFloatSatang: 0 });
+    const input = { requestId: randomUUID(), lines: [{ productId, qty: 1, modifierIds: [] }], payment: { method: "cash" as const, cashReceivedSatang: 100 } };
+    await orders.checkout(fixture.shopId, fixture.ownerId, input);
+    const inventory = new InventoryService(fixture.database as never);
+    assert.equal((await inventory.list(fixture.shopId, fixture.ownerId)).ingredients[0].onHandMilliunits, 0);
     await fixture.database.connection`update shop_subscriptions set trial_started_at=now()-interval '15 days',trial_ends_at=now()-interval '1 day' where shop_id=${fixture.shopId}`;
     await requireFeature(fixture.database.connection, fixture.shopId, 'core-pos');
     await assert.rejects(requireFeature(fixture.database.connection, fixture.shopId, 'self-order'), ForbiddenException);
     assert.equal((await service.get(fixture.shopId, fixture.ownerId, ownerUser)).status, 'expired');
-    const { InventoryService, deductRecipeStock } = await import("../src/inventory.service.js");
-    const inventory = new InventoryService(fixture.database as never);
     assert.equal((await inventory.list(fixture.shopId, fixture.ownerId)).ingredients.length, 1);
     await assert.rejects(inventory.createIngredient(fixture.shopId, fixture.ownerId,
       { name: 'Denied', unit: 'g', lowStockMilliunits: 0 }), ForbiddenException);
     await assert.rejects(inventory.setThreshold(fixture.shopId, fixture.ownerId, ingredientId, 1000), ForbiddenException);
     await assert.rejects(inventory.setRecipe(fixture.shopId, fixture.ownerId, 'product', productId, []), ForbiddenException);
-    await assert.rejects(inventory.move(fixture.shopId, fixture.ownerId, ingredientId,
-      { requestId: randomUUID(), kind: 'receive', quantityMilliunits: 1000, reason: 'Denied' }), ForbiddenException);
-    await fixture.database.connection.begin(async (tx) => {
-      const [order] = await tx`insert into orders(shop_id,daily_no,business_date) values (${fixture.shopId},1,'2026-10-23') returning id`;
-      await deductRecipeStock(tx, fixture.shopId, order.id, [{ productId, qty: 1, modifierIds: [] }]);
-    });
-    assert.equal((await inventory.list(fixture.shopId, fixture.ownerId)).ingredients[0].onHandMilliunits, -1000);
+    await inventory.move(fixture.shopId, fixture.ownerId, ingredientId,
+      { requestId: randomUUID(), kind: 'receive', quantityMilliunits: 1000, reason: 'Replenish to continue sales' });
+    await orders.checkout(fixture.shopId, fixture.ownerId, { ...input, requestId: randomUUID() });
+    assert.equal((await inventory.list(fixture.shopId, fixture.ownerId)).ingredients[0].onHandMilliunits, 0);
   });
 
   it("prevents owner self-approval and forged user/staff bindings", async () => {

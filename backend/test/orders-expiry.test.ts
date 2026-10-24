@@ -9,6 +9,7 @@ describe("checkout expiry and refund snapshots",{skip:!process.env.TEST_DATABASE
  before(async()=>{f=await createPaymentSettingsFixture(process.env.TEST_DATABASE_URL??"");service=new OrdersService(f.database as never);
   const sql=f.database.connection;const [m]=await sql`insert into members(shop_id,display_name) values(${f.shopId},'Expiry member') returning id`;memberId=m.id;
   const [p]=await sql`insert into products(shop_id,name,base_price_satang,earns_stamp) values(${f.shopId},'Coffee',6500,true) returning id`;productId=p.id;
+  const {ShiftsService}=await import("../src/shifts.service.js");await new ShiftsService(f.database as never).open(f.shopId,f.ownerId,{requestId:randomUUID(),openingFloatSatang:0});
  });after(async()=>{await f?.dispose();});
  it("rejects an expired reward even when no member page has been opened",async()=>{
   const [r]=await f.database.connection`insert into rewards(shop_id,member_id,status,expires_at) values(${f.shopId},${memberId},'available',now()-interval '1 second') returning id`;

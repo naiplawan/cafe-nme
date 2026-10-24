@@ -55,6 +55,18 @@ describe("checkout action recovery", () => {
     expect("retryable" in response && response.retryable).not.toBe(true);
   });
 
+  it("tells the cashier to open a shift when cash checkout is rejected", async () => {
+    api.checkout.mockImplementation(async () => { throw new CheckoutError("cash_shift_required" as CheckoutError["code"]); });
+    expect(await checkoutAction({ ...input, payment: { method: "cash", cashReceivedSatang: 6500 }, expectedScope: scope }))
+      .toEqual({ ok: false, message: "กรุณาเปิดกะและนับเงินทอนก่อนขายเงินสด" });
+  });
+
+  it("explains that recipe stock is insufficient without treating the rejected sale as uncertain", async () => {
+    api.checkout.mockRejectedValue(new CheckoutError("insufficient_recipe_stock" as CheckoutError["code"]));
+    expect(await checkoutAction({ ...input, expectedScope: scope }))
+      .toEqual({ ok: false, message: "วัตถุดิบในสูตรไม่พอ กรุณาตรวจยอดสต๊อกก่อนขาย" });
+  });
+
   it("explains ineligible redemption and allows staff to correct the basket", async () => {
     api.checkout.mockRejectedValue(new CheckoutError("reward_ineligible"));
     const response = await checkoutAction({ ...input, expectedScope: scope });

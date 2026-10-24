@@ -14,9 +14,22 @@ export type InventoryIngredient = z.infer<typeof ingredientSchema>;
 export type InventoryRecipe = z.infer<typeof recipeSchema>;
 const idSchema = z.object({ id: z.uuid() }).strict();
 const path = (shopId: string) => `/v1/shops/${z.uuid().parse(shopId)}/inventory`;
+export class InventoryApiError extends Error {
+  constructor(readonly status: number, readonly code: string | null) {
+    super(`Inventory API returned ${status}`);
+    this.name = "InventoryApiError";
+  }
+}
 async function request<T>(url: string, schema: z.ZodType<T>, init?: RequestInit): Promise<T> {
   const response = await internalApiFetch(url, init);
-  if (!response.ok) { throw new Error(`Inventory API returned ${response.status}`); }
+  if (!response.ok) {
+    let code: string | null = null;
+    try {
+      const body: unknown = await response.json();
+      if (body && typeof body === "object" && "code" in body && typeof body.code === "string") { code = body.code; }
+    } catch { /* Keep the HTTP status when the API has no JSON error body. */ }
+    throw new InventoryApiError(response.status, code);
+  }
   return schema.parse(await readInternalJson(response));
 }
 export function listInventory(shopId: string, actorStaffId: string): Promise<InventoryState> {

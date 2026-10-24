@@ -43,6 +43,7 @@ describe("recipe inventory ledger", { skip: !process.env.TEST_DATABASE_URL }, ()
       { ingredientId: beans, quantityMilliunits: 18000 }, { ingredientId: milk, quantityMilliunits: 200000 },
     ]);
     await service.setRecipe(fixture.shopId, fixture.ownerId, 'modifier', modifier, [{ ingredientId: beans, quantityMilliunits: 9000 }]);
+    await service.move(fixture.shopId, fixture.managerId, milk, { requestId: randomUUID(), kind: 'receive', quantityMilliunits: 200000, reason: 'Opening stock' });
     const [order] = await fixture.database.connection`insert into orders(shop_id,daily_no,business_date) values (${fixture.shopId},1,'2026-10-23') returning id`;
     const lines = [{ productId: product, qty: 1, modifierIds: [modifier] }, { productId: product, qty: 2, modifierIds: [] }];
     await Promise.all([
@@ -51,13 +52,36 @@ describe("recipe inventory ledger", { skip: !process.env.TEST_DATABASE_URL }, ()
     ]);
     const state = await service.list(fixture.shopId, fixture.ownerId);
     assert.equal(state.ingredients.find((row) => row.id === beans)?.onHandMilliunits, 27000);
-    assert.equal(state.ingredients.find((row) => row.id === milk)?.onHandMilliunits, -100000);
+    assert.equal(state.ingredients.find((row) => row.id === milk)?.onHandMilliunits, 100000);
     assert.equal(state.ingredients.find((row) => row.id === milk)?.lowStock, true);
     const [count] = await fixture.database.connection`select count(*)::int as n from inventory_movements where order_id=${order.id}`;
     assert.equal(count.n, 2);
   });
 
+  it("rejects recipe consumption that would make a tracked ingredient negative", async () => {
+    const sql = fixture.database.connection;
+    const limited = (await service.createIngredient(fixture.shopId, fixture.ownerId, { name: "Limited beans", unit: "g", lowStockMilliunits: 0 })).id;
+    await service.move(fixture.shopId, fixture.managerId, limited, { requestId: randomUUID(), kind: "receive", quantityMilliunits: 999, reason: "Opening stock" });
+    const [limitedProduct] = await sql`insert into products(shop_id,name,base_price_satang) values(${fixture.shopId},'Limited coffee',100) returning id`;
+    await service.setRecipe(fixture.shopId, fixture.ownerId, "product", limitedProduct.id, [{ ingredientId: limited, quantityMilliunits: 1000 }]);
+
+    await assert.rejects(sql.begin(async (tx) => {
+      const [order] = await tx`insert into orders(shop_id,daily_no,business_date) values(${fixture.shopId},4,'2026-10-23') returning id`;
+      await deduct(tx, fixture.shopId, order.id, [{ productId: limitedProduct.id, qty: 1, modifierIds: [] }]);
+    }), ConflictException);
+    assert.equal((await service.list(fixture.shopId, fixture.ownerId)).ingredients.find((row) => row.id === limited)?.onHandMilliunits, 999);
+  });
+
+  it("rejects waste and count adjustments that exceed available stock", async () => {
+    const ingredient = (await service.createIngredient(fixture.shopId, fixture.ownerId, { name: "Counted syrup", unit: "ml", lowStockMilliunits: 0 })).id;
+    await service.move(fixture.shopId, fixture.managerId, ingredient, { requestId: randomUUID(), kind: "receive", quantityMilliunits: 1000, reason: "Opening stock" });
+    await assert.rejects(service.move(fixture.shopId, fixture.managerId, ingredient, { requestId: randomUUID(), kind: "waste", quantityMilliunits: 1001, reason: "Spill" }), ConflictException);
+    await assert.rejects(service.move(fixture.shopId, fixture.managerId, ingredient, { requestId: randomUUID(), kind: "adjust", quantityMilliunits: -1001, reason: "Count" }), ConflictException);
+    assert.equal((await service.list(fixture.shopId, fixture.ownerId)).ingredients.find((row) => row.id === ingredient)?.onHandMilliunits, 1000);
+  });
+
   it("rolls all consumption back with the checkout transaction", async () => {
+    await service.move(fixture.shopId, fixture.managerId, milk, { requestId: randomUUID(), kind: "receive", quantityMilliunits: 200000, reason: "Opening stock" });
     const before = await service.list(fixture.shopId, fixture.ownerId);
     await assert.rejects(fixture.database.connection.begin(async (tx) => {
       const [order] = await tx`insert into orders(shop_id,daily_no,business_date) values (${fixture.shopId},2,'2026-10-23') returning id`;

@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Inject,
   Injectable,
   NotFoundException,
@@ -239,10 +240,12 @@ export class MembersService {
         where id = ${memberId}::uuid and shop_id = ${shopId}::uuid and deleted_at is null
         limit 1
       `;
+      if (!member) { throw new NotFoundException("Member not found"); }
       const [actor] = await tx<{ id: string }[]>`
-        select id::text as id from staff where id = ${staffId}::uuid and shop_id = ${shopId}::uuid limit 1
+        select id::text as id from staff where id = ${staffId}::uuid and shop_id = ${shopId}::uuid
+          and is_active = true and role in ('owner','manager') limit 1
       `;
-      if (!member || !actor) { throw new NotFoundException("Member or staff not found"); }
+      if (!actor) { throw new ForbiddenException("Active shop owner or manager required"); }
       const state = await resolveSharedLoyalty(tx, shopId, memberId);
       if (!state) { throw new NotFoundException("Member not found"); }
       await tx`

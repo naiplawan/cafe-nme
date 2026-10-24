@@ -26,6 +26,8 @@ const CHECKOUT_MESSAGES: Record<CheckoutError["code"], string> = {
   reward_unavailable: "รางวัลนี้ใช้ไปแล้ว",
   reward_ineligible: "ออเดอร์นี้ยังไม่มีเครื่องดื่มที่ใช้รางวัลเป็นส่วนลดได้ กรุณาเพิ่มเครื่องดื่มหรือยกเลิกการใช้รางวัล",
   cash_insufficient: "รับเงินไม่พอ",
+  cash_shift_required: "กรุณาเปิดกะและนับเงินทอนก่อนขายเงินสด",
+  insufficient_recipe_stock: "วัตถุดิบในสูตรไม่พอ กรุณาตรวจยอดสต๊อกก่อนขาย",
   promptpay_not_configured: "ร้านยังไม่ได้ตั้งค่าพร้อมเพย์ในหลังร้าน",
   idempotency_key_reused: "รายการชำระเงินเปลี่ยนไป กรุณากลับไปตรวจสอบออเดอร์",
 };

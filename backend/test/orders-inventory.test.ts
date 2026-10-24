@@ -11,6 +11,10 @@ test("actual checkout consumes recipe exactly once across same-key retries",{ski
  const [p]=await sql`insert into products(shop_id,name,base_price_satang) values(${f.shopId},'Latte',6500) returning id`;
  const [milk]=await sql`insert into ingredients(shop_id,name,unit) values(${f.shopId},'Milk','ml') returning id`;
  await sql`insert into recipe_lines(shop_id,product_id,ingredient_id,quantity_milliunits) values(${f.shopId},${p.id},${milk.id},200000)`;
+ const {InventoryService}=await import("../src/inventory.service.js");
+ await new InventoryService(f.database as never).move(f.shopId,f.managerId,milk.id,{requestId:randomUUID(),kind:"receive",quantityMilliunits:400000,reason:"Opening stock"});
+ const {ShiftsService}=await import("../src/shifts.service.js");
+ await new ShiftsService(f.database as never).open(f.shopId,f.ownerId,{requestId:randomUUID(),openingFloatSatang:0});
  const orders=new OrdersService(f.database as never);
  const input={requestId:randomUUID(),lines:[{productId:p.id,qty:2,modifierIds:[]}],payment:{method:'cash' as const,cashReceivedSatang:13000}};
  const [a,b]=await Promise.all([orders.checkout(f.shopId,f.ownerId,input),orders.checkout(f.shopId,f.ownerId,input)]);assert.equal(a.orderId,b.orderId);

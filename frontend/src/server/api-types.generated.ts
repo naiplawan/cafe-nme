@@ -10448,7 +10448,7 @@ export interface operations {
                     "application/json": components["schemas"]["CheckoutReceiptDto"];
                 };
             };
-            /** @description Invalid checkout or PromptPay is not configured (code: promptpay_not_configured). */
+            /** @description Invalid checkout, missing open cash shift (code: cash_shift_required), or PromptPay is not configured (code: promptpay_not_configured). */
             400: {
                 headers: {
                     [name: string]: unknown;
@@ -10484,7 +10484,7 @@ export interface operations {
                     "application/json": components["schemas"]["ApiErrorDto"];
                 };
             };
-            /** @description The idempotency key was reused with a different checkout (code: idempotency_key_reused). */
+            /** @description The idempotency key was reused with a different checkout (code: idempotency_key_reused), or recipe stock is insufficient (code: insufficient_recipe_stock). */
             409: {
                 headers: {
                     [name: string]: unknown;

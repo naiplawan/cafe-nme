@@ -37,7 +37,7 @@ async function recipes(sql: Connection, shopId: string): Promise<RecipeRow[]> {
     where r.shop_id=${shopId}::uuid`;
 }
 
-/** Call in the checkout transaction. Recipes apply once; stock may become negative. */
+/** Call in the checkout transaction. Recipes apply once and cannot spend stock below zero. */
 export async function deductRecipeStock(tx: TransactionSql, shopId: string, orderId: string,
   lines: { productId: string; qty: number; modifierIds: string[] }[]): Promise<void> {
   ids(shopId, orderId);
@@ -67,9 +67,19 @@ export async function deductRecipeStock(tx: TransactionSql, shopId: string, orde
   }
   const ingredientIds = [...amounts.keys()].sort();
   await tx`select id from ingredients where shop_id=${shopId}::uuid and id=any(${ingredientIds}::uuid[]) order by id for update`;
+  const balances = await tx<{ id: string; onHand: number }[]>`select i.id::text as id,
+      coalesce(sum(m.quantity_milliunits),0)::float8 as "onHand"
+    from ingredients i left join inventory_movements m on m.ingredient_id=i.id and m.shop_id=i.shop_id
+    where i.shop_id=${shopId}::uuid and i.id=any(${ingredientIds}::uuid[]) group by i.id order by i.id`;
+  const onHandById = new Map(balances.map((row) => [row.id, row.onHand]));
   for (const ingredientId of ingredientIds) {
+    const onHand = onHandById.get(ingredientId) ?? 0;
+    const required = amounts.get(ingredientId)!;
+    if (!Number.isSafeInteger(onHand) || onHand < required) {
+      throw new ConflictException({ code: "insufficient_recipe_stock", ingredientId });
+    }
     await tx`insert into inventory_movements(shop_id,ingredient_id,kind,quantity_milliunits,actor_staff_id,reason,order_id)
-      values (${shopId}::uuid,${ingredientId}::uuid,'sale',${-amounts.get(ingredientId)!},${order.staff_id}::uuid,'Recipe consumption',${orderId}::uuid)
+      values (${shopId}::uuid,${ingredientId}::uuid,'sale',${-required},${order.staff_id}::uuid,'Recipe consumption',${orderId}::uuid)
       on conflict (order_id,ingredient_id) where kind='sale' do nothing`;
   }
   await tx`update orders set inventory_deducted_at=clock_timestamp() where id=${orderId}::uuid`;
@@ -171,7 +181,7 @@ export class InventoryService {
     const reason = input.reason.trim();
     return this.database.connection.begin(async (tx) => {
       await requireActor(tx, shopId, actorStaffId, true);
-      await requireShopFeature(tx, shopId, "inventory-write");
+      if (input.kind !== "receive") { await requireShopFeature(tx, shopId, "inventory-write"); }
       await tx`select pg_advisory_xact_lock(hashtextextended(${`${shopId}:stock:${input.requestId}`},0))`;
       const [ingredient] = await tx`select id from ingredients where shop_id=${shopId}::uuid and id=${ingredientId}::uuid for update`;
       if (!ingredient) { throw new NotFoundException("Ingredient not found"); }
@@ -181,6 +191,13 @@ export class InventoryService {
         if (existing.ingredient_id !== ingredientId || existing.actor_staff_id !== actorStaffId || existing.kind !== input.kind
           || existing.quantity !== signed || existing.reason !== reason) { throw new ConflictException("Stock request already used"); }
         return { id: existing.id as string };
+      }
+      if (signed < 0) {
+        const [balance] = await tx<{ onHand: number }[]>`select coalesce(sum(quantity_milliunits),0)::float8 as "onHand"
+          from inventory_movements where shop_id=${shopId}::uuid and ingredient_id=${ingredientId}::uuid`;
+        if (!Number.isSafeInteger(balance.onHand) || balance.onHand < -signed) {
+          throw new ConflictException({ code: "insufficient_inventory_stock" });
+        }
       }
       const [row] = await tx<{ id: string }[]>`insert into inventory_movements(shop_id,ingredient_id,kind,quantity_milliunits,actor_staff_id,reason,request_id)
         values (${shopId}::uuid,${ingredientId}::uuid,${input.kind},${signed},${actorStaffId}::uuid,${reason},${input.requestId}::uuid) returning id::text`;

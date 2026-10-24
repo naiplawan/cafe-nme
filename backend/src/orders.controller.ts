@@ -120,12 +120,12 @@ export class OrdersController {
   @ApiResponse({
     status: 400,
     type: ApiErrorDto,
-    description: 'Invalid checkout or PromptPay is not configured (code: promptpay_not_configured).',
+    description: 'Invalid checkout, missing open cash shift (code: cash_shift_required), or PromptPay is not configured (code: promptpay_not_configured).',
   })
   @ApiResponse({
     status: 409,
     type: ApiErrorDto,
-    description: 'The idempotency key was reused with a different checkout (code: idempotency_key_reused).',
+    description: 'The idempotency key was reused with a different checkout (code: idempotency_key_reused), or recipe stock is insufficient (code: insufficient_recipe_stock).',
   })
   checkout(@Param('shopId', new ParseUUIDPipe()) shopId: string, @Body() body: CheckoutDto) {
     const checkout = parseCheckout(body);

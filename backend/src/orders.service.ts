@@ -267,14 +267,17 @@ export class OrdersService {
         if (input.payment.method === 'promptpay' && !shop.promptpayId && !providerIntentId) {
           throw new CheckoutDomainError('promptpay_not_configured');
         }
+        const [cashShift] = input.payment.method === 'cash'
+          ? await tx<{ id: string }[]>`select id::text from shifts where shop_id=${shopId}::uuid and closed_at is null`
+          : [];
+        if (input.payment.method === 'cash' && !cashShift) {
+          throw new CheckoutDomainError('cash_shift_required');
+        }
         const [numberRow] = await tx<{ max: number | string }[]>`
           select coalesce(max(daily_no), 0) as max from orders
           where shop_id = ${shopId}::uuid and business_date = ${day}
         `;
         const dailyNo = Number(numberRow?.max ?? 0) + 1;
-        const [cashShift] = input.payment.method === 'cash'
-          ? await tx<{ id: string }[]>`select id::text from shifts where shop_id=${shopId}::uuid and closed_at is null`
-          : [];
         const [order] = await tx<{ id: string }[]>`
           insert into orders (shop_id, daily_no, business_date, status, member_id, staff_id,
             subtotal_satang, discount_satang, total_satang, paid_at, checkout_key, checkout_fingerprint, shift_id)

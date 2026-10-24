@@ -89,6 +89,8 @@ describe("self-order drafts", { skip: !process.env.TEST_DATABASE_URL }, () => {
   it("normal checkout settles an accepted draft once across distinct request keys", async () => {
     const draft = await service.submit(fixture.shopId, { ...input(), clientKey: randomUUID(), statusToken: randomBytes(32).toString("hex") });
     await service.decide(fixture.shopId, fixture.baristaId, draft.id, "accepted");
+    const { ShiftsService } = await import("../src/shifts.service.js");
+    await new ShiftsService(fixture.database as never).open(fixture.shopId, fixture.ownerId, { requestId: randomUUID(), openingFloatSatang: 0 });
     const orders = new OrdersService(fixture.database as never);
     const request = { requestId: randomUUID(), selfOrderId: draft.id, expectedTotalSatang: 13000, lines: input().lines, payment: { method: "cash" as const, cashReceivedSatang: 13000 } };
     await assert.rejects(orders.checkout(fixture.shopId, fixture.baristaId, { ...request, expectedTotalSatang: 6500, lines: [{ ...input().lines[0], qty: 1 }] }), ConflictException);

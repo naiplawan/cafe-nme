@@ -9940,7 +9940,7 @@
             }
           },
           "400": {
-            "description": "Invalid checkout or PromptPay is not configured (code: promptpay_not_configured).",
+            "description": "Invalid checkout, missing open cash shift (code: cash_shift_required), or PromptPay is not configured (code: promptpay_not_configured).",
             "content": {
               "application/json": {
                 "schema": {
@@ -9980,7 +9980,7 @@
             }
           },
           "409": {
-            "description": "The idempotency key was reused with a different checkout (code: idempotency_key_reused).",
+            "description": "The idempotency key was reused with a different checkout (code: idempotency_key_reused), or recipe stock is insufficient (code: insufficient_recipe_stock).",
             "content": {
               "application/json": {
                 "schema": {

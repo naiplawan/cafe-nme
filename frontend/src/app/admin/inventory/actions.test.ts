@@ -1,5 +1,7 @@
 import { beforeEach, expect, it, vi } from "vitest";
-const api = vi.hoisted(() => ({ createIngredient: vi.fn(), moveInventory: vi.fn(), saveRecipe: vi.fn(), setInventoryThreshold: vi.fn(), session: vi.fn() }));
+const api = vi.hoisted(() => ({ createIngredient: vi.fn(), moveInventory: vi.fn(), saveRecipe: vi.fn(), setInventoryThreshold: vi.fn(), session: vi.fn(),
+  InventoryApiError: class InventoryApiError extends Error { constructor(readonly status: number, readonly code: string | null) { super("Inventory request failed"); } },
+}));
 vi.mock("@/server/inventory", () => api);
 vi.mock("@/lib/auth", () => ({ requireStaff: api.session }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
@@ -30,6 +32,17 @@ it("rejects excessive precision and unauthorized mutation", async () => {
   form.set("quantity", "1");
   expect(await moveInventoryAction(null, form)).toMatchObject({ success: false });
   expect(api.moveInventory).not.toHaveBeenCalled();
+});
+it("explains a definite stock underflow rejection without asking staff to retry unchanged", async () => {
+  const { moveInventoryAction } = await import("./actions");
+  const form = new FormData();
+  form.set("ingredientId", ingredientId); form.set("requestId", targetId);
+  form.set("kind", "waste"); form.set("quantity", "1.001"); form.set("reason", "Spill");
+  api.moveInventory.mockRejectedValueOnce(new api.InventoryApiError(409, "insufficient_inventory_stock"));
+  expect(await moveInventoryAction(null, form)).toEqual({
+    success: false,
+    message: "จำนวนที่ตัดมากกว่ายอดคงเหลือ ตรวจยอดแล้วแก้จำนวนก่อนบันทึก",
+  });
 });
 it("saves nonzero recipe quantities while allowing omitted ingredients to remove lines", async () => {
   const { saveRecipeAction } = await import("./actions");

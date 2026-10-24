@@ -4,6 +4,7 @@ import { eq, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { categories, members, modifierGroups, modifiers, productModifierGroups, products, rewards, shops, staff, stampLedger } from "@/db/schema";
 import { checkout, voidOrder, type CheckoutError } from "./orders";
+import { openShift } from "./shifts";
 import { getOrder } from "./orders";
 import { getMemberSummary } from "./loyalty";
 
@@ -15,6 +16,7 @@ describe("orders integration", () => {
   let modifierId: string;
   let memberId: string;
   let unlockedRewardId: string;
+  let shiftOpened = false;
 
   beforeAll(async () => {
     const [shop] = await db.insert(shops).values({ name: "Orders Test", slug, promptpayId: "0812345678", stampGoal: 3, receiptFooter: "ขอบคุณ" }).returning();
@@ -46,6 +48,10 @@ describe("orders integration", () => {
   });
 
   it("reprices from the database, numbers daily orders, gives change, and earns stamps/reward", async () => {
+    if (!shiftOpened) {
+      await openShift(shopId, staffId, { requestId: randomUUID(), openingFloatSatang: 0 });
+      shiftOpened = true;
+    }
     const result = await checkout({ shopId, staffId }, { lines: [{ productId, qty: 3, modifierIds: [modifierId], note: "  ไม่หวาน " }], memberId,
       payment: { method: "cash", cashReceivedSatang: 20_000 } });
     expect(result.subtotalSatang).toBe(18_000);

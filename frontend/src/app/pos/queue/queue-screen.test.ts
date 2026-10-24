@@ -1,13 +1,13 @@
 // @vitest-environment jsdom
 import { createElement } from "react";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 const api = vi.hoisted(() => ({ loadQueueAction: vi.fn(), advancePreparationAction: vi.fn() }));
 vi.mock("./actions", () => api);
 import { QueueScreen } from "./queue-screen";
 const initial = [{ id: "order", dailyNo: 7, status: "received" as const, updatedAt: null, items: [{ id: "item", name: "Coffee", qty: 2, note: "No ice", modifiers: ["Oat milk"] }] }];
 beforeEach(() => { vi.resetAllMocks(); });
-afterEach(cleanup);
+afterEach(() => { cleanup(); vi.useRealTimers(); vi.restoreAllMocks(); });
 it("shows queue number, quantities, modifiers and preparation notes", () => {
   render(createElement(QueueScreen, { initial }));
   expect(screen.getByRole("heading", { name: "#007" })).toBeTruthy();
@@ -43,4 +43,84 @@ it("refreshes after a stale transition instead of optimistically advancing", asy
   fireEvent.click(screen.getByRole("button", { name: "เริ่มทำ" }));
   await waitFor(() => expect(screen.getByText("พร้อมรับแล้ว")).toBeTruthy());
   expect(screen.queryByRole("button", { name: "พร้อมเสิร์ฟ" })).toBeNull();
+});
+it("automatically shows new orders and status changes made on another device", async () => {
+  vi.useFakeTimers();
+  api.loadQueueAction.mockResolvedValue({ ok: true, rows: [
+    { ...initial[0], status: "ready" },
+    { ...initial[0], id: "new-order", dailyNo: 8 },
+  ] });
+  render(createElement(QueueScreen, { initial }));
+
+  await act(() => vi.advanceTimersByTimeAsync(5000));
+
+  expect(screen.getByRole("heading", { name: "#008" })).toBeTruthy();
+  expect(screen.getByText("พร้อมรับแล้ว")).toBeTruthy();
+});
+it("does not overlap a slow refresh with another poll or a preparation change", async () => {
+  vi.useFakeTimers();
+  let resolveRefresh!: (value: { ok: true; rows: typeof initial }) => void;
+  api.loadQueueAction.mockImplementation(() => new Promise((resolve) => { resolveRefresh = resolve; }));
+  render(createElement(QueueScreen, { initial }));
+
+  await act(() => vi.advanceTimersByTimeAsync(15_000));
+  fireEvent.click(screen.getByRole("button", { name: "เริ่มทำ" }));
+  expect(api.loadQueueAction).toHaveBeenCalledTimes(1);
+  expect(api.advancePreparationAction).not.toHaveBeenCalled();
+
+  await act(async () => { resolveRefresh({ ok: true, rows: [] }); });
+  expect(screen.getByText("ไม่มีคิววันนี้")).toBeTruthy();
+});
+it("keeps the last queue on a polling failure and clears the error after automatic recovery", async () => {
+  vi.useFakeTimers();
+  api.loadQueueAction.mockRejectedValueOnce(new Error("offline"))
+    .mockResolvedValueOnce({ ok: true, rows: [{ ...initial[0], status: "ready" }] });
+  render(createElement(QueueScreen, { initial }));
+
+  await act(() => vi.advanceTimersByTimeAsync(5000));
+  expect(screen.getByRole("alert")).toBeTruthy();
+  expect(screen.getByRole("heading", { name: "#007" })).toBeTruthy();
+
+  await act(() => vi.advanceTimersByTimeAsync(5000));
+  expect(screen.queryByRole("alert")).toBeNull();
+  expect(screen.getByText("พร้อมรับแล้ว")).toBeTruthy();
+});
+it("pauses polling while hidden or offline and refreshes when the screen can reconnect", async () => {
+  vi.useFakeTimers();
+  const visibility = vi.spyOn(document, "visibilityState", "get").mockReturnValue("hidden");
+  const online = vi.spyOn(navigator, "onLine", "get").mockReturnValue(false);
+  api.loadQueueAction.mockResolvedValueOnce({ ok: true, rows: [] })
+    .mockResolvedValueOnce({ ok: true, rows: [{ ...initial[0], status: "ready" }] });
+  render(createElement(QueueScreen, { initial }));
+
+  await act(() => vi.advanceTimersByTimeAsync(10_000));
+  expect(api.loadQueueAction).not.toHaveBeenCalled();
+  visibility.mockReturnValue("visible");
+  await act(async () => { document.dispatchEvent(new Event("visibilitychange")); });
+  expect(api.loadQueueAction).not.toHaveBeenCalled();
+
+  online.mockReturnValue(true);
+  await act(async () => { window.dispatchEvent(new Event("online")); });
+  expect(screen.getByText("ไม่มีคิววันนี้")).toBeTruthy();
+  visibility.mockReturnValue("hidden");
+  await act(() => vi.advanceTimersByTimeAsync(10_000));
+  expect(api.loadQueueAction).toHaveBeenCalledTimes(1);
+  visibility.mockReturnValue("visible");
+  await act(async () => { document.dispatchEvent(new Event("visibilitychange")); });
+  expect(screen.getByText("พร้อมรับแล้ว")).toBeTruthy();
+});
+it("stops polling and reconnect listeners after leaving the queue screen", async () => {
+  vi.useFakeTimers();
+  api.loadQueueAction.mockResolvedValue({ ok: true, rows: [] });
+  const { unmount } = render(createElement(QueueScreen, { initial }));
+  await act(() => vi.advanceTimersByTimeAsync(5000));
+  expect(screen.getByText("ไม่มีคิววันนี้")).toBeTruthy();
+  unmount();
+
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(10_000);
+    window.dispatchEvent(new Event("online"));
+    document.dispatchEvent(new Event("visibilitychange"));
+  });
+  expect(api.loadQueueAction).toHaveBeenCalledTimes(1);
 });

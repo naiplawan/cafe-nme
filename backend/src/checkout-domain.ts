@@ -7,6 +7,7 @@ export type CheckoutFailure =
   | 'reward_unavailable'
   | 'reward_ineligible'
   | 'cash_insufficient'
+  | 'cash_shift_required'
   | 'promptpay_not_configured';
 
 export const MAX_CHECKOUT_UNITS = 500;

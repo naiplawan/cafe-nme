@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireStaff } from "@/lib/auth";
 import { logger } from "@/lib/logger";
-import { createIngredient, moveInventory, saveRecipe, setInventoryThreshold } from "@/server/inventory";
+import { createIngredient, InventoryApiError, moveInventory, saveRecipe, setInventoryThreshold } from "@/server/inventory";
 
 export type InventoryActionState = { success: boolean; message: string } | null;
 const amount = z.string().regex(/^-?\d+(\.\d{1,3})?$/).transform((value) => {
@@ -47,7 +47,13 @@ export async function moveInventoryAction(_previous: InventoryActionState, form:
   if (!parsed.success || parsed.data.quantityMilliunits === 0 || (parsed.data.kind !== "adjust" && parsed.data.quantityMilliunits < 0)) { return invalid; }
   const { ingredientId, ...input } = parsed.data;
   try { await moveInventory(session.shopId, session.staff.id, ingredientId, input); }
-  catch (error) { logger.error({ err: error, shopId: session.shopId }, "Stock movement failed"); return { success: false, message: "ยังไม่ทราบผล กรุณาลองส่งรายการเดิมด้วยจำนวนและเหตุผลเดิมอีกครั้ง" }; }
+  catch (error) {
+    if (error instanceof InventoryApiError && error.code === "insufficient_inventory_stock") {
+      return { success: false, message: "จำนวนที่ตัดมากกว่ายอดคงเหลือ ตรวจยอดแล้วแก้จำนวนก่อนบันทึก" };
+    }
+    logger.error({ err: error, shopId: session.shopId }, "Stock movement failed");
+    return { success: false, message: "ยังไม่ทราบผล กรุณาลองส่งรายการเดิมด้วยจำนวนและเหตุผลเดิมอีกครั้ง" };
+  }
   revalidatePath("/admin/inventory");
   return { success: true, message: "บันทึกการเคลื่อนไหวแล้ว" };
 }

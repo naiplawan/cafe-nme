@@ -73,6 +73,8 @@ before(async () => {
     returning id::text as id
   `;
   staffId = staff.id;
+  await database`insert into shifts (shop_id, opened_by, opening_request_id, opening_float_satang)
+    values (${shopId}::uuid, ${staffId}::uuid, ${randomUUID()}::uuid, 0)`;
   const [product] = await database`
     insert into products (shop_id, name, base_price_satang, is_active, earns_stamp, sold_out)
     values (${shopId}::uuid, 'Test coffee', 5000, true, true, false)

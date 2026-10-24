@@ -4,7 +4,7 @@ import { after, before, describe, it } from "node:test";
 import { BadRequestException, ConflictException, ForbiddenException, NotFoundException } from "@nestjs/common";
 import { createPaymentSettingsFixture, type PaymentSettingsFixture } from "./payment-settings-fixture.js";
 
-describe("cash drawer shifts", { skip: !process.env.TEST_DATABASE_URL }, () => {
+describe("cash drawer shifts", { skip: !process.env.TEST_DATABASE_URL, concurrency: false }, () => {
   let fixture: PaymentSettingsFixture;
   let service: import("../src/shifts.service.js").ShiftsService;
   let shiftId: string;
@@ -14,6 +14,20 @@ describe("cash drawer shifts", { skip: !process.env.TEST_DATABASE_URL }, () => {
     service = new ShiftsService(fixture.database as never);
   });
   after(async () => { await fixture?.dispose(); });
+
+  it("rejects cash checkout without an open shift instead of creating uncounted cash", async () => {
+    const { OrdersService } = await import("../src/orders.service.js");
+    const orders = new OrdersService(fixture.database as never);
+    const sql = fixture.database.connection;
+    const [product] = await sql`insert into products(shop_id,name,base_price_satang)
+      values (${fixture.shopId},'No-shift coffee',6500) returning id`;
+    const input = { requestId: randomUUID(), lines: [{ productId: product.id as string, qty: 1, modifierIds: [] }],
+      payment: { method: "cash" as const, cashReceivedSatang: 6500 } };
+
+    await assert.rejects(orders.checkout(fixture.shopId, fixture.baristaId, input), BadRequestException);
+    const [count] = await sql`select count(*)::int as n from orders where shop_id=${fixture.shopId}`;
+    assert.equal(count.n, 0);
+  });
 
   it("serializes concurrent openings into one active drawer and replays the opening request", async () => {
     const input = { requestId: randomUUID(), openingFloatSatang: 10000 };
@@ -104,16 +118,23 @@ describe("cash drawer shifts", { skip: !process.env.TEST_DATABASE_URL }, () => {
     const opened = await service.open(fixture.shopId, fixture.ownerId, { requestId: randomUUID(), openingFloatSatang: 500 });
     await assert.rejects(service.close(fixture.shopId, fixture.baristaId, opened.id,
       { requestId: randomUUID(), countedCashSatang: 500 }), ForbiddenException);
-    const [closed, receipt] = await Promise.all([
+    const [closedResult, checkoutResult] = await Promise.allSettled([
       service.close(fixture.shopId, fixture.ownerId, opened.id, { requestId: randomUUID(), countedCashSatang: 500 }),
       orders.checkout(fixture.shopId, fixture.baristaId, {
         requestId: randomUUID(), lines: [{ productId: product.id, qty: 1, modifierIds: [] }],
         payment: { method: "cash", cashReceivedSatang: 6500 },
       }),
     ]);
-    const [order] = await fixture.database.connection`select shift_id from orders where id=${receipt.orderId}`;
-    assert.equal(closed.expectedCashSatang, order.shift_id === opened.id ? 7000 : 500);
-    assert.ok(order.shift_id === null || order.shift_id === opened.id);
+    assert.equal(closedResult.status, "fulfilled");
+    if (closedResult.status !== "fulfilled") { return; }
+    if (checkoutResult.status === "fulfilled") {
+      const [order] = await fixture.database.connection`select shift_id from orders where id=${checkoutResult.value.orderId}`;
+      assert.equal(order.shift_id, opened.id);
+      assert.equal(closedResult.value.expectedCashSatang, 7000);
+    } else {
+      assert.ok(checkoutResult.reason instanceof BadRequestException);
+      assert.equal(closedResult.value.expectedCashSatang, 500);
+    }
   });
 
 });

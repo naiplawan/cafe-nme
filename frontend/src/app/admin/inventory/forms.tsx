@@ -22,18 +22,18 @@ export function CreateIngredientForm() {
   </form>;
 }
 
-export function StockMovementForm({ ingredient, requestId }: { ingredient: InventoryIngredient; requestId: string }) {
+export function StockMovementForm({ ingredient, requestId, receiveOnly = false }: { ingredient: InventoryIngredient; requestId: string; receiveOnly?: boolean }) {
   const [state, action, pending] = useActionState(moveInventoryAction, null);
   return <form action={action} className="grid gap-3 rounded-lg bg-muted/30 p-3 sm:grid-cols-2">
     <input type="hidden" name="ingredientId" value={ingredient.id} />
     <input type="hidden" name="requestId" value={requestId} />
-    <label className="grid gap-1">ประเภท<select name="kind" disabled={pending} className={fieldClass}>
+    {receiveOnly ? <input type="hidden" name="kind" value="receive" /> : <label className="grid gap-1">ประเภท<select name="kind" disabled={pending} className={fieldClass}>
       <option value="receive">รับเข้า</option><option value="waste">ของเสีย / หก</option><option value="adjust">ปรับยอด (+ / −)</option>
-    </select></label>
-    <label className="grid gap-1">จำนวน ({ingredient.unit})<input name="quantity" type="number" step="0.001" required disabled={pending} className={fieldClass} /></label>
+    </select></label>}
+    <label className="grid gap-1">จำนวน ({ingredient.unit})<input name="quantity" type="number" min={receiveOnly ? "0.001" : undefined} step="0.001" required disabled={pending} className={fieldClass} /></label>
     <label className="grid gap-1 sm:col-span-2">เหตุผล<input name="reason" required maxLength={500} disabled={pending} className={fieldClass} /></label>
-    <p className="text-sm text-muted-foreground sm:col-span-2">รับเข้าและของเสียใช้จำนวนบวก การปรับยอดคือจำนวนที่เพิ่มหรือลดจากยอดปัจจุบัน</p>
-    <button type="submit" disabled={pending} className={buttonClass}>{pending ? "กำลังบันทึก…" : "บันทึกการเคลื่อนไหว"}</button>
+    <p className="text-sm text-muted-foreground sm:col-span-2">{receiveOnly ? "รับเข้าใช้จำนวนบวกเพื่อให้ POS ใช้งานต่อได้" : "รับเข้าและของเสียใช้จำนวนบวก การปรับยอดคือจำนวนที่เพิ่มหรือลดจากยอดปัจจุบัน"}</p>
+    <button type="submit" disabled={pending} className={buttonClass}>{pending ? "กำลังบันทึก…" : receiveOnly ? "บันทึกรับเข้า" : "บันทึกการเคลื่อนไหว"}</button>
     <Message state={state} />
   </form>;
 }
@@ -72,7 +72,7 @@ export function RecipeEditor({ inventory }: { inventory: InventoryState }) {
   const target = inventory.targets.find((item) => `${item.kind}:${item.id}` === selected);
   return <section className="rounded-xl border bg-card p-4">
     <h2 className="text-lg font-semibold">สูตรวัตถุดิบ</h2>
-    <p className="my-2 text-sm text-muted-foreground">สูตรตัวเลือกจะบวกเพิ่มจากสูตรเมนูหลัก เช่น เพิ่มช็อตกาแฟ สต็อกติดลบจะเตือนแต่ไม่หยุดการขาย</p>
+    <p className="my-2 text-sm text-muted-foreground">สูตรตัวเลือกจะบวกเพิ่มจากสูตรเมนูหลัก เช่น เพิ่มช็อตกาแฟ การขายจะหยุดเมื่อวัตถุดิบไม่พอ รับวัตถุดิบเข้าได้แม้หมด Pro</p>
     <label className="grid gap-1">เลือกเมนูหรือตัวเลือก<select value={selected} onChange={(event) => setSelected(event.target.value)} className={fieldClass}>
       {inventory.targets.map((item) => <option key={`${item.kind}:${item.id}`} value={`${item.kind}:${item.id}`}>{item.kind === "modifier" ? "ตัวเลือก: " : "เมนู: "}{item.name}</option>)}
     </select></label>

@@ -36,6 +36,8 @@ export class CheckoutError extends Error {
     | 'reward_unavailable'
     | 'reward_ineligible'
     | 'cash_insufficient'
+    | 'cash_shift_required'
+    | 'insufficient_recipe_stock'
     | 'promptpay_not_configured'
     | 'idempotency_key_reused'
     | 'self_order_unavailable';
@@ -140,6 +142,8 @@ async function request<T>(path: string, schema: z.ZodType<T>, init?: RequestInit
         'reward_unavailable',
         'reward_ineligible',
         'cash_insufficient',
+        'cash_shift_required',
+        'insufficient_recipe_stock',
         'promptpay_not_configured',
         'idempotency_key_reused',
         'self_order_unavailable',
