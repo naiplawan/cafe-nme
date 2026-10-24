@@ -24,9 +24,11 @@ versioning (pre-1.0: minor = features, patch = fixes).
 - Follow `docs/operations-readiness.md` for the isolated restore drill and operator alert receiver. Local restore evidence does not establish production retention, alert delivery, or recovery objectives.
 
 ### Security
+- Override vulnerable transitive `body-parser`, `multer`, and `fast-uri` versions with patched releases required by current advisories.
 - Upgrade Next.js to 16.4.1 to address the reported App Router denial-of-service advisory.
 
 ### Fixed
+- Give each shop a unique setup trial jump target without calling a React hook inside an async server page.
 - Bind PromptPay save, clear, and preview actions to the branch displayed by the form so stale tabs cannot change another branch's settings.
 - Preserve loyalty rewards when an order has no eligible item or would receive no discount.
 - Handle empty HTTP 200 responses from nullable API lookups as missing records instead of JSON parse errors.

@@ -1,6 +1,5 @@
 import Image from "next/image";
 import Link from "next/link";
-import { useId } from "react";
 import { requireStaff } from "@/lib/auth";
 import { getPosMenu } from "@/server/catalog";
 import { getAdminDashboardData, getShopProfile } from "@/server/admin-data";
@@ -10,8 +9,8 @@ import { AdminPageHeader } from "../_components/page-header";
 import { TrialForm } from "./trial-form";
 export const instant = false;
 export default async function SetupPage() {
-  const trialId = useId();
   const session = await requireStaff();
+  const trialId = `trial-checkout-${session.shopId}`;
   if (session.staff.role === "barista") { return <AdminAccessDenied message="เฉพาะเจ้าของร้านหรือผู้จัดการที่ทดลองออกบิลได้" />; }
   const [menu, profile, dashboard] = await Promise.all([getPosMenu(session.shopId), getShopProfile(session.shopId), getAdminDashboardData(session.shopId)]);
   const qr = profile ? await publicMenuQr(profile.slug).catch(() => null) : null;

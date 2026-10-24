@@ -9,3 +9,6 @@ allowBuilds:
   unrs-resolver: false
 overrides:
   esbuild@0.18.20: ^0.25.4
+  body-parser: 2.4.0
+  multer: 2.5.0
+  fast-uri: 3.1.9
