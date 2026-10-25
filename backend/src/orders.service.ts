@@ -1,4 +1,4 @@
-import { deductRecipeStock } from "./inventory.service.js";
+import { deductRecipeStock, reservePromptPayRecipeStock } from "./inventory.service.js";
 import { createHash, randomUUID } from 'node:crypto';
 import { BadRequestException, ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import type { TransactionSql } from 'postgres';
@@ -204,6 +204,41 @@ export class OrdersService {
     }
   }
 
+  async reservePromptPayStock(shopId: string, staffId: string, input: CheckoutInput): Promise<{ expiresAt: string }> {
+    if (!input.requestId || input.payment.method !== 'promptpay' || !input.lines.length
+      || input.lines.length > 100 || input.lines.reduce((total, line) => total + line.qty, 0) > MAX_CHECKOUT_UNITS) {
+      throw new BadRequestException({ code: 'invalid_checkout' });
+    }
+    const requestId = requestIdForCheckout(input);
+    const fingerprint = checkoutFingerprint(staffId, input);
+    try {
+      return await this.database.connection.begin(async (tx) => {
+        const [shop] = await tx<{ promptpayId: string | null }[]>`
+          select promptpay_id as "promptpayId" from shops where id=${shopId}::uuid for share`;
+        if (!shop) throw new NotFoundException('Shop not found');
+        if (!shop.promptpayId) throw new CheckoutDomainError('promptpay_not_configured');
+        const [actor] = await tx`select id from staff where id=${staffId}::uuid and shop_id=${shopId}::uuid and is_active=true`;
+        if (!actor) throw new NotFoundException('Staff not found');
+        await tx`select pg_advisory_xact_lock(hashtextextended(${`${shopId.toLowerCase()}:${requestId}`}, 0))`;
+        const draftTotal = input.selfOrderId
+          ? await lockSelfOrderForCheckout(tx, shopId, staffId, input.selfOrderId, input.lines)
+          : null;
+        const priced = await checkoutPrice(tx, shopId, input);
+        if (draftTotal !== null && draftTotal !== priced.totalSatang) {
+          throw new ConflictException({ code: 'self_order_unavailable' });
+        }
+        if (input.expectedTotalSatang !== undefined && input.expectedTotalSatang !== priced.totalSatang) {
+          throw new CheckoutDomainError('price_changed');
+        }
+        const expiresAt = await reservePromptPayRecipeStock(tx, shopId, staffId, requestId, fingerprint, input.lines);
+        return { expiresAt };
+      });
+    } catch (error) {
+      if (error instanceof CheckoutDomainError) throw new BadRequestException({ code: error.code });
+      throw error;
+    }
+  }
+
   async checkout(shopId: string, staffId: string, input: CheckoutInput, providerIntentId?: string): Promise<CheckoutReceipt> {
     if (providerIntentId && (!input.selfOrderId || input.requestId !== providerIntentId || input.payment.method !== 'promptpay' || input.memberId || input.redeemRewardId)) {
       throw new ConflictException('Invalid provider settlement context');
@@ -247,6 +282,28 @@ export class OrdersService {
             throw new ConflictException({ code: 'idempotency_key_reused' });
           }
           return { ...stored, replayed: true };
+        }
+
+        let stockReservationRequestId: string | undefined;
+        if (input.payment.method === 'promptpay' && !providerIntentId) {
+          const [hold] = await tx<{ staffId: string; fingerprint: string; expiresAt: Date }[]>`
+            select staff_id::text as "staffId", fingerprint, expires_at as "expiresAt"
+            from promptpay_stock_holds where shop_id=${shopId}::uuid and request_id=${requestId}::uuid for update`;
+          if (hold && (hold.staffId !== staffId || hold.fingerprint !== fingerprint)) {
+            throw new ConflictException({ code: 'idempotency_key_reused' });
+          }
+          if (hold && hold.expiresAt <= new Date()) {
+            throw new ConflictException({ code: 'promptpay_stock_reservation_expired' });
+          }
+          stockReservationRequestId = requestId;
+        } else if (input.payment.method === 'cash') {
+          const [hold] = await tx<{ staffId: string; fingerprint: string; expiresAt: Date }[]>`
+            select staff_id::text as "staffId", fingerprint, expires_at as "expiresAt"
+            from promptpay_stock_holds where shop_id=${shopId}::uuid and request_id=${requestId}::uuid for update`;
+          const promptPayFingerprint = checkoutFingerprint(staffId, { ...input, payment: { method: 'promptpay' } });
+          if (hold && hold.staffId === staffId && hold.fingerprint === promptPayFingerprint && hold.expiresAt > new Date()) {
+            stockReservationRequestId = requestId;
+          }
         }
 
         if (input.selfOrderId) {
@@ -340,7 +397,7 @@ export class OrdersService {
               select ${shopId}::uuid, ${member.id}::uuid, ${order.id}::uuid, ${member.loyalty.newExpiresAt} from generate_series(1, ${rewardsCreated})`;
           }
         }
-        await deductRecipeStock(tx, shopId, order.id, input.lines);
+        await deductRecipeStock(tx, shopId, order.id, input.lines, stockReservationRequestId);
         const receipt: CheckoutReceipt = {
           orderId: order.id,
           dailyNo,

@@ -53,3 +53,13 @@ it("saves nonzero recipe quantities while allowing omitted ingredients to remove
   expect(api.saveRecipe).toHaveBeenCalledWith("shop", "manager", "product", targetId,
     [{ ingredientId, quantityMilliunits: 18005 }]);
 });
+it("explains that a recipe change waits for an active PromptPay stock reservation", async () => {
+  const { saveRecipeAction } = await import("./actions");
+  const form = new FormData(); form.set("kind", "product"); form.set("targetId", targetId);
+  form.set(`quantity:${ingredientId}`, "18");
+  api.saveRecipe.mockRejectedValueOnce(new api.InventoryApiError(409, "promptpay_stock_reservation_active"));
+  expect(await saveRecipeAction(null, form)).toEqual({
+    success: false,
+    message: "มีรายการพร้อมเพย์ที่จองวัตถุดิบไว้ กรุณารอให้รับเงินเสร็จหรือหมดเวลาจอง (ไม่เกิน 30 นาที) แล้วบันทึกสูตรอีกครั้ง",
+  });
+});

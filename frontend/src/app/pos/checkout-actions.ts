@@ -7,7 +7,7 @@ import { sendOperationalAlert } from "@/lib/operational-alert";
 import { logger } from "@/lib/logger";
 import { formatBaht } from "@/lib/money";
 import { getPosPromptPayConfig, getPosReceiptRecipient } from "@/server/pos-operations";
-import { CheckoutError, quoteCheckout, checkout, getOrder, type CheckoutInput, type CheckoutResult } from "@/server/orders";
+import { CheckoutError, quoteCheckout, reservePromptPayStock, checkout, getOrder, type CheckoutInput, type CheckoutResult } from "@/server/orders";
 import { requirePosStaff } from "@/server/pos-session";
 import { pushText } from "@/server/line";
 import type { CheckoutSessionScope } from "@/lib/checkout-attempt";
@@ -28,6 +28,7 @@ const CHECKOUT_MESSAGES: Record<CheckoutError["code"], string> = {
   cash_insufficient: "รับเงินไม่พอ",
   cash_shift_required: "กรุณาเปิดกะและนับเงินทอนก่อนขายเงินสด",
   insufficient_recipe_stock: "วัตถุดิบในสูตรไม่พอ กรุณาตรวจยอดสต๊อกก่อนขาย",
+  promptpay_stock_reservation_expired: "เวลาจองวัตถุดิบหมดแล้ว กรุณาตรวจสอบรายการโอนและประสานผู้จัดการก่อนทำรายการใหม่",
   promptpay_not_configured: "ร้านยังไม่ได้ตั้งค่าพร้อมเพย์ในหลังร้าน",
   idempotency_key_reused: "รายการชำระเงินเปลี่ยนไป กรุณากลับไปตรวจสอบออเดอร์",
 };
@@ -106,5 +107,20 @@ export async function quoteCheckoutAction(input: Omit<CheckoutInput, "payment">)
   } catch (error) {
     logger.error({ err: error, shopId: session.shopId }, "POS quote failed");
     return { ok: false as const, message: error instanceof CheckoutError ? CHECKOUT_MESSAGES[error.code] : "ตรวจสอบราคาไม่สำเร็จ กรุณาลองใหม่" };
+  }
+}
+
+export async function reservePromptPayStockAction(input: CheckoutInput & { expectedScope?: CheckoutSessionScope }) {
+  const session = await requirePosStaff();
+  const { expectedScope, ...checkoutInput } = input;
+  if (!expectedScope || expectedScope.shopId !== session.shopId || expectedScope.staffId !== session.staff.id
+    || expectedScope.deviceId !== session.deviceId) {
+    return { ok: false as const, message: ORIGINAL_SESSION_MESSAGE };
+  }
+  try {
+    return { ok: true as const, reservation: await reservePromptPayStock({ shopId: session.shopId, staffId: session.staff.id }, checkoutInput) };
+  } catch (error) {
+    logger.error({ err: error, shopId: session.shopId }, "PromptPay stock reservation failed");
+    return { ok: false as const, message: error instanceof CheckoutError ? CHECKOUT_MESSAGES[error.code] : "จองวัตถุดิบไม่สำเร็จ กรุณาลองใหม่" };
   }
 }

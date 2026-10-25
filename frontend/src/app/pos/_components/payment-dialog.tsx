@@ -5,7 +5,7 @@ import { formatBaht, parseBahtToSatang } from "@/lib/money";
 import { suggestCashAmounts } from "@/lib/pricing";
 import type { CheckoutInput, CheckoutResult, CheckoutQuote } from "@/server/orders";
 import { submitBrowserCheckout } from "@/lib/browser-checkout";
-import { checkoutAction, quoteCheckoutAction } from "@/app/pos/checkout-actions";
+import { checkoutAction, quoteCheckoutAction, reservePromptPayStockAction } from "@/app/pos/checkout-actions";
 import { gsap, MOTION, prefersReducedMotion, useGSAP } from "@/components/motion/gsap";
 import { Keypad } from "./keypad";
 import { PromptPayQr } from "./promptpay-qr";
@@ -82,6 +82,8 @@ export function PaymentDialog({ orderLabel, lines: cartLines, subtotalSatang: ca
   const totalSatang = quote?.totalSatang ?? cartTotal;
   const ready = quote !== null && priceAccepted;
   const [method, setMethod] = useState<PaymentMethod>("cash");
+  const [promptPayRequestId, setPromptPayRequestId] = useState<string | null>(null);
+  const [stockReserved, setStockReserved] = useState(false);
   const [cashInput, setCashInput] = useState("");
   const [pending, setPending] = useState(false);
   const [recovering, setRecovering] = useState(false);
@@ -95,10 +97,56 @@ export function PaymentDialog({ orderLabel, lines: cartLines, subtotalSatang: ca
   const progressRef = useRef<SVGLineElement>(null);
   const attemptRef = useRef<CheckoutAttempt | null>(null);
   const submittingRef = useRef(false);
+  const previousQuoteInput = useRef(quoteInput);
+  useEffect(() => {
+    if (previousQuoteInput.current === quoteInput) return;
+    previousQuoteInput.current = quoteInput;
+    attemptRef.current = null;
+    setPromptPayRequestId(null);
+    setStockReserved(false);
+  }, [quoteInput]);
   const receivedSatang = parseBahtToSatang(cashInput.replace(/\.$/, "")) ?? 0;
   const changeSatang = receivedSatang - totalSatang;
   const shortBySatang = Math.max(0, -changeSatang);
   const quickAmounts = useMemo(() => suggestCashAmounts(totalSatang), [totalSatang]);
+
+  const reservePromptPay = useCallback(async (requestId: string) => {
+    const result = await reservePromptPayStockAction({
+      ...checkoutInput,
+      requestId,
+      expectedTotalSatang: totalSatang,
+      payment: { method: "promptpay" },
+      expectedScope,
+    });
+    if (!result.ok) throw new Error(result.message);
+  }, [checkoutInput, expectedScope, totalSatang]);
+
+  async function selectPromptPay() {
+    if (!promptpayEnabled || !ready || pending) return;
+    setError(null);
+    setStockReserved(false);
+    const requestId = promptPayRequestId ?? crypto.randomUUID();
+    setPromptPayRequestId(requestId);
+    try {
+      await reservePromptPay(requestId);
+      setStockReserved(true);
+      setMethod("promptpay");
+    } catch (reservationError) {
+      setMethod("promptpay");
+      setError(reservationError instanceof Error ? reservationError.message : "จองวัตถุดิบไม่สำเร็จ กรุณาลองใหม่");
+    }
+  }
+
+  useEffect(() => {
+    if (method !== "promptpay" || !promptPayRequestId || !stockReserved) return;
+    const timer = window.setInterval(() => {
+      void reservePromptPay(promptPayRequestId).catch((reservationError: unknown) => {
+        setStockReserved(false);
+        setError(reservationError instanceof Error ? reservationError.message : "ต่อเวลาจองวัตถุดิบไม่สำเร็จ กรุณาตรวจสอบก่อนรับเงิน");
+      });
+    }, 10 * 60 * 1000);
+    return () => window.clearInterval(timer);
+  }, [method, promptPayRequestId, reservePromptPay, stockReserved]);
 
   useGSAP(() => {
     if (prefersReducedMotion()) return;
@@ -164,6 +212,7 @@ export function PaymentDialog({ orderLabel, lines: cartLines, subtotalSatang: ca
     try {
       const input = { ...checkoutInput, expectedTotalSatang: totalSatang, payment };
       const attempt = checkoutAttempt(input, attemptRef.current);
+      if (promptPayRequestId) attempt.requestId = promptPayRequestId;
       attemptRef.current = attempt;
       const pendingInput = { ...input, requestId: attempt.requestId, expectedScope };
       const response = await submitBrowserCheckout(pendingInput, cartStorageKey, checkoutAction);
@@ -174,6 +223,7 @@ export function PaymentDialog({ orderLabel, lines: cartLines, subtotalSatang: ca
         } else if (response.kind === "rejected") {
           attemptRef.current = null;
           setRecovering(false);
+          if (method === "promptpay") setStockReserved(false);
           setQuoteVersion((version) => version + 1);
         }
         return;
@@ -190,7 +240,7 @@ export function PaymentDialog({ orderLabel, lines: cartLines, subtotalSatang: ca
   }
 
   const isCash = method === "cash";
-  const blocked = !ready || pending || (isCash && receivedSatang < totalSatang);
+  const blocked = !ready || pending || (isCash && receivedSatang < totalSatang) || (!isCash && !stockReserved);
   const changeShort = shortBySatang > 0;
 
   return (
@@ -232,7 +282,7 @@ export function PaymentDialog({ orderLabel, lines: cartLines, subtotalSatang: ca
             <button type="button" role="tab" aria-selected={isCash} onClick={() => { setMethod("cash"); setError(null); }}
               className={`relative z-10 h-[60px] rounded-[14px] text-lg font-bold transition-colors ${isCash ? "text-[#F5EDE3]" : "text-[#3B2A20]"}`}>เงินสด</button>
             <button type="button" role="tab" aria-selected={!isCash} disabled={!promptpayEnabled}
-              onClick={() => { if (promptpayEnabled) { setMethod("promptpay"); setError(null); } }}
+              onClick={() => void selectPromptPay()}
               className={`relative z-10 h-[60px] rounded-[14px] text-lg font-bold transition-colors disabled:cursor-not-allowed disabled:text-[#8A796B] ${isCash ? "text-[#3B2A20]" : "text-[#F5EDE3]"}`}>พร้อมเพย์</button>
           </div>
           {!promptpayEnabled && <p className="-mt-3 text-sm text-[#6B5547]">ยังไม่ได้ตั้งค่าพร้อมเพย์ในหลังร้าน</p>}
@@ -256,7 +306,8 @@ export function PaymentDialog({ orderLabel, lines: cartLines, subtotalSatang: ca
               </div>
               <Keypad value={cashInput} onChange={(next) => setCashInput(next.replace(/^0+(?=\d)/, ""))} maxLength={9} decimal
                 className="w-full sm:w-[min(280px,43%)] content-start" keyClassName="h-[min(72px,9vh)] min-h-[50px]" />
-            </div> : ready ? <PromptPayQr amountSatang={totalSatang} shopName={shopName} /> : null}
+            </div> : ready && stockReserved ? <PromptPayQr amountSatang={totalSatang} shopName={shopName} />
+              : ready ? <p className="rounded-xl bg-amber-100 p-3" role="status">{error ?? "กำลังตรวจสอบและจองวัตถุดิบก่อนแสดง QR…"}</p> : null}
           </div>
 
           </fieldset>

@@ -139,6 +139,13 @@ export class OrdersController {
     return this.orders.quote(shopId, input.staffId, input);
   }
 
+  @Post('reserve-promptpay-stock')
+  @ApiCreatedResponse({ schema: { type: 'object', required: ['expiresAt'], properties: { expiresAt: { type: 'string', format: 'date-time' } } } })
+  reservePromptPayStock(@Param('shopId', new ParseUUIDPipe()) shopId: string, @Body() body: CheckoutDto) {
+    const input = parseCheckout(body);
+    return this.orders.reservePromptPayStock(shopId, input.staffId, input);
+  }
+
   @Get('promptpay-config')
   @ApiOkResponse({ type: PromptPayIdDto, nullable: true })
   getPromptPayId(@Param('shopId', new ParseUUIDPipe()) shopId: string) {

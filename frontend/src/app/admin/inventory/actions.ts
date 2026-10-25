@@ -73,7 +73,13 @@ export async function saveRecipeAction(_previous: InventoryActionState, form: Fo
   }
   if (lines.length > 100) { return invalid; }
   try { await saveRecipe(session.shopId, session.staff.id, target.data.kind, target.data.id, lines); }
-  catch (error) { logger.error({ err: error, shopId: session.shopId }, "Recipe update failed"); return { success: false, message: "บันทึกสูตรไม่สำเร็จ กรุณาตรวจสอบวัตถุดิบแล้วลองใหม่" }; }
+  catch (error) {
+    if (error instanceof InventoryApiError && error.code === "promptpay_stock_reservation_active") {
+      return { success: false, message: "มีรายการพร้อมเพย์ที่จองวัตถุดิบไว้ กรุณารอให้รับเงินเสร็จหรือหมดเวลาจอง (ไม่เกิน 30 นาที) แล้วบันทึกสูตรอีกครั้ง" };
+    }
+    logger.error({ err: error, shopId: session.shopId }, "Recipe update failed");
+    return { success: false, message: "บันทึกสูตรไม่สำเร็จ กรุณาตรวจสอบวัตถุดิบแล้วลองใหม่" };
+  }
   revalidatePath("/admin/inventory");
   return { success: true, message: "บันทึกสูตรสำหรับการขายครั้งถัดไปแล้ว" };
 }

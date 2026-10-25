@@ -38,6 +38,7 @@ export class CheckoutError extends Error {
     | 'cash_insufficient'
     | 'cash_shift_required'
     | 'insufficient_recipe_stock'
+    | 'promptpay_stock_reservation_expired'
     | 'promptpay_not_configured'
     | 'idempotency_key_reused'
     | 'self_order_unavailable';
@@ -144,6 +145,7 @@ async function request<T>(path: string, schema: z.ZodType<T>, init?: RequestInit
         'cash_insufficient',
         'cash_shift_required',
         'insufficient_recipe_stock',
+        'promptpay_stock_reservation_expired',
         'promptpay_not_configured',
         'idempotency_key_reused',
         'self_order_unavailable',
@@ -212,4 +214,12 @@ export async function quoteCheckout(session: { shopId: string; staffId: string }
   return request(`/v1/shops/${encodeURIComponent(session.shopId)}/orders/quote`, quoteSchema, {
     method: 'POST', body: JSON.stringify({ ...input, staffId: session.staffId, payment: { method: 'promptpay' } }),
   });
+}
+
+export async function reservePromptPayStock(session: { shopId: string; staffId: string }, input: CheckoutInput): Promise<{ expiresAt: Date }> {
+  const response = await request(`/v1/shops/${encodeURIComponent(session.shopId)}/orders/reserve-promptpay-stock`,
+    z.object({ expiresAt: dateSchema }).transform(({ expiresAt }) => ({ expiresAt })), {
+      method: 'POST', body: JSON.stringify({ ...input, staffId: session.staffId }),
+    });
+  return response;
 }

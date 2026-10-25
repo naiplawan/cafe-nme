@@ -37,9 +37,74 @@ async function recipes(sql: Connection, shopId: string): Promise<RecipeRow[]> {
     where r.shop_id=${shopId}::uuid`;
 }
 
+export async function reservePromptPayRecipeStock(tx: TransactionSql, shopId: string, staffId: string,
+  requestId: string, fingerprint: string, lines: { productId: string; qty: number; modifierIds: string[] }[]): Promise<string> {
+  ids(shopId, staffId, requestId);
+  const productIds = [...new Set(lines.map((line) => line.productId))];
+  const modifierIds = [...new Set(lines.flatMap((line) => line.modifierIds))];
+  ids(...productIds, ...modifierIds);
+  for (const line of lines) { quantity(line.qty); }
+  const products = await tx`select id from products where shop_id=${shopId}::uuid and id=any(${productIds}::uuid[])`;
+  const modifiers = await tx`select m.id from modifiers m join modifier_groups g on g.id=m.group_id
+    where g.shop_id=${shopId}::uuid and m.id=any(${modifierIds}::uuid[])`;
+  if (products.length !== productIds.length || modifiers.length !== modifierIds.length) { throw new NotFoundException("Recipe target not found"); }
+
+  const configured = await recipes(tx, shopId);
+  const amounts = new Map<string, number>();
+  for (const line of lines) {
+    for (const recipe of configured) {
+      if ((recipe.targetKind === "product" && recipe.targetId === line.productId)
+        || (recipe.targetKind === "modifier" && line.modifierIds.includes(recipe.targetId))) {
+        const amount = (amounts.get(recipe.ingredientId) ?? 0) + recipe.quantityMilliunits * line.qty;
+        if (!Number.isSafeInteger(amount)) { throw new BadRequestException("Recipe quantity exceeds supported range"); }
+        amounts.set(recipe.ingredientId, amount);
+      }
+    }
+  }
+  const ingredientIds = [...amounts.keys()].sort();
+  await tx`select id from ingredients where shop_id=${shopId}::uuid and id=any(${ingredientIds}::uuid[]) order by id for update`;
+  await tx`delete from promptpay_stock_holds where shop_id=${shopId}::uuid and expires_at <= now()`;
+  const [existing] = await tx<{ fingerprint: string; expiresAt: string }[]>`
+    select fingerprint,expires_at::text as "expiresAt" from promptpay_stock_holds
+    where shop_id=${shopId}::uuid and request_id=${requestId}::uuid for update`;
+  if (existing && existing.fingerprint !== fingerprint) { throw new ConflictException({ code: "idempotency_key_reused" }); }
+
+  if (ingredientIds.length) {
+    const balances = await tx<{ id: string; onHand: number; held: number }[]>`select i.id::text as id,
+        coalesce(sum(m.quantity_milliunits),0)::float8 as "onHand",
+        coalesce((select sum(h.quantity_milliunits) from promptpay_stock_hold_items h
+          join promptpay_stock_holds hh on hh.shop_id=h.shop_id and hh.request_id=h.request_id
+          where h.shop_id=i.shop_id and h.ingredient_id=i.id and hh.expires_at>now()
+            and h.request_id<>${requestId}::uuid),0)::float8 as held
+      from ingredients i left join inventory_movements m on m.ingredient_id=i.id and m.shop_id=i.shop_id
+      where i.shop_id=${shopId}::uuid and i.id=any(${ingredientIds}::uuid[]) group by i.id order by i.id`;
+    const balanceById = new Map(balances.map((row) => [row.id, row]));
+    for (const ingredientId of ingredientIds) {
+      const row = balanceById.get(ingredientId);
+      if (!row || !Number.isSafeInteger(row.onHand) || !Number.isSafeInteger(row.held)
+        || row.onHand - row.held < amounts.get(ingredientId)!) {
+        throw new ConflictException({ code: "insufficient_recipe_stock", ingredientId });
+      }
+    }
+  }
+
+  const expiresAt = new Date(Date.now() + 30 * 60 * 1000).toISOString();
+  if (existing) {
+    await tx`update promptpay_stock_holds set expires_at=${expiresAt} where shop_id=${shopId}::uuid and request_id=${requestId}::uuid`;
+  } else {
+    await tx`insert into promptpay_stock_holds(shop_id,request_id,staff_id,fingerprint,expires_at)
+      values (${shopId}::uuid,${requestId}::uuid,${staffId}::uuid,${fingerprint},${expiresAt})`;
+    for (const [ingredientId, amount] of amounts) {
+      await tx`insert into promptpay_stock_hold_items(shop_id,request_id,ingredient_id,quantity_milliunits)
+        values (${shopId}::uuid,${requestId}::uuid,${ingredientId}::uuid,${amount})`;
+    }
+  }
+  return expiresAt;
+}
+
 /** Call in the checkout transaction. Recipes apply once and cannot spend stock below zero. */
 export async function deductRecipeStock(tx: TransactionSql, shopId: string, orderId: string,
-  lines: { productId: string; qty: number; modifierIds: string[] }[]): Promise<void> {
+  lines: { productId: string; qty: number; modifierIds: string[] }[], requestId?: string): Promise<void> {
   ids(shopId, orderId);
   await tx`select id from shops where id=${shopId}::uuid for share`;
   const [order] = await tx`select inventory_deducted_at,staff_id from orders where id=${orderId}::uuid and shop_id=${shopId}::uuid for update`;
@@ -67,20 +132,28 @@ export async function deductRecipeStock(tx: TransactionSql, shopId: string, orde
   }
   const ingredientIds = [...amounts.keys()].sort();
   await tx`select id from ingredients where shop_id=${shopId}::uuid and id=any(${ingredientIds}::uuid[]) order by id for update`;
-  const balances = await tx<{ id: string; onHand: number }[]>`select i.id::text as id,
-      coalesce(sum(m.quantity_milliunits),0)::float8 as "onHand"
+  const balances = await tx<{ id: string; onHand: number; held: number }[]>`select i.id::text as id,
+      coalesce(sum(m.quantity_milliunits),0)::float8 as "onHand",
+      coalesce((select sum(h.quantity_milliunits) from promptpay_stock_hold_items h
+        join promptpay_stock_holds hh on hh.shop_id=h.shop_id and hh.request_id=h.request_id
+        where h.shop_id=i.shop_id and h.ingredient_id=i.id and hh.expires_at>now()
+          and (${requestId ?? null}::uuid is null or h.request_id<>${requestId ?? null}::uuid)),0)::float8 as held
     from ingredients i left join inventory_movements m on m.ingredient_id=i.id and m.shop_id=i.shop_id
     where i.shop_id=${shopId}::uuid and i.id=any(${ingredientIds}::uuid[]) group by i.id order by i.id`;
-  const onHandById = new Map(balances.map((row) => [row.id, row.onHand]));
+  const balanceById = new Map(balances.map((row) => [row.id, row]));
   for (const ingredientId of ingredientIds) {
-    const onHand = onHandById.get(ingredientId) ?? 0;
+    const balance = balanceById.get(ingredientId);
     const required = amounts.get(ingredientId)!;
-    if (!Number.isSafeInteger(onHand) || onHand < required) {
+    if (!balance || !Number.isSafeInteger(balance.onHand) || !Number.isSafeInteger(balance.held)
+      || balance.onHand - balance.held < required) {
       throw new ConflictException({ code: "insufficient_recipe_stock", ingredientId });
     }
     await tx`insert into inventory_movements(shop_id,ingredient_id,kind,quantity_milliunits,actor_staff_id,reason,order_id)
       values (${shopId}::uuid,${ingredientId}::uuid,'sale',${-required},${order.staff_id}::uuid,'Recipe consumption',${orderId}::uuid)
       on conflict (order_id,ingredient_id) where kind='sale' do nothing`;
+  }
+  if (requestId) {
+    await tx`delete from promptpay_stock_holds where shop_id=${shopId}::uuid and request_id=${requestId}::uuid`;
   }
   await tx`update orders set inventory_deducted_at=clock_timestamp() where id=${orderId}::uuid`;
 }
@@ -148,6 +221,8 @@ export class InventoryService {
       await tx`select id from shops where id=${shopId}::uuid for update`;
       await requireActor(tx, shopId, actorStaffId, true);
       await requireShopFeature(tx, shopId, "inventory-write");
+      const [activeHold] = await tx`select request_id from promptpay_stock_holds where shop_id=${shopId}::uuid and expires_at>now() limit 1`;
+      if (activeHold) { throw new ConflictException({ code: "promptpay_stock_reservation_active" }); }
       const targets = kind === "product"
         ? await tx`select id from products where shop_id=${shopId}::uuid and id=${targetId}::uuid for share`
         : await tx`select m.id from modifiers m join modifier_groups g on g.id=m.group_id where g.shop_id=${shopId}::uuid and m.id=${targetId}::uuid for share of m,g`;
@@ -193,9 +268,12 @@ export class InventoryService {
         return { id: existing.id as string };
       }
       if (signed < 0) {
-        const [balance] = await tx<{ onHand: number }[]>`select coalesce(sum(quantity_milliunits),0)::float8 as "onHand"
-          from inventory_movements where shop_id=${shopId}::uuid and ingredient_id=${ingredientId}::uuid`;
-        if (!Number.isSafeInteger(balance.onHand) || balance.onHand < -signed) {
+        const [balance] = await tx<{ onHand: number; held: number }[]>`select
+            coalesce((select sum(quantity_milliunits) from inventory_movements where shop_id=${shopId}::uuid and ingredient_id=${ingredientId}::uuid),0)::float8 as "onHand",
+            coalesce((select sum(h.quantity_milliunits) from promptpay_stock_hold_items h
+              join promptpay_stock_holds hh on hh.shop_id=h.shop_id and hh.request_id=h.request_id
+              where h.shop_id=${shopId}::uuid and h.ingredient_id=${ingredientId}::uuid and hh.expires_at>now()),0)::float8 as held`;
+        if (!Number.isSafeInteger(balance.onHand) || !Number.isSafeInteger(balance.held) || balance.onHand - balance.held < -signed) {
           throw new ConflictException({ code: "insufficient_inventory_stock" });
         }
       }

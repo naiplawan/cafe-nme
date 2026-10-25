@@ -4,6 +4,7 @@ import {
   boolean,
   check,
   customType,
+  foreignKey,
   index,
   integer,
   jsonb,
@@ -500,6 +501,29 @@ export const inventoryMovements = pgTable('inventory_movements', {
   check('inventory_movements_reason_check', sql`length(trim(${t.reason})) between 1 and 500`),
   check('inventory_movements_source_check', sql`(${t.kind} = 'sale' and ${t.orderId} is not null and ${t.requestId} is null and ${t.quantityMilliunits} < 0) or (${t.kind} <> 'sale' and ${t.orderId} is null and ${t.requestId} is not null and ${t.actorStaffId} is not null)`),
   check('inventory_movements_direction_check', sql`(${t.kind} <> 'receive' or ${t.quantityMilliunits} > 0) and (${t.kind} <> 'waste' or ${t.quantityMilliunits} < 0)`),
+]);
+
+export const promptpayStockHolds = pgTable('promptpay_stock_holds', {
+  shopId: shopId(),
+  requestId: uuid('request_id').notNull(),
+  staffId: uuid('staff_id').notNull().references(() => staff.id, { onDelete: 'cascade' }),
+  fingerprint: text('fingerprint').notNull(),
+  expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+  createdAt: createdAt(),
+}, (t) => [
+  primaryKey({ columns: [t.shopId, t.requestId] }),
+  index('promptpay_stock_holds_expiry_idx').on(t.expiresAt),
+]);
+
+export const promptpayStockHoldItems = pgTable('promptpay_stock_hold_items', {
+  shopId: uuid('shop_id').notNull(),
+  requestId: uuid('request_id').notNull(),
+  ingredientId: uuid('ingredient_id').notNull().references(() => ingredients.id, { onDelete: 'cascade' }),
+  quantityMilliunits: bigint('quantity_milliunits', { mode: 'number' }).notNull(),
+}, (t) => [
+  primaryKey({ columns: [t.shopId, t.requestId, t.ingredientId] }),
+  foreignKey({ columns: [t.shopId, t.requestId], foreignColumns: [promptpayStockHolds.shopId, promptpayStockHolds.requestId] }).onDelete('cascade'),
+  check('promptpay_stock_hold_items_quantity_check', sql`${t.quantityMilliunits} > 0`),
 ]);
 
 // Immutable, explicitly selected branch groups; one group per shop.

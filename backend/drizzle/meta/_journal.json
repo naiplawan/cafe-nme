@@ -218,6 +218,13 @@
       "when": 1792757523637,
       "tag": "0030_fluffy_dracula",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1792819948017,
+      "tag": "0031_promptpay_stock_holds",
+      "breakpoints": true
     }
   ]
 }

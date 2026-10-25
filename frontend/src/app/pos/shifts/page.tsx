@@ -27,7 +27,7 @@ export default async function ShiftsPage() {
           : <p className="mt-4">ให้ผู้เปิดกะหรือผู้จัดการยืนยันยอดและปิดกะนี้</p>}
       </> : <>
         <h2 className="text-xl font-semibold">ยังไม่มีกะเงินสดเปิดอยู่</h2>
-        <p className="mt-2 text-amber-800">ควรเปิดกะก่อนรับเงินสด รายการที่รับเงินก่อนเปิดกะจะไม่รวมในยอดลิ้นชักนี้</p>
+        <p className="mt-2 text-amber-800">กรุณาเปิดกะก่อนขายเงินสด ระบบจะบันทึกการขายเงินสดได้เมื่อมีกะเปิดอยู่เท่านั้น</p>
         <ShiftForm requestId={randomUUID()} recipients={state.recipients} />
       </>}
     </section>

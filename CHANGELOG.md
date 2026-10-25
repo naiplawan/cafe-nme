@@ -13,17 +13,19 @@ versioning (pre-1.0: minor = features, patch = fixes).
 - Added ingredient recipes and stock movements, self-service QR order requests with staff acceptance, partial refunds with approval and separately recorded payouts, subscription trials and payment history, and explicitly grouped cross-branch loyalty.
 - Added configurable stamp and reward expiry with ledger history, plus checkout/API failure alerts and a repeatable isolated PostgreSQL restore drill.
 - Added a public Thai landing page at `/` with features, setup steps, comparison, FAQ, and matching JSON-LD, plus `robots.txt`, `sitemap.xml`, `llms.txt`, and a generated Open Graph image. Signed-in users are still sent to `/admin`; app screens stay `noindex` and out of the sitemap.
+- Reserve recipe ingredients for 30 minutes when staff open a PromptPay QR, refreshed while the QR stays open. Other sales cannot consume reserved stock, and the QR is withheld when stock cannot be reserved.
 
 ### Changed
 - Tightened staff role changes so managers cannot create owners or change higher-privilege PINs; expanded shop scoping across member, POS, order, and report operations.
 - Recover unresolved checkouts after reload using the original sale request and prevent duplicate order/payment creation on retries.
 - Update the preparation queue every five seconds while online and visible, including immediately after reconnecting or returning to the tab.
 - Require an open cash shift before a cash sale, and reject recipe consumption, waste, or stock adjustments that would make tracked ingredient balances negative. Stock receiving remains available to owners and managers after Pro expires so they can replenish ingredients and continue core POS sales.
+- Block recipe edits while a PromptPay stock reservation is active and explain the wait in the inventory admin; waste and adjustments now count reserved stock as unavailable.
 - Let search engines index public QR menus at `/menu/[shopSlug]`; their order pages stay `noindex`.
 - Extend the API schema and OpenAPI client types for payment review, shifts, preparation, expiry, self-orders, inventory, refunds, shared loyalty, subscriptions, and provider payment intents.
 
 ### Operations
-- Apply migrations `0023_payment_reviews` through `0030_fluffy_dracula` before deploying the updated API.
+- Apply migrations `0023_payment_reviews` through `0031_promptpay_stock_holds` before deploying the updated API. `0031` only adds the `promptpay_stock_holds` and `promptpay_stock_hold_items` tables.
 - Follow `docs/omise-payments.md` to configure per-shop Omise credentials and webhooks. Live charging remains disabled unless `OMISE_LIVE_ENABLED=true` is explicitly configured.
 - Set `NEXT_PUBLIC_SITE_URL` to the public frontend origin before deploying the landing page; without it, canonical URLs, the sitemap, `robots.txt`, and JSON-LD point to `http://localhost:3000`.
 - Follow `docs/operations-readiness.md` for the isolated restore drill and operator alert receiver. Local restore evidence does not establish production retention, alert delivery, or recovery objectives.

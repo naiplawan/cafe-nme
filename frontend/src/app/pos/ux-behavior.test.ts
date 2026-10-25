@@ -2,7 +2,7 @@
 import React from "react";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
-const actions = vi.hoisted(() => ({ getPosDeviceId: vi.fn(), getOrderAction: vi.fn(), voidOrderAction: vi.fn(), searchMembersByPhone: vi.fn(), quoteCheckoutAction: vi.fn(), checkoutAction: vi.fn() }));
+const actions = vi.hoisted(() => ({ getPosDeviceId: vi.fn(), getOrderAction: vi.fn(), voidOrderAction: vi.fn(), searchMembersByPhone: vi.fn(), quoteCheckoutAction: vi.fn(), reservePromptPayStockAction: vi.fn(), checkoutAction: vi.fn() }));
 vi.mock("./orders/actions", () => actions);
 vi.mock("./actions", () => actions);
 vi.mock("./checkout-actions", () => actions);
@@ -60,6 +60,7 @@ it("separates failed phone search from no matches and supports retry", async () 
 it("withholds QR until a changed quote is accepted and submits exact satang", async () => {
   const line = { key: "coffee", name: "Coffee", qty: 1, modifiersText: "", lineTotalSatang: 5000 };
   actions.quoteCheckoutAction.mockResolvedValue({ ok: true, quote: { lines: [{ ...line, lineTotalSatang: 5050 }], subtotalSatang: 5050, discountSatang: 0, totalSatang: 5050 } });
+  actions.reservePromptPayStockAction.mockResolvedValue({ ok: true, reservation: { expiresAt: new Date(Date.now() + 1800000) } });
   actions.checkoutAction.mockResolvedValue({ ok: true, result: { orderId: "paid" } });
   const onPaid = vi.fn();
   render(React.createElement(PaymentDialog, { orderLabel: "#001", lines: [line], subtotalSatang: 5000, discountSatang: 0, totalSatang: 5000, checkoutInput: { lines: [{ productId: "11111111-1111-4111-8111-111111111111", qty: 1, modifierIds: [] }] }, cartStorageKey: "cart", expectedScope: { shopId: "shop", staffId: "staff", deviceId: "device" }, promptpayEnabled: true, shopName: "Cafe", onClose: vi.fn(), onPaid }));
@@ -68,12 +69,28 @@ it("withholds QR until a changed quote is accepted and submits exact satang", as
   expect(screen.queryByTestId("qr")).toBeNull();
   fireEvent.click(screen.getByRole("button", { name: "ยืนยันยอดใหม่" }));
   fireEvent.click(screen.getByRole("tab", { name: "พร้อมเพย์" }));
+  await waitFor(() => expect(actions.reservePromptPayStockAction).toHaveBeenCalledWith(expect.objectContaining({ expectedTotalSatang: 5050, payment: { method: "promptpay" } })));
+  expect(await screen.findByTestId("qr")).toBeTruthy();
   expect(screen.getByTestId("qr").textContent).toBe("5050");
   fireEvent.click(screen.getByRole("tab", { name: "เงินสด" }));
   fireEvent.click(screen.getByRole("button", { name: "พอดี" }));
   fireEvent.click(screen.getByRole("button", { name: /รับเงิน · ทอน/ }));
   await waitFor(() => expect(onPaid).toHaveBeenCalled());
   expect(actions.checkoutAction).toHaveBeenCalledWith(expect.objectContaining({ expectedTotalSatang: 5050, payment: { method: "cash", cashReceivedSatang: 5050 } }));
+  expect(actions.checkoutAction).toHaveBeenCalledWith(expect.objectContaining({ requestId: actions.reservePromptPayStockAction.mock.calls[0][0].requestId }));
+});
+
+it("does not display a PromptPay QR or accept confirmation when stock cannot be reserved", async () => {
+  const line = { key: "coffee", name: "Coffee", qty: 1, modifiersText: "", lineTotalSatang: 5000 };
+  actions.quoteCheckoutAction.mockResolvedValue({ ok: true, quote: { lines: [line], subtotalSatang: 5000, discountSatang: 0, totalSatang: 5000 } });
+  actions.reservePromptPayStockAction.mockResolvedValue({ ok: false, message: "วัตถุดิบในสูตรไม่พอ" });
+  render(React.createElement(PaymentDialog, { orderLabel: "#001", lines: [line], subtotalSatang: 5000, discountSatang: 0, totalSatang: 5000, checkoutInput: { lines: [{ productId: "11111111-1111-4111-8111-111111111111", qty: 1, modifierIds: [] }] }, cartStorageKey: "cart", expectedScope: { shopId: "shop", staffId: "staff", deviceId: "device" }, promptpayEnabled: true, shopName: "Cafe", onClose: vi.fn(), onPaid: vi.fn() }));
+  await screen.findByRole("tab", { name: "พร้อมเพย์" });
+  fireEvent.click(screen.getByRole("tab", { name: "พร้อมเพย์" }));
+  await screen.findByRole("alert");
+  expect(screen.queryByTestId("qr")).toBeNull();
+  expect(screen.getByRole("button", { name: "ได้รับเงินแล้ว" }).hasAttribute("disabled")).toBe(true);
+  expect(actions.checkoutAction).not.toHaveBeenCalled();
 });
 
 it("recovers a durable checkout through the recovery screen after tab storage is lost", async () => {
