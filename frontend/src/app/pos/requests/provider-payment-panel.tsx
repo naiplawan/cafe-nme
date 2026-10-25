@@ -1,4 +1,5 @@
 "use client";
+import { formatBaht } from "@/lib/money";
 import { useState, useTransition } from "react";
 import type { ProviderPaymentView } from "@/server/provider-payments";
 import { refreshProviderPaymentAction, startProviderPaymentAction } from "./payment-actions";
@@ -23,7 +24,7 @@ export function ProviderPaymentPanel({ id, initial }: { id: string; initial: Pro
     <h2 className="text-lg font-semibold">ชำระผ่าน PromptPay</h2>
     {view.testMode ? <p className="rounded-lg bg-amber-100 p-3">โหมดทดสอบเท่านั้น ยังไม่มีการตัดเงินจริง</p> : null}
     <p role="status">{labels[view.status]}</p>
-    {view.amountSatang !== null ? <p className="text-xl font-bold">ยอด ฿{(view.amountSatang / 100).toLocaleString("th-TH", { minimumFractionDigits: 2 })}</p> : null}
+    {view.amountSatang !== null ? <p className="text-xl font-bold">ยอด {formatBaht(view.amountSatang)}</p> : null}
     {view.qrImageUrl ? <div className="space-y-2"><img src={view.qrImageUrl} alt="QR PromptPay จากผู้ให้บริการชำระเงิน" width={256} height={256} className="size-64 rounded-xl border bg-white object-contain" /><p className="text-sm">สแกนเพื่อชำระ แล้วกดตรวจสถานะได้ ระบบจะยืนยันจากผู้ให้บริการ</p></div> : null}
     {view.dailyNo ? <p>ออกบิลแล้ว · คิว #{view.dailyNo}</p> : null}
     {error ? <p role="alert" className="text-red-800">{error}</p> : null}

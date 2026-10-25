@@ -6,6 +6,7 @@ import { categories, members, modifierGroups, modifiers, productModifierGroups, 
 import { checkout, voidOrder, type CheckoutError } from "./orders";
 import { openShift } from "./shifts";
 import { getOrder } from "./orders";
+import { createRefund } from "./refunds";
 import { getMemberSummary } from "./loyalty";
 
 describe("orders integration", () => {
@@ -37,6 +38,12 @@ describe("orders integration", () => {
   afterAll(async () => {
     if (shopId) await db.delete(shops).where(eq(shops.id, shopId));
   });
+
+  async function refundAll(orderId: string) {
+    const detail = await getOrder(shopId, orderId);
+    if (!detail) throw new Error('Order missing');
+    return createRefund(shopId, staffId, orderId, { requestId: randomUUID(), reason: 'Full return', lines: detail.items.map(item => ({ itemId: item.id, qty: item.qty })) });
+  }
 
   it("rejects a client-supplied price instead of trusting it", async () => {
     await expect(checkout({ shopId, staffId }, { lines: [{ productId, qty: 1, modifierIds: [], unitPriceSatang: 1 } as never],
@@ -87,16 +94,16 @@ describe("orders integration", () => {
     }
   });
 
-  it("voids paid orders and restores/cancels rewards as applicable", async () => {
+  it("refunds paid orders and restores/cancels rewards as applicable", async () => {
     const earned = await checkout({ shopId, staffId }, { lines: [{ productId, qty: 3, modifierIds: [] }], memberId,
       payment: { method: "promptpay" } });
     const redeem = await checkout({ shopId, staffId }, { lines: [{ productId, qty: 1, modifierIds: [] }], memberId,
       redeemRewardId: earned.member!.availableRewards[0].id, payment: { method: "promptpay" } });
     expect(redeem.discountSatang).toBe(5000);
-    await voidOrder(shopId, redeem.orderId, staffId);
-    await voidOrder(shopId, earned.orderId, staffId);
+    await refundAll(redeem.orderId);
+    await refundAll(earned.orderId);
     const detail = await getOrder(shopId, earned.orderId);
-    expect(detail?.status).toBe("void");
+    expect(detail?.status).toBe("paid");
     const summary = await getMemberSummary(shopId, memberId);
     expect(summary?.availableRewards.map((reward) => reward.id)).toContain(unlockedRewardId);
     const [earnedReward] = await db.select({ status: rewards.status }).from(rewards)
@@ -113,7 +120,7 @@ describe("orders integration", () => {
     const redemption = await checkout({ shopId, staffId }, { lines: [{ productId, qty: 1, modifierIds: [] }], memberId,
       redeemRewardId: rewardId, payment: { method: "promptpay" } });
 
-    await expect(voidOrder(shopId, earned.orderId, staffId)).rejects.toMatchObject({ code: "reward_redemption_active" });
+    await expect(voidOrder(shopId, earned.orderId, staffId)).rejects.toMatchObject({ code: "use_refund" });
 
     expect((await getOrder(shopId, earned.orderId))?.status).toBe("paid");
     expect((await getOrder(shopId, redemption.orderId))?.status).toBe("paid");
@@ -130,7 +137,7 @@ describe("orders integration", () => {
       payment: { method: "promptpay" } });
     await db.update(shops).set({ stampGoal: 5 }).where(eq(shops.id, shopId));
 
-    await voidOrder(shopId, earned.orderId, staffId);
+    await refundAll(earned.orderId);
 
     const [after] = await db.select({ total: sql<string>`coalesce(sum(${stampLedger.delta}), 0)` }).from(stampLedger)
       .where(eq(stampLedger.memberId, memberId));

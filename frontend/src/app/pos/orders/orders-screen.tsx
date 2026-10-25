@@ -292,8 +292,8 @@ export function OrdersScreen({ orders, initialDetail, netSalesSatang, todaySumma
             <Link href={`/pos/receipt/${detail.id}`} className="flex h-[68px] flex-1 items-center justify-center gap-2 rounded-2xl border border-[#D9C5B0] bg-[#FFFBF6] text-lg font-semibold text-[#3B2A20] no-underline">
               <Printer aria-hidden="true" size={22} /> พิมพ์ใบเสร็จซ้ำ
             </Link>
-            {detail.status === "paid" ? <Link href={`/pos/refunds/${detail.id}`} className="flex min-h-12 items-center justify-center rounded-xl border px-4 font-semibold">คืนเงินบางรายการ</Link> : null}
-            {detail.status === "paid" ? <button type="button" onClick={openVoid} className="h-[68px] flex-1 rounded-2xl border-2 border-[#8E3415] bg-[#FFFBF6] text-lg font-bold text-[#8E3415]">ยกเลิกบิลนี้</button> : null}
+            {detail.status === "paid" ? <Link href={`/pos/refunds/${detail.id}`} className="flex min-h-12 items-center justify-center rounded-xl border px-4 font-semibold">คืนเงิน / ยกเลิกรายการที่ชำระแล้ว</Link> : null}
+            {detail.status === "open" ? <button type="button" onClick={openVoid} className="h-[68px] flex-1 rounded-2xl border-2 border-[#8E3415] bg-[#FFFBF6] text-lg font-bold text-[#8E3415]">ยกเลิกบิลนี้</button> : null}
           </div>
         </> : orders.length ? <p className="m-auto text-center text-[#6B5547]">{loadingDetail ? "กำลังโหลดรายละเอียด…" : "เลือกออเดอร์เพื่อดูรายละเอียด"}</p> : <div className="m-auto text-center text-[#6B5547]">ยังไม่มีรายละเอียดออเดอร์</div>}
       </section>
@@ -303,7 +303,7 @@ export function OrdersScreen({ orders, initialDetail, netSalesSatang, todaySumma
       <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby={voidTitleId} tabIndex={-1} onKeyDown={trapDialogTab}
         className="flex w-full max-w-[520px] flex-col items-center gap-4 rounded-3xl bg-[#FFFBF6] p-7 outline-none">
         <h2 id={voidTitleId} className="m-0 text-center text-2xl font-bold">ยกเลิกบิล {orderLabel(detail.dailyNo)} ({formatBaht(detail.totalSatang)})</h2>
-        <p className="m-0 text-center text-base text-[#6B5547]">ต้องใช้ PIN ผู้จัดการหรือเจ้าของร้าน · แสตมป์ที่ได้จากบิลนี้จะถูกหักคืน</p>
+        <p className="m-0 text-center text-base text-[#6B5547]">ต้องใช้ PIN ผู้จัดการหรือเจ้าของร้าน · ยกเลิกได้เฉพาะบิลที่ยังไม่ชำระเงิน</p>
         <div ref={pinDotsRef} role="img" aria-label={`PIN ที่ใส่แล้ว ${pin.length} หลัก`} className="flex gap-3 py-1">
           {Array.from({ length: 6 }, (_, index) => index + 1).map((pinPosition) => <span key={pinPosition} data-pin-index={pinPosition - 1} className={`size-[22px] rounded-full border-2 border-[#3B2A20] ${pinPosition <= pin.length ? "bg-[#3B2A20]" : "bg-transparent"}`} />)}
         </div>

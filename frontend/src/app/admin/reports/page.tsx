@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { requireStaff } from "@/lib/auth";
 import { businessDate } from "@/lib/business-date";
 import { formatBaht } from "@/lib/money";
-import { categorySales, dailySales, hourlySales, refundSummary, salesByItem, salesSummary } from "@/server/reports";
+import { categorySales, dailySales, hourlySales, marginByItem, refundSummary, salesByItem, salesSummary } from "@/server/reports";
 import { AdminPageHeader } from "../_components/page-header";
 import { bangkokHour, dailyChartData, hourlyChartData, isSelectedPreset } from "./chart-data";
 import { ReportsCharts } from "./charts-section";
@@ -71,7 +71,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Sear
   const periodDays = (Date.parse(`${range.to}T00:00:00Z`) - Date.parse(`${range.from}T00:00:00Z`)) / 86_400_000 + 1;
   const previousTo = shiftDate(range.from, -1);
   const previousFrom = shiftDate(range.from, -periodDays);
-  const [summary, previousSummary, refunds, days, items, hours, categories] = await Promise.all([
+  const [summary, previousSummary, refunds, days, items, hours, categories, margin] = await Promise.all([
     salesSummary(shopId, range.from, range.to),
     salesSummary(shopId, previousFrom, previousTo),
     refundSummary(shopId, range.from, range.to),
@@ -79,6 +79,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Sear
     salesByItem(shopId, range.from, range.to),
     hourlySales(shopId, range.from, range.to),
     categorySales(shopId, range.from, range.to),
+    marginByItem(shopId, range.from, range.to),
   ]);
   const isSingleDay = range.from === range.to;
   const chartDays = dailyChartData(days, range.from, range.to);
@@ -125,7 +126,18 @@ export default async function ReportsPage({ searchParams }: { searchParams: Sear
         </CardContent></Card>)}
       </section>
 
-      <ReportsCharts
+      <section className="space-y-3 rounded-xl border bg-card p-4">
+      <h2 className="text-xl font-semibold">กำไรหลังต้นทุนวัตถุดิบ</h2>
+      <p className="text-sm text-muted-foreground">ยอดขายตามวันที่บิล หักคืนเงินที่อนุมัติแล้ว ต้นทุนตามสูตรและราคาที่บันทึกตอนขาย นับเฉพาะจำนวนที่เริ่มทำแล้ว ยอดออเดอร์ที่ยังไม่เริ่มทำจึงยังไม่รวมต้นทุน ไม่รวมค่าแรง ค่าเช่า และค่าใช้จ่ายอื่น</p>
+      <Table><TableHeader><TableRow><TableHead>เมนู</TableHead><TableHead>ยอดหลังคืนเงิน</TableHead><TableHead>ต้นทุนที่ทราบ</TableHead><TableHead>กำไร</TableHead><TableHead>ข้อมูลต้นทุน</TableHead></TableRow></TableHeader>
+        <TableBody>{margin.items.map(item => <TableRow key={item.name}><TableCell>{item.name}</TableCell><TableCell>{formatBaht(item.revenueSatang)}</TableCell>
+          <TableCell>{formatBaht(item.knownCostSatang)}</TableCell><TableCell>{item.marginSatang === null ? 'ยังคำนวณไม่ได้' : formatBaht(item.marginSatang)}</TableCell>
+          <TableCell>{item.qty-item.unknownCostQty}/{item.qty} แก้ว{item.pendingQty > 0 ? ` · รอเริ่มทำ ${item.pendingQty} แก้ว` : null}</TableCell></TableRow>)}</TableBody>
+      </Table>
+      <p>ต้นทุนทำใหม่ {formatBaht(margin.remakeCostSatang)} · ของเสีย {formatBaht(margin.wasteCostSatang)} (ตามวันที่บันทึก แสดงแยกจากกำไรเมนู)</p>
+      {margin.unknownExtraCostMovements > 0 ? <p className="text-amber-800">มีรายการทำใหม่ / ของเสียที่ไม่ทราบต้นทุน {margin.unknownExtraCostMovements} รายการ</p> : null}
+    </section>
+    <ReportsCharts
         dailySales={chartDays}
         hourlySales={chartHours.data}
         highlightLastHour={chartHours.highlightLast}

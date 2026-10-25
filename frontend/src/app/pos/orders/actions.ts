@@ -24,6 +24,7 @@ export async function voidOrderAction(orderId: string, pin: string): Promise<Voi
     return { ok: true };
   } catch (error) {
     if (error instanceof OrderVoidError) {
+      if (error.code === "use_refund") return { ok: false, message: "บิลชำระแล้ว กรุณาใช้หน้าคืนเงินและบันทึกการจ่ายคืน" };
       return { ok: false, message: "กรุณายกเลิกบิลที่ใช้รางวัลนี้ก่อน แล้วจึงยกเลิกบิลที่ได้รับรางวัล" };
     }
     const latest = await getOrder(session.shopId, orderId);

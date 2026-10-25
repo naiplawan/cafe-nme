@@ -8,6 +8,7 @@ import {
   index,
   integer,
   jsonb,
+  numeric,
   pgEnum,
   pgTable,
   primaryKey,
@@ -73,10 +74,11 @@ export const shops = pgTable(
     stampGoal: integer('stamp_goal').notNull().default(10),
     stampExpiryMonths: integer('stamp_expiry_months').notNull().default(12),
     // Sold-out products become available again on the shop's next business day.
+    stockConsumption: text('stock_consumption').notNull().default('payment'),
     autoClearSoldOut: boolean('auto_clear_sold_out').notNull().default(true),
     createdAt: createdAt(),
   },
-  (t) => [check('shops_stamp_goal_positive_check', sql`${t.stampGoal} > 0`)],
+  (t) => [check('shops_stock_consumption_check', sql`${t.stockConsumption} in ('payment','preparation')`), check('shops_stamp_goal_positive_check', sql`${t.stampGoal} > 0`)],
 );
 
 export const staff = pgTable(
@@ -227,12 +229,33 @@ export const shifts = pgTable('shifts', {
   check('shifts_closed_fields_check', sql`(${t.closedAt} is null and ${t.closedBy} is null and ${t.closeRequestId} is null and ${t.expectedCashSatang} is null and ${t.countedCashSatang} is null and ${t.handedToStaffId} is null) or (${t.closedAt} is not null and ${t.closedBy} is not null and ${t.closeRequestId} is not null and ${t.expectedCashSatang} is not null and ${t.countedCashSatang} is not null)`),
 ]);
 
+export const cashMovements = pgTable('cash_movements', {
+  id: id(),
+  shopId: shopId(),
+  shiftId: uuid('shift_id').notNull().references(() => shifts.id, { onDelete: 'cascade' }),
+  requestId: uuid('request_id').notNull(),
+  kind: text('kind').notNull(),
+  amountSatang: integer('amount_satang').notNull(),
+  reason: text('reason').notNull(),
+  actorStaffId: uuid('actor_staff_id').notNull().references(() => staff.id),
+  approvedByStaffId: uuid('approved_by_staff_id').notNull().references(() => staff.id),
+  createdAt: createdAt(),
+}, (t) => [
+  uniqueIndex('cash_movements_request_uidx').on(t.shopId, t.requestId),
+  index('cash_movements_shift_idx').on(t.shiftId),
+  check('cash_movements_kind_check', sql`${t.kind} in ('float_topup','petty_cash','bank_deposit')`),
+  check('cash_movements_amount_check', sql`${t.amountSatang} > 0`),
+  check('cash_movements_reason_check', sql`length(trim(${t.reason})) between 1 and 500`),
+]);
+
 export const orders = pgTable(
   'orders',
   {
     id: id(),
     shopId: shopId(),
     shiftId: uuid('shift_id').references(() => shifts.id),
+    stockConsumption: text('stock_consumption'),
+    recipeSnapshotAt: timestamp('recipe_snapshot_at', { withTimezone: true }),
     inventoryDeductedAt: timestamp('inventory_deducted_at', { withTimezone: true }),
     // Resets every day in the shop's timezone; businessDate is that day (YYYY-MM-DD).
     dailyNo: integer('daily_no').notNull(),
@@ -302,6 +325,10 @@ export const orderItems = pgTable(
     lineNo: integer('line_no').notNull().default(0),
     paidSatang: integer('paid_satang'),
     stampsEarned: integer('stamps_earned'),
+    rewardDiscountSatang: integer('reward_discount_satang'),
+    costSatang: bigint('cost_satang', { mode: 'number' }),
+    unitCostSatang: numeric('unit_cost_satang', { precision: 30, scale: 12 }),
+    preparedQty: integer('prepared_qty'),
     note: text('note'),
   },
   (t) => [
@@ -454,6 +481,7 @@ export const ingredients = pgTable('ingredients', {
   name: text('name').notNull(),
   unit: text('unit').notNull(),
   lowStockMilliunits: integer('low_stock_milliunits').notNull().default(0),
+  averageCostPerMilliunit: numeric('average_cost_per_milliunit', { precision: 30, scale: 12 }),
   createdAt: createdAt(),
 }, (t) => [
   uniqueIndex('ingredients_shop_name_uidx').on(t.shopId, t.name),
@@ -471,15 +499,51 @@ export const recipeLines = pgTable('recipe_lines', {
   check('recipe_lines_quantity_check', sql`${t.quantityMilliunits} > 0`),
 ]);
 
+// Migration 0038 defers the replacement-ingredient FK to allow whole-shop cascades.
+// Preserve DEFERRABLE INITIALLY DEFERRED if a future migration recreates that FK.
 export const modifierRecipeLines = pgTable('modifier_recipe_lines', {
   shopId: shopId(),
   modifierId: uuid('modifier_id').notNull().references(() => modifiers.id, { onDelete: 'cascade' }),
   ingredientId: uuid('ingredient_id').notNull().references(() => ingredients.id, { onDelete: 'cascade' }),
+  replacesIngredientId: uuid('replaces_ingredient_id').references(() => ingredients.id),
   quantityMilliunits: integer('quantity_milliunits').notNull(),
 }, (t) => [
   primaryKey({ columns: [t.modifierId, t.ingredientId] }),
   check('modifier_recipe_lines_quantity_check', sql`${t.quantityMilliunits} > 0`),
 ]);
+
+// Ingredient FKs on snapshots and holds are NO ACTION, DEFERRABLE INITIALLY
+// DEFERRED (0038): direct ingredient deletion must not erase sale history/holds.
+// Drizzle cannot encode deferrability; preserve it when recreating these FKs.
+export const orderItemRecipes = pgTable('order_item_recipes', {
+  orderItemId: uuid('order_item_id').notNull().references(() => orderItems.id, { onDelete: 'cascade' }),
+  ingredientId: uuid('ingredient_id').notNull().references(() => ingredients.id),
+  unitCostSatang: numeric('unit_cost_satang', { precision: 30, scale: 12 }),
+  quantityMilliunits: integer('quantity_milliunits').notNull(),
+}, (t) => [primaryKey({ columns: [t.orderItemId, t.ingredientId] }),
+  check('order_item_recipes_quantity_check', sql`${t.quantityMilliunits} > 0`)]);
+
+export const orderStockHolds = pgTable('order_stock_holds', {
+  shopId: shopId(),
+  orderId: uuid('order_id').notNull().references(() => orders.id, { onDelete: 'cascade' }),
+  ingredientId: uuid('ingredient_id').notNull().references(() => ingredients.id),
+  quantityMilliunits: bigint('quantity_milliunits', { mode: 'number' }).notNull(),
+}, (t) => [primaryKey({ columns: [t.orderId, t.ingredientId] }),
+  index('order_stock_holds_ingredient_idx').on(t.shopId, t.ingredientId),
+  check('order_stock_holds_quantity_check', sql`${t.quantityMilliunits} > 0`)]);
+
+export const remakes = pgTable('remakes', {
+  id: id(), shopId: shopId(),
+  orderId: uuid('order_id').notNull().references(() => orders.id, { onDelete: 'cascade' }),
+  orderItemId: uuid('order_item_id').notNull().references(() => orderItems.id, { onDelete: 'cascade' }),
+  requestId: uuid('request_id').notNull(),
+  qty: integer('qty').notNull(),
+  reason: text('reason').notNull(),
+  actorStaffId: uuid('actor_staff_id').notNull().references(() => staff.id),
+  createdAt: createdAt(),
+}, (t) => [uniqueIndex('remakes_request_uidx').on(t.shopId, t.requestId),
+  check('remakes_qty_check', sql`${t.qty} between 1 and 99`),
+  check('remakes_reason_check', sql`length(trim(${t.reason})) between 1 and 500`)]);
 
 export const inventoryMovements = pgTable('inventory_movements', {
   id: id(),
@@ -491,15 +555,17 @@ export const inventoryMovements = pgTable('inventory_movements', {
   reason: text('reason').notNull(),
   requestId: uuid('request_id'),
   orderId: uuid('order_id').references(() => orders.id),
+  remakeId: uuid('remake_id').references(() => remakes.id),
+  costSatang: bigint('cost_satang', { mode: 'number' }),
   createdAt: createdAt(),
 }, (t) => [
   uniqueIndex('inventory_movements_request_uidx').on(t.shopId, t.requestId),
   uniqueIndex('inventory_movements_sale_uidx').on(t.orderId, t.ingredientId).where(sql`${t.kind} = 'sale'`),
   index('inventory_movements_ingredient_idx').on(t.ingredientId, t.createdAt),
-  check('inventory_movements_kind_check', sql`${t.kind} in ('receive','waste','adjust','sale')`),
+  check('inventory_movements_kind_check', sql`${t.kind} in ('receive','waste','adjust','sale','remake')`),
   check('inventory_movements_quantity_check', sql`${t.quantityMilliunits} <> 0 and abs(${t.quantityMilliunits}) <= 9007199254740991`),
   check('inventory_movements_reason_check', sql`length(trim(${t.reason})) between 1 and 500`),
-  check('inventory_movements_source_check', sql`(${t.kind} = 'sale' and ${t.orderId} is not null and ${t.requestId} is null and ${t.quantityMilliunits} < 0) or (${t.kind} <> 'sale' and ${t.orderId} is null and ${t.requestId} is not null and ${t.actorStaffId} is not null)`),
+  check('inventory_movements_source_check', sql`(${t.kind} = 'sale' and ${t.orderId} is not null and ${t.requestId} is null and ${t.quantityMilliunits} < 0) or (${t.kind} = 'remake' and ${t.remakeId} is not null and ${t.orderId} is not null and ${t.requestId} is null and ${t.actorStaffId} is not null and ${t.quantityMilliunits} < 0) or (${t.kind} not in ('sale','remake') and ${t.orderId} is null and ${t.requestId} is not null and ${t.actorStaffId} is not null)`),
   check('inventory_movements_direction_check', sql`(${t.kind} <> 'receive' or ${t.quantityMilliunits} > 0) and (${t.kind} <> 'waste' or ${t.quantityMilliunits} < 0)`),
 ]);
 

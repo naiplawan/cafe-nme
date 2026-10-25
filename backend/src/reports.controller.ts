@@ -1,5 +1,5 @@
 import { ApiStandardErrors } from "./common/api-errors.decorator.js";
-import { ApiOkResponse, ApiSecurity, ApiTags } from "@nestjs/swagger";
+import { ApiOkResponse, ApiProperty, ApiSecurity, ApiTags } from "@nestjs/swagger";
 import {
   BadRequestException,
   Controller,
@@ -14,6 +14,22 @@ import { InternalApiGuard } from "./internal-api.guard.js";
 import { ReportsService } from "./reports.service.js";
 import { CategorySalesDto, DailySalesDto, HourlySalesDto, MemberGrowthDto, MemberOverviewDto, SalesByItemDto } from "./core-response.dto.js";
 import { OrdersExportResponseDto, RefundSummaryResponseDto, SalesSummaryResponseDto } from "./rest-response.dto.js";
+
+class MarginItemDto {
+  @ApiProperty() name!: string;
+  @ApiProperty() qty!: number;
+  @ApiProperty() revenueSatang!: number;
+  @ApiProperty() knownCostSatang!: number;
+  @ApiProperty() unknownCostQty!: number;
+  @ApiProperty() pendingQty!: number;
+  @ApiProperty({ type: Number, nullable: true }) marginSatang!: number | null;
+}
+class MarginReportDto {
+  @ApiProperty({ type: MarginItemDto, isArray: true }) items!: MarginItemDto[];
+  @ApiProperty() remakeCostSatang!: number;
+  @ApiProperty() wasteCostSatang!: number;
+  @ApiProperty() unknownExtraCostMovements!: number;
+}
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const MAX_RANGE_DAYS = 365;
@@ -46,6 +62,12 @@ function parseRange(fromValue: unknown, toValue: unknown) {
 @UseGuards(InternalApiGuard)
 export class ReportsController {
   constructor(@Inject(ReportsService) private readonly reports: ReportsService) {}
+
+  @Get('margin-by-item')
+  @ApiOkResponse({ type: MarginReportDto })
+  margin(@Param('shopId', new ParseUUIDPipe()) shopId: string, @Query('from') from: string | undefined, @Query('to') to: string | undefined) {
+    return this.reports.marginByItem(shopId, parseRange(from, to));
+  }
 
   @Get("sales-summary")
   @ApiOkResponse({ type: SalesSummaryResponseDto })

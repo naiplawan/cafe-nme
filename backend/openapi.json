@@ -691,6 +691,486 @@
         ]
       }
     },
+    "/v1/shops/{shopId}/inventory/stock-policy": {
+      "get": {
+        "operationId": "InventoryController_policy",
+        "parameters": [
+          {
+            "name": "shopId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "actorStaffId",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StockPolicyResultDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Dependency unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "internal-api-token": []
+          }
+        ],
+        "tags": [
+          "inventory"
+        ]
+      },
+      "put": {
+        "operationId": "InventoryController_setPolicy",
+        "parameters": [
+          {
+            "name": "shopId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StockPolicyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StockPolicyResultDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Dependency unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "internal-api-token": []
+          }
+        ],
+        "tags": [
+          "inventory"
+        ]
+      }
+    },
+    "/v1/shops/{shopId}/inventory/orders/{orderId}/items/{itemId}/remakes": {
+      "post": {
+        "operationId": "InventoryController_remake",
+        "parameters": [
+          {
+            "name": "shopId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orderId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "itemId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RemakeDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryIdDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Dependency unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "internal-api-token": []
+          }
+        ],
+        "tags": [
+          "inventory"
+        ]
+      }
+    },
+    "/v1/shops/{shopId}/inventory/ingredients/{ingredientId}/valuation": {
+      "post": {
+        "operationId": "InventoryController_valuation",
+        "parameters": [
+          {
+            "name": "shopId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ingredientId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InventoryValuationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryIdDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Dependency unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "internal-api-token": []
+          }
+        ],
+        "tags": [
+          "inventory"
+        ]
+      }
+    },
     "/v1/shops/{shopId}/inventory/ingredients": {
       "post": {
         "operationId": "InventoryController_create",
@@ -2027,6 +2507,382 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ShiftDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Dependency unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "internal-api-token": []
+          }
+        ],
+        "tags": [
+          "shifts"
+        ]
+      }
+    },
+    "/v1/shops/{shopId}/shifts/{shiftId}/statement": {
+      "get": {
+        "operationId": "ShiftsController_statement",
+        "parameters": [
+          {
+            "name": "shopId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "shiftId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "actorStaffId",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 10000,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CashStatementDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Dependency unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "internal-api-token": []
+          }
+        ],
+        "tags": [
+          "shifts"
+        ]
+      }
+    },
+    "/v1/shops/{shopId}/shifts/{shiftId}/movements": {
+      "get": {
+        "operationId": "ShiftsController_movements",
+        "parameters": [
+          {
+            "name": "shopId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "shiftId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "actorStaffId",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CashMovementRowDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Dependency unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "internal-api-token": []
+          }
+        ],
+        "tags": [
+          "shifts"
+        ]
+      },
+      "post": {
+        "operationId": "ShiftsController_recordMovement",
+        "parameters": [
+          {
+            "name": "shopId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "shiftId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CashMovementDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CashMovementResultDto"
                 }
               }
             }
@@ -12969,6 +13825,123 @@
         ]
       }
     },
+    "/v1/shops/{shopId}/reports/margin-by-item": {
+      "get": {
+        "operationId": "ReportsController_margin",
+        "parameters": [
+          {
+            "name": "shopId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "from",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MarginReportDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Dependency unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "internal-api-token": []
+          }
+        ],
+        "tags": [
+          "reports"
+        ]
+      }
+    },
     "/v1/shops/{shopId}/reports/sales-summary": {
       "get": {
         "operationId": "ReportsController_salesSummary",
@@ -15031,6 +16004,12 @@
           "onHandMilliunits": {
             "type": "number"
           },
+          "reservedMilliunits": {
+            "type": "number"
+          },
+          "availableMilliunits": {
+            "type": "number"
+          },
           "lowStock": {
             "type": "boolean"
           }
@@ -15041,12 +16020,18 @@
           "unit",
           "lowStockMilliunits",
           "onHandMilliunits",
+          "reservedMilliunits",
+          "availableMilliunits",
           "lowStock"
         ]
       },
       "InventoryRecipeRowDto": {
         "type": "object",
         "properties": {
+          "replacesIngredientId": {
+            "type": "string",
+            "nullable": true
+          },
           "targetKind": {
             "type": "string",
             "enum": [
@@ -15065,6 +16050,7 @@
           }
         },
         "required": [
+          "replacesIngredientId",
           "targetKind",
           "targetId",
           "ingredientId",
@@ -15097,6 +16083,10 @@
       "InventoryMovementRowDto": {
         "type": "object",
         "properties": {
+          "costSatang": {
+            "type": "number",
+            "nullable": true
+          },
           "id": {
             "type": "string"
           },
@@ -15109,7 +16099,8 @@
               "receive",
               "waste",
               "adjust",
-              "sale"
+              "sale",
+              "remake"
             ]
           },
           "quantityMilliunits": {
@@ -15131,6 +16122,7 @@
           }
         },
         "required": [
+          "costSatang",
           "id",
           "ingredientId",
           "kind",
@@ -15176,6 +16168,101 @@
           "movements"
         ]
       },
+      "StockPolicyResultDto": {
+        "type": "object",
+        "properties": {
+          "mode": {
+            "type": "string",
+            "enum": [
+              "payment",
+              "preparation"
+            ]
+          }
+        },
+        "required": [
+          "mode"
+        ]
+      },
+      "StockPolicyDto": {
+        "type": "object",
+        "properties": {
+          "actorStaffId": {
+            "type": "string"
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "payment",
+              "preparation"
+            ]
+          }
+        },
+        "required": [
+          "actorStaffId",
+          "mode"
+        ]
+      },
+      "RemakeDto": {
+        "type": "object",
+        "properties": {
+          "actorStaffId": {
+            "type": "string"
+          },
+          "requestId": {
+            "type": "string"
+          },
+          "qty": {
+            "type": "number"
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "actorStaffId",
+          "requestId",
+          "qty",
+          "reason"
+        ]
+      },
+      "InventoryIdDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "InventoryValuationDto": {
+        "type": "object",
+        "properties": {
+          "actorStaffId": {
+            "type": "string"
+          },
+          "requestId": {
+            "type": "string"
+          },
+          "onHandMilliunits": {
+            "type": "number"
+          },
+          "costSatang": {
+            "type": "number"
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "actorStaffId",
+          "requestId",
+          "onHandMilliunits",
+          "costSatang",
+          "reason"
+        ]
+      },
       "IngredientDto": {
         "type": "object",
         "properties": {
@@ -15204,17 +16291,6 @@
           "lowStockMilliunits"
         ]
       },
-      "InventoryIdDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "id"
-        ]
-      },
       "ThresholdDto": {
         "type": "object",
         "properties": {
@@ -15233,6 +16309,10 @@
       "InventoryMoveDto": {
         "type": "object",
         "properties": {
+          "costSatang": {
+            "type": "number",
+            "nullable": true
+          },
           "actorStaffId": {
             "type": "string"
           },
@@ -15265,6 +16345,10 @@
       "RecipeLineDto": {
         "type": "object",
         "properties": {
+          "replacesIngredientId": {
+            "type": "string",
+            "nullable": true
+          },
           "ingredientId": {
             "type": "string"
           },
@@ -15583,6 +16667,241 @@
           "actorStaffId",
           "requestId",
           "openingFloatSatang"
+        ]
+      },
+      "CashStatementTotalsDto": {
+        "type": "object",
+        "properties": {
+          "cashSalesSatang": {
+            "type": "number"
+          },
+          "cashRefundsSatang": {
+            "type": "number"
+          },
+          "topupsSatang": {
+            "type": "number"
+          },
+          "pettyCashSatang": {
+            "type": "number"
+          },
+          "depositsSatang": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "cashSalesSatang",
+          "cashRefundsSatang",
+          "topupsSatang",
+          "pettyCashSatang",
+          "depositsSatang"
+        ]
+      },
+      "CashStatementEntryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "sale",
+              "refund",
+              "float_topup",
+              "petty_cash",
+              "bank_deposit"
+            ]
+          },
+          "amountSatang": {
+            "type": "number"
+          },
+          "occurredAt": {
+            "type": "string"
+          },
+          "actorName": {
+            "type": "string",
+            "nullable": true
+          },
+          "approvedByName": {
+            "type": "string",
+            "nullable": true
+          },
+          "reason": {
+            "type": "string"
+          },
+          "reference": {
+            "type": "string",
+            "nullable": true
+          },
+          "orderId": {
+            "type": "string",
+            "nullable": true
+          },
+          "dailyNo": {
+            "type": "number",
+            "nullable": true
+          },
+          "businessDate": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "amountSatang",
+          "occurredAt",
+          "actorName",
+          "approvedByName",
+          "reason",
+          "reference",
+          "orderId",
+          "dailyNo",
+          "businessDate"
+        ]
+      },
+      "CashStatementDto": {
+        "type": "object",
+        "properties": {
+          "shift": {
+            "$ref": "#/components/schemas/ShiftDto"
+          },
+          "closedByName": {
+            "type": "string",
+            "nullable": true
+          },
+          "handedToName": {
+            "type": "string",
+            "nullable": true
+          },
+          "totals": {
+            "$ref": "#/components/schemas/CashStatementTotalsDto"
+          },
+          "ledgerCashSatang": {
+            "type": "number"
+          },
+          "snapshotDifferenceSatang": {
+            "type": "number",
+            "nullable": true
+          },
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CashStatementEntryDto"
+            }
+          },
+          "entryCount": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "pageSize": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "shift",
+          "closedByName",
+          "handedToName",
+          "totals",
+          "ledgerCashSatang",
+          "snapshotDifferenceSatang",
+          "entries",
+          "entryCount",
+          "page",
+          "pageSize"
+        ]
+      },
+      "CashMovementRowDto": {
+        "type": "object",
+        "properties": {
+          "actorStaffId": {
+            "type": "string"
+          },
+          "requestId": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "float_topup",
+              "petty_cash",
+              "bank_deposit"
+            ]
+          },
+          "amountSatang": {
+            "type": "number"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "shiftId": {
+            "type": "string"
+          },
+          "approvedByStaffId": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "actorStaffId",
+          "requestId",
+          "kind",
+          "amountSatang",
+          "reason",
+          "id",
+          "shiftId",
+          "approvedByStaffId",
+          "createdAt"
+        ]
+      },
+      "CashMovementDto": {
+        "type": "object",
+        "properties": {
+          "actorStaffId": {
+            "type": "string"
+          },
+          "requestId": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "float_topup",
+              "petty_cash",
+              "bank_deposit"
+            ]
+          },
+          "amountSatang": {
+            "type": "number"
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "actorStaffId",
+          "requestId",
+          "kind",
+          "amountSatang",
+          "reason"
+        ]
+      },
+      "CashMovementResultDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
         ]
       },
       "CloseShiftDto": {
@@ -18534,6 +19853,68 @@
         "required": [
           "actorStaffId",
           "active"
+        ]
+      },
+      "MarginItemDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "qty": {
+            "type": "number"
+          },
+          "revenueSatang": {
+            "type": "number"
+          },
+          "knownCostSatang": {
+            "type": "number"
+          },
+          "unknownCostQty": {
+            "type": "number"
+          },
+          "pendingQty": {
+            "type": "number"
+          },
+          "marginSatang": {
+            "type": "number",
+            "nullable": true
+          }
+        },
+        "required": [
+          "name",
+          "qty",
+          "revenueSatang",
+          "knownCostSatang",
+          "unknownCostQty",
+          "pendingQty",
+          "marginSatang"
+        ]
+      },
+      "MarginReportDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MarginItemDto"
+            }
+          },
+          "remakeCostSatang": {
+            "type": "number"
+          },
+          "wasteCostSatang": {
+            "type": "number"
+          },
+          "unknownExtraCostMovements": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "items",
+          "remakeCostSatang",
+          "wasteCostSatang",
+          "unknownExtraCostMovements"
         ]
       },
       "SalesSummaryMethodDto": {

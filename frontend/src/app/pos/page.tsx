@@ -1,3 +1,5 @@
+import { logger } from "@/lib/logger";
+import { listShifts } from "@/server/shifts";
 import { getAcceptedSelfOrder } from "@/server/self-orders";
 import { z } from "zod";
 import { connection } from "next/server";
@@ -14,10 +16,14 @@ export default async function PosPage({ searchParams }: { searchParams: Promise<
   await connection();
   const session = await requirePosStaff();
   const date = businessDate(new Date());
-  const [menu, orders, brand] = await Promise.all([
+  const [menu, orders, brand, cashShiftOpen] = await Promise.all([
     getPosMenu(session.shopId),
     listOrdersForDay(session.shopId, date),
     getBrand(session.shopId),
+    listShifts(session.shopId, session.staff.id).then((state) => state.shifts.some((shift) => !shift.closedAt)).catch((error) => {
+      logger.error({ err: error, shopId: session.shopId }, "POS cash shift lookup failed");
+      return null;
+    }),
   ]);
   const { selfOrderId } = await searchParams;
   let acceptedSelfOrder = null;
@@ -30,5 +36,5 @@ export default async function PosPage({ searchParams }: { searchParams: Promise<
   }
   const nextOrderNo = Math.max(0, ...orders.map((order) => order.dailyNo)) + 1;
 
-  return <PosApp acceptedSelfOrder={acceptedSelfOrder} selfOrderError={selfOrderError} shop={session.shop} staff={session.staff} menu={menu} orderNo={nextOrderNo} logoUrl={brand.logoUrl} />;
+  return <PosApp cashShiftOpen={cashShiftOpen} acceptedSelfOrder={acceptedSelfOrder} selfOrderError={selfOrderError} shop={session.shop} staff={session.staff} menu={menu} orderNo={nextOrderNo} logoUrl={brand.logoUrl} />;
 }

@@ -136,3 +136,10 @@ export function memberOverview(shopId: string): Promise<{ total: number; lineLin
 export function ordersForExport(shopId: string, from: string, to: string): Promise<Record<string, string | number>[]> {
   return requestReport(shopId, "orders-export", ordersForExportSchema, { from, to });
 }
+
+const marginReportSchema = z.object({ items: z.array(z.object({ name: z.string(), qty: z.number().int(), revenueSatang: z.number().int(),
+  knownCostSatang: z.number().int(), unknownCostQty: z.number().int(), pendingQty: z.number().int(), marginSatang: z.number().int().nullable() })),
+  remakeCostSatang: z.number().int(), wasteCostSatang: z.number().int(), unknownExtraCostMovements: z.number().int() });
+export function marginByItem(shopId: string, from: string, to: string) {
+  return requestReport(shopId, 'margin-by-item', marginReportSchema, { from, to });
+}

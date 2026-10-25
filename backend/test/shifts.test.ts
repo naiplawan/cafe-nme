@@ -88,7 +88,7 @@ describe("cash drawer shifts", { skip: !process.env.TEST_DATABASE_URL, concurren
     await assert.rejects(service.close(fixture.shopId, fixture.ownerId, shiftId, { ...input, countedCashSatang: 20000 }), ConflictException);
     await assert.rejects(service.close(fixture.shopId, fixture.ownerId, shiftId, { ...input, requestId: randomUUID() }), ConflictException);
   });
-  it("links cash checkout once on replay and keeps a closed count stable after later void", async () => {
+  it("links cash checkout once on replay and keeps a closed count stable after rejecting a paid-order void", async () => {
     const { OrdersService } = await import("../src/orders.service.js");
     const orders = new OrdersService(fixture.database as never);
     const sql = fixture.database.connection;
@@ -105,7 +105,7 @@ describe("cash drawer shifts", { skip: !process.env.TEST_DATABASE_URL, concurren
     assert.equal((await service.list(fixture.shopId, fixture.baristaId)).shifts.find((row) => row.id === opened.id)?.expectedCashSatang, 7500);
     const closeInput = { requestId: randomUUID(), countedCashSatang: 7500 };
     const closed = await service.close(fixture.shopId, fixture.baristaId, opened.id, closeInput);
-    await orders.voidOrder(fixture.shopId, first.orderId, fixture.ownerId);
+    await assert.rejects(orders.voidOrder(fixture.shopId, first.orderId, fixture.ownerId), ConflictException);
     assert.deepEqual(await service.close(fixture.shopId, fixture.baristaId, opened.id, closeInput), closed);
     const replay = await orders.checkout(fixture.shopId, fixture.baristaId, input);
     assert.equal(replay.orderId, first.orderId);

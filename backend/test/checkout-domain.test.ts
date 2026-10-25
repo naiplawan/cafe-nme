@@ -21,7 +21,7 @@ test("checkout price includes selected modifier deltas and trims notes", () => {
     lines: [{
       productId: "coffee", name: "Latte", qty: 2, note: "less ice", earnsStamp: true,
       modifiers: [{ id: "oat", name: "Oat", priceDeltaSatang: 250 }],
-      unitPriceSatang: 5250, lineTotalSatang: 10_500,
+      basePriceSatang: 5000, unitPriceSatang: 5250, lineTotalSatang: 10_500,
     }],
     subtotalSatang: 10_500,
   });

@@ -38,6 +38,7 @@ export class CheckoutError extends Error {
     | 'cash_insufficient'
     | 'cash_shift_required'
     | 'insufficient_recipe_stock'
+    | 'conflicting_recipe_replacements'
     | 'promptpay_stock_reservation_expired'
     | 'promptpay_not_configured'
     | 'idempotency_key_reused'
@@ -51,10 +52,8 @@ export class CheckoutError extends Error {
 }
 
 export class OrderVoidError extends Error {
-  readonly code = 'reward_redemption_active';
-
-  constructor() {
-    super('reward_redemption_active');
+  constructor(readonly code: 'reward_redemption_active' | 'use_refund' = 'reward_redemption_active') {
+    super(code);
     this.name = 'OrderVoidError';
   }
 }
@@ -130,8 +129,8 @@ async function request<T>(path: string, schema: z.ZodType<T>, init?: RequestInit
     } catch {
       // Error responses without JSON are reported using their HTTP status.
     }
-    if (code === 'reward_redemption_active') {
-      throw new OrderVoidError();
+    if (code === 'reward_redemption_active' || code === 'use_refund') {
+      throw new OrderVoidError(code);
     }
     if (typeof code === 'string') {
       const knownCodes: CheckoutError['code'][] = [
@@ -145,6 +144,7 @@ async function request<T>(path: string, schema: z.ZodType<T>, init?: RequestInit
         'cash_insufficient',
         'cash_shift_required',
         'insufficient_recipe_stock',
+        'conflicting_recipe_replacements',
         'promptpay_stock_reservation_expired',
         'promptpay_not_configured',
         'idempotency_key_reused',

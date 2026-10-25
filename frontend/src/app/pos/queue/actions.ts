@@ -1,4 +1,5 @@
 "use server";
+import { remakeDrink } from "@/server/inventory";
 import { z } from "zod";
 import { logger } from "@/lib/logger";
 import { requirePosStaff } from "@/server/pos-session";
@@ -25,4 +26,16 @@ export async function advancePreparationAction(orderId: string, expected: Prepar
     logger.error({ err: error, shopId: session.shopId, orderId }, "Preparation transition failed");
     return { ok: false as const, message: "ยังยืนยันสถานะไม่ได้ ระบบจะตรวจสอบคิวล่าสุด กรุณาตรวจสอบก่อนลองใหม่" };
   }
+}
+
+export async function remakeDrinkAction(input: { orderId: string; itemId: string; requestId: string; qty: number; reason: string }) {
+  const session = await requirePosStaff();
+  const parsed = z.object({ orderId: z.uuid(), itemId: z.uuid(), requestId: z.uuid(), qty: z.number().int().min(1).max(99), reason: z.string().trim().min(1).max(500) }).safeParse(input);
+  if (!parsed.success) return { ok: false, message: 'ระบุจำนวนและเหตุผลที่ทำใหม่' };
+  try { await remakeDrink(session.shopId, session.staff.id, parsed.data.orderId, parsed.data.itemId, { requestId: parsed.data.requestId, qty: parsed.data.qty, reason: parsed.data.reason }); }
+  catch (error) {
+    logger.error({ err: error, shopId: session.shopId }, 'Drink remake failed');
+    return { ok: false, message: 'ทำใหม่ไม่สำเร็จ ตรวจสอบวัตถุดิบและสถานะออเดอร์ หรือลองรายการเดิมอีกครั้ง' };
+  }
+  return { ok: true, message: 'บันทึกทำใหม่และตัดวัตถุดิบแล้ว ไม่เพิ่มยอดขาย' };
 }

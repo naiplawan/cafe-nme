@@ -223,11 +223,11 @@ test('real two-branch checkout combines earnings and concurrent reward use succe
   const paid = uses.find((row) => row.status === 'fulfilled');
   assert.ok(paid && paid.status === 'fulfilled');
   const [saved] = await fixture.database.connection`select shop_id from orders where id=${paid.value.orderId}::uuid`;
-  await data.orders.voidOrder(
-    saved.shop_id,
-    paid.value.orderId,
-    saved.shop_id === fixture.shopId ? fixture.ownerId : fixture.otherShopOwnerId,
-  );
+  const { RefundsService } = await import('../src/refunds.service.js');
+  const [item] = await fixture.database.connection`select id from order_items where order_id=${paid.value.orderId}::uuid`;
+  await new RefundsService(fixture.database as never).create(saved.shop_id,
+    saved.shop_id === fixture.shopId ? fixture.ownerId : fixture.otherShopOwnerId, paid.value.orderId,
+    { requestId: randomUUID(), reason: 'Full reward return', lines: [{ itemId: item.id, qty: 1 }] });
   const [restored] = await fixture.database.connection`select status,shop_id from rewards where id=${reward.id}::uuid`;
   assert.equal(restored.status, 'available');
   assert.equal(restored.shop_id, otherShopId);
@@ -268,10 +268,10 @@ test('refund of already expired earnings never debits stamps a second time', { s
     0,
   );
 });
-test('void and full discounted refund never revive expired rewards', { skip }, async () => {
+test('full discounted refund never revives expired rewards', { skip }, async () => {
   const { RefundsService } = await import('../src/refunds.service.js');
   const refunds = new RefundsService(fixture.database as never);
-  for (const mode of ['void', 'refund']) {
+  {
     const data = await checkoutFixture();
     const earned = await data.buy(fixture.shopId, 10);
     const [reward] = await fixture.database
@@ -279,9 +279,6 @@ test('void and full discounted refund never revive expired rewards', { skip }, a
     const used = await data.buy(otherShopId, 1, reward.id);
     assert.equal(used.totalSatang, 0);
     await fixture.database.connection`update rewards set expires_at='2001-01-01T00:00:00Z' where id=${reward.id}::uuid`;
-    if (mode === 'void') {
-      await data.orders.voidOrder(otherShopId, used.orderId, fixture.otherShopOwnerId);
-    } else {
       const [item] = await fixture.database.connection`select id from order_items where order_id=${used.orderId}::uuid`;
       const result = await refunds.create(otherShopId, fixture.otherShopOwnerId, used.orderId, {
         requestId: randomUUID(),
@@ -289,7 +286,6 @@ test('void and full discounted refund never revive expired rewards', { skip }, a
         lines: [{ itemId: item.id, qty: 1 }],
       });
       assert.equal(result.amountSatang, 0);
-    }
     const [saved] = await fixture.database.connection`select status from rewards where id=${reward.id}::uuid`;
     assert.equal(saved.status, 'expired');
   }

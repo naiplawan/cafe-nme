@@ -2,8 +2,11 @@
 import React from "react";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
-const actions = vi.hoisted(() => ({ getPosDeviceId: vi.fn(), getOrderAction: vi.fn(), voidOrderAction: vi.fn(), searchMembersByPhone: vi.fn(), quoteCheckoutAction: vi.fn(), reservePromptPayStockAction: vi.fn(), checkoutAction: vi.fn() }));
+const actions = vi.hoisted(() => ({ getPosDeviceId: vi.fn(), getOrderAction: vi.fn(), voidOrderAction: vi.fn(), searchMembersByPhone: vi.fn(), quoteCheckoutAction: vi.fn(), reservePromptPayStockAction: vi.fn(), checkoutAction: vi.fn(), loadQueueAction: vi.fn(), advancePreparationAction: vi.fn(), remakeDrinkAction: vi.fn(), loadRequestsAction: vi.fn(), decideRequestAction: vi.fn(), openShiftAction: vi.fn(), closeShiftAction: vi.fn(), cashMovementAction: vi.fn() }));
 vi.mock("./orders/actions", () => actions);
+vi.mock("./queue/actions", () => actions);
+vi.mock("./requests/actions", () => actions);
+vi.mock("./shifts/actions", () => actions);
 vi.mock("./actions", () => actions);
 vi.mock("./checkout-actions", () => actions);
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
@@ -20,11 +23,11 @@ function detail(id: string, dailyNo: number): OrderDetail {
   return { id, dailyNo, status: "paid", totalSatang: 5050, paymentMethod: "cash", memberName: null, staffName: "Staff", itemCount: 1, paidAt: new Date(), subtotalSatang: 5050, discountSatang: 0, cashReceivedSatang: 5050, items: [{ id: `item-${id}`, name: `Coffee ${dailyNo}`, qty: 1, unitPriceSatang: 5050, note: null, modifiers: [] }], voidedAt: null, businessDate: "2026-10-22", shopName: "Cafe", receiptFooter: null };
 }
 const first = detail("first", 1), second = detail("second", 2);
-function renderOrders() {
-  return render(React.createElement(OrdersScreen, { orders: [first, second], initialDetail: first, netSalesSatang: 10100, todaySummary: { orders: 2, netSatang: 10100, cups: 2, byMethod: { cash: 10100, promptpay: 0 } }, hourlySales: [], topItems: [], currentHour: 12 }));
+function renderOrders(initialDetail: OrderDetail = first) {
+  return render(React.createElement(OrdersScreen, { orders: [first, second], initialDetail, netSalesSatang: 10100, todaySummary: { orders: 2, netSatang: 10100, cups: 2, byMethod: { cash: 10100, promptpay: 0 } }, hourlySales: [], topItems: [], currentHour: 12 }));
 }
 beforeEach(() => { vi.resetAllMocks(); sessionStorage.clear(); localStorage.clear(); Object.defineProperty(navigator, "locks", { configurable: true, value: { request: async (_name: string, _options: unknown, action: () => unknown) => action() } }); });
-afterEach(cleanup);
+afterEach(() => { cleanup(); vi.useRealTimers(); });
 it("ignores stale order responses and removes actions while details load", async () => {
   let resolveFirst!: (value: OrderDetail) => void;
   let resolveSecond!: (value: OrderDetail) => void;
@@ -41,7 +44,7 @@ it("ignores stale order responses and removes actions while details load", async
 });
 it("releases cancellation controls after a transport error", async () => {
   actions.voidOrderAction.mockRejectedValue(new Error("offline"));
-  renderOrders();
+  renderOrders({ ...first, status: "open" });
   fireEvent.click(screen.getByRole("button", { name: "ยกเลิกบิลนี้" }));
   for (const number of ["1", "2", "3", "4"]) fireEvent.click(screen.getByRole("button", { name: number }));
   fireEvent.click(screen.getByRole("button", { name: /ยืนยันยกเลิก/ }));
@@ -89,6 +92,7 @@ it("does not display a PromptPay QR or accept confirmation when stock cannot be 
   fireEvent.click(screen.getByRole("tab", { name: "พร้อมเพย์" }));
   await screen.findByRole("alert");
   expect(screen.queryByTestId("qr")).toBeNull();
+  expect(screen.getAllByText("วัตถุดิบในสูตรไม่พอ")).toHaveLength(1);
   expect(screen.getByRole("button", { name: "ได้รับเงินแล้ว" }).hasAttribute("disabled")).toBe(true);
   expect(actions.checkoutAction).not.toHaveBeenCalled();
 });
@@ -155,4 +159,145 @@ it("carries the accepted draft identity through normal cashier payment", async (
   fireEvent.click(screen.getByRole("button", { name: /รับเงิน · ทอน/ }));
   expect(await screen.findByText("ชำระเงินเรียบร้อย · ออเดอร์")).toBeTruthy();
   expect(actions.checkoutAction).toHaveBeenCalledWith(expect.objectContaining({ selfOrderId: sourceDraft.id, lines: sourceDraft.lines, expectedTotalSatang: 10000 }));
+});
+
+
+it("keeps queue actions available during polling and ignores the stale poll after a tap", async () => {
+  const { QueueScreen } = await import("./queue/queue-screen");
+  const row = { id: "order", dailyNo: 1, status: "received" as const, updatedAt: null, items: [] };
+  let finishPoll!: (value: unknown) => void;
+  actions.loadQueueAction.mockReturnValue(new Promise(resolve => { finishPoll = resolve; }));
+  actions.advancePreparationAction.mockResolvedValue({ ok: true, update: { id: row.id, status: "preparing", updatedAt: null } });
+  vi.useFakeTimers();
+  render(React.createElement(QueueScreen, { initial: [row] }));
+  await act(async () => { vi.advanceTimersByTime(5000); });
+  expect(screen.getByRole("button", { name: "เริ่มทำ" }).hasAttribute("disabled")).toBe(false);
+  expect(screen.getByRole("button", { name: "รีเฟรชคิว" }).hasAttribute("disabled")).toBe(false);
+  await act(async () => { fireEvent.click(screen.getByRole("button", { name: "เริ่มทำ" })); });
+  await act(async () => { finishPoll({ ok: true, rows: [row] }); });
+  expect(screen.getByRole("button", { name: "พร้อมเสิร์ฟ" })).toBeTruthy();
+});
+
+it("polls QR requests quietly and confirms rejection before sending it", async () => {
+  const { RequestsScreen } = await import("./requests/requests-screen");
+  const order = { id: "request", status: "pending" as const, totalSatang: 5050, dailyNo: null, mode: "pickup" as const, tableLabel: null, items: [] };
+  let finishPoll!: (value: unknown) => void;
+  actions.loadRequestsAction.mockReturnValue(new Promise(resolve => { finishPoll = resolve; }));
+  actions.decideRequestAction.mockResolvedValue({ ok: true, order: { ...order, status: "rejected" } });
+  vi.useFakeTimers();
+  render(React.createElement(RequestsScreen, { initial: [order] }));
+  await act(async () => { vi.advanceTimersByTime(5000); });
+  expect(actions.loadRequestsAction).toHaveBeenCalledTimes(1);
+  expect(screen.getByRole("button", { name: "รับรายการ" }).hasAttribute("disabled")).toBe(false);
+  fireEvent.click(screen.getByRole("button", { name: "ไม่รับรายการ" }));
+  expect(actions.decideRequestAction).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole("button", { name: "กลับ" }));
+  expect(actions.decideRequestAction).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole("button", { name: "ไม่รับรายการ" }));
+  await act(async () => { fireEvent.click(screen.getByRole("button", { name: "ยืนยันไม่รับรายการ" })); });
+  await act(async () => { finishPoll({ ok: true, orders: [order] }); });
+  expect(screen.getByText("ไม่มีรายการรอรับ")).toBeTruthy();
+});
+
+it("pauses QR polling while hidden or offline and resumes on return", async () => {
+  const { RequestsScreen } = await import("./requests/requests-screen");
+  actions.loadRequestsAction.mockResolvedValue({ ok: true, orders: [] });
+  vi.useFakeTimers();
+  render(React.createElement(RequestsScreen, { initial: [] }));
+  Object.defineProperty(document, "visibilityState", { configurable: true, value: "hidden" });
+  await act(async () => { vi.advanceTimersByTime(5000); });
+  expect(actions.loadRequestsAction).not.toHaveBeenCalled();
+  Object.defineProperty(document, "visibilityState", { configurable: true, value: "visible" });
+  Object.defineProperty(navigator, "onLine", { configurable: true, value: false });
+  await act(async () => { vi.advanceTimersByTime(5000); });
+  expect(actions.loadRequestsAction).not.toHaveBeenCalled();
+  Object.defineProperty(navigator, "onLine", { configurable: true, value: true });
+  await act(async () => { window.dispatchEvent(new Event("online")); });
+  expect(actions.loadRequestsAction).toHaveBeenCalledTimes(1);
+});
+
+it("blocks payment when the cart contains a sold-out product", async () => {
+  const { CartPanel } = await import("./_components/cart-panel");
+  const { priceCart } = await import("@/lib/pricing");
+  const lines = [sourceDraft.lines[0]];
+  const menu = { ...sourceMenu, products: [{ ...sourceMenu.products[0], soldOut: true }] };
+  render(React.createElement(CartPanel, { lines, pricedLines: priceCart(lines, menu).lines, subtotalSatang: 10000, discountSatang: 0, totalSatang: 10000, menu, member: null, redeemRewardId: null, online: true, onQuantity: vi.fn(), onEdit: vi.fn(), onScan: vi.fn(), onPhone: vi.fn(), onRemoveMember: vi.fn(), onToggleReward: vi.fn(), onPay: vi.fn() }));
+  expect(screen.getByRole("button", { name: /นำรายการที่หมดออกก่อนชำระเงิน/ }).hasAttribute("disabled")).toBe(true);
+});
+
+it("restores a removed last unit without replacing subsequent cart additions", async () => {
+  const { PosApp } = await import("./_components/pos-app");
+  actions.getPosDeviceId.mockResolvedValue("device");
+  sessionStorage.setItem("cafe-pos-cart:device:staff", JSON.stringify({ lines: [{ ...sourceDraft.lines[0], qty: 1 }], memberId: null, redeemRewardId: null }));
+  render(React.createElement(PosApp, { ...posProps, acceptedSelfOrder: null }));
+  fireEvent.click(await screen.findByRole("button", { name: "ลดจำนวน Source Coffee" }));
+  const undo = await screen.findByRole("button", { name: "เลิกทำ" });
+  fireEvent.click(screen.getByRole("button", { name: /Source Coffee.*50/ }));
+  fireEvent.click(undo);
+  await waitFor(() => expect(JSON.parse(sessionStorage.getItem("cafe-pos-cart:device:staff") ?? "{}").lines[0].qty).toBe(2));
+});
+
+it("shows shift guidance without blocking PromptPay checkout", async () => {
+  const { PosApp } = await import("./_components/pos-app");
+  actions.getPosDeviceId.mockResolvedValue("device");
+  render(React.createElement(PosApp, { ...posProps, cashShiftOpen: false }));
+  expect(await screen.findByRole("link", { name: "เปิดกะเงินสด" })).toBeTruthy();
+  expect(screen.getByRole("button", { name: "ตรวจสอบยอดและรับชำระเงิน" }).hasAttribute("disabled")).toBe(false);
+});
+
+it("enters a shift amount with the touch keypad and submits its named field", async () => {
+  const { ShiftForm } = await import("./shifts/shift-form");
+  actions.openShiftAction.mockImplementation(async (_previous, form: FormData) => ({ ok: true, message: `saved ${form.get("amount")}` }));
+  render(React.createElement(ShiftForm, { requestId: "request", recipients: [] }));
+  for (const digit of ["5", "0", ".", "5"]) fireEvent.click(screen.getByRole("button", { name: digit }));
+  const input = screen.getByLabelText("เงินทอนเริ่มต้น (บาท)") as HTMLInputElement;
+  expect(input.inputMode).toBe("none");
+  expect(input.value).toBe("50.5");
+  fireEvent.click(screen.getByRole("button", { name: "เปิดกะเงินสด" }));
+  expect(await screen.findByText("saved 50.5")).toBeTruthy();
+});
+
+it("prevents empty or excessive shift amounts while retaining the existing maximum", async () => {
+  const { ShiftForm } = await import("./shifts/shift-form");
+  render(React.createElement(ShiftForm, { requestId: "request", recipients: [] }));
+  const submit = screen.getByRole("button", { name: "เปิดกะเงินสด" });
+  expect(submit.hasAttribute("disabled")).toBe(true);
+  for (const digit of "21474836.47") fireEvent.click(screen.getByRole("button", { name: digit }));
+  expect((screen.getByLabelText("เงินทอนเริ่มต้น (บาท)") as HTMLInputElement).value).toBe("21474836.47");
+  expect(submit.hasAttribute("disabled")).toBe(false);
+  fireEvent.click(screen.getByRole("button", { name: "ลบ" }));
+  fireEvent.click(screen.getByRole("button", { name: "8" }));
+  expect(submit.hasAttribute("disabled")).toBe(true);
+});
+
+it("retains hardware-keyboard entry for shift amounts without requesting a touch keyboard", async () => {
+  const { ShiftForm } = await import("./shifts/shift-form");
+  render(React.createElement(ShiftForm, { requestId: "request", recipients: [] }));
+  const input = screen.getByLabelText("เงินทอนเริ่มต้น (บาท)") as HTMLInputElement;
+  expect(input.readOnly).toBe(false);
+  fireEvent.change(input, { target: { value: "100.25" } });
+  expect(input.value).toBe("100.25");
+  expect(screen.getByRole("button", { name: "เปิดกะเงินสด" }).hasAttribute("disabled")).toBe(false);
+});
+
+it("keeps a failed QR decision visible after a successful background refresh", async () => {
+  const { RequestsScreen } = await import("./requests/requests-screen");
+  const order = { id: "request", status: "pending" as const, totalSatang: 5050, dailyNo: null, mode: "pickup" as const, tableLabel: null, items: [] };
+  actions.decideRequestAction.mockResolvedValue({ ok: false, message: "รับรายการไม่สำเร็จ" });
+  actions.loadRequestsAction.mockResolvedValue({ ok: true, orders: [order] });
+  vi.useFakeTimers();
+  render(React.createElement(RequestsScreen, { initial: [order] }));
+  await act(async () => { fireEvent.click(screen.getByRole("button", { name: "รับรายการ" })); });
+  expect(screen.getByRole("alert").textContent).toBe("รับรายการไม่สำเร็จ");
+  await act(async () => { vi.advanceTimersByTime(5000); });
+  expect(screen.getByRole("alert").textContent).toBe("รับรายการไม่สำเร็จ");
+});
+
+it("shows unavailable QR pricing without presenting a zero-baht total", async () => {
+  const { PosApp } = await import("./_components/pos-app");
+  actions.getPosDeviceId.mockResolvedValue("device");
+  render(React.createElement(PosApp, { ...posProps, menu: { categories: [], products: [] } }));
+  await screen.findByText("รายการจาก QR · รับชำระเงิน");
+  expect(screen.getByText("รอตรวจสอบราคา")).toBeTruthy();
+  expect(screen.queryByText("฿0")).toBeNull();
 });

@@ -40,6 +40,8 @@ export function CartPanel({ lines, pricedLines, subtotalSatang, discountSatang, 
   const productNames = new Map(menu.products.map((product) => [product.id, product.name]));
   const soldOutIds = new Set(menu.products.filter((product) => product.soldOut).map((product) => product.id));
 
+  const hasSoldOut = lines.some((line) => soldOutIds.has(line.productId));
+
   useGSAP((_, contextSafe = (callback) => callback()) => {
     const rows = gsap.utils.toArray<HTMLElement>("[data-cart-line]", panelRef.current);
     const freshRows = rows.filter((row) => {
@@ -60,7 +62,6 @@ export function CartPanel({ lines, pricedLines, subtotalSatang, discountSatang, 
         gsap.to(clone, { x: 16, opacity: 0, scaleY: 0.88, duration: MOTION.base, ease: MOTION.ease, onComplete: () => clone.remove() });
         window.setTimeout(() => clone.remove(), MOTION.base * 1000 + 120);
       }
-      onQuantity(index, -1);
     });
   }, { scope: panelRef, dependencies: [lines] });
 
@@ -87,7 +88,7 @@ export function CartPanel({ lines, pricedLines, subtotalSatang, discountSatang, 
             <div className="text-[17px] font-semibold">{productNames.get(line.productId) ?? priced?.name}</div>{soldOutIds.has(line.productId) ? <div className="text-sm font-semibold text-[#8E3415]">หมดแล้ว — กดปุ่มลดจำนวนเพื่อนำออก</div> : <div className="text-sm text-[#6B5547]">{modifiersText || "แตะเพื่อแก้ไขรายการ"}</div>}
             <div className="mt-1 text-[15px] font-bold tabular-nums">{formatBaht(priced?.lineTotalSatang ?? 0)}</div></button>
           <div className="flex items-center gap-1">
-            <button type="button" aria-label={`ลดจำนวน ${productNames.get(line.productId)}`} onClick={() => line.qty === 1 ? removeLineWithMotionRef.current(index) : onQuantity(index, -1)} className="flex size-11 items-center justify-center rounded-xl border border-[#D9C5B0] bg-[#FFFBF6] active:scale-[0.97] motion-reduce:transition-none"><Minus aria-hidden="true" size={20} /></button>
+            <button type="button" aria-label={`ลดจำนวน ${productNames.get(line.productId)}`} onClick={() => { if (line.qty === 1) { removeLineWithMotionRef.current(index); } onQuantity(index, -1); }} className="flex size-11 items-center justify-center rounded-xl border border-[#D9C5B0] bg-[#FFFBF6] active:scale-[0.97] motion-reduce:transition-none"><Minus aria-hidden="true" size={20} /></button>
             <span className="w-8 text-center text-lg font-bold">{line.qty}</span>
             <button type="button" aria-label={`เพิ่มจำนวน ${productNames.get(line.productId)}`} onClick={() => onQuantity(index, 1)} disabled={line.qty >= 99} className="flex size-11 items-center justify-center rounded-xl border border-[#D9C5B0] bg-[#FFFBF6] disabled:opacity-40"><Plus aria-hidden="true" size={20} /></button>
           </div>
@@ -98,9 +99,9 @@ export function CartPanel({ lines, pricedLines, subtotalSatang, discountSatang, 
       <div className="flex justify-between text-[15px] text-[#6B5547]"><span>รวม {itemCount} รายการ</span><span className="tabular-nums">{formatBaht(subtotalSatang)}</span></div>
       {discountSatang > 0 && <div className="flex justify-between text-[15px] font-semibold text-[#2F6B3F]"><span>ส่วนลดรางวัลสมาชิก</span><span className="tabular-nums">−{formatBaht(discountSatang)}</span></div>}
       <div className="mt-0.5 flex items-baseline justify-between"><span className="text-lg font-semibold">ยอดชำระ</span><span className="text-[32px] font-bold tabular-nums">{formatBaht(totalSatang)}</span></div>
-      <button ref={payRef} type="button" disabled={!lines.length || !online} onClick={onPay} className="relative mt-1.5 h-[72px] overflow-hidden rounded-2xl bg-[#B4441C] text-[22px] font-bold text-white shadow-[0_5px_12px_rgba(180,68,28,0.18)] transition-transform active:scale-[0.99] motion-reduce:transform-none motion-reduce:transition-none disabled:bg-[#C9B6A4]">
+      <button ref={payRef} type="button" disabled={!lines.length || !online || hasSoldOut} onClick={onPay} className="relative mt-1.5 h-[72px] overflow-hidden rounded-2xl bg-[#B4441C] text-[22px] font-bold text-white shadow-[0_5px_12px_rgba(180,68,28,0.18)] transition-transform active:scale-[0.99] motion-reduce:transform-none motion-reduce:transition-none disabled:bg-[#C9B6A4]">
         <span aria-hidden="true" data-pay-shine className="pointer-events-none absolute inset-y-0 left-0 w-1/3 -skew-x-12 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0" />
-        <span className="relative">{online ? `ชำระเงิน ${formatBaht(totalSatang)}` : "ออฟไลน์ — ชำระเงินไม่ได้"}</span></button>
+        <span className="relative">{hasSoldOut ? "นำรายการที่หมดออกก่อนชำระเงิน" : online ? `ชำระเงิน ${formatBaht(totalSatang)}` : "ออฟไลน์ — ชำระเงินไม่ได้"}</span></button>
     </footer>
   </aside>;
 }

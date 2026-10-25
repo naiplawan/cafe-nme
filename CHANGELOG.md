@@ -7,6 +7,10 @@ versioning (pre-1.0: minor = features, patch = fixes).
 ## [Unreleased]
 
 ### Added
+- Add cash statements for active and closed shifts, with sales, actual refund payouts, drawer movements, staff/approval details, paginated entries, and reconciliation against the frozen closing balance.
+- Record manager-approved drawer top-ups, petty cash and deposits with reasons and idempotent requests; include them in closing cash reconciliation.
+- Support ingredient-replacement modifiers, immutable per-item recipes, opt-in stock consumption at preparation, pre-preparation reservation release, and recorded remakes without additional revenue.
+- Track weighted-average purchase costs, audited opening stock valuation and immutable sale costs; report ingredient margins with missing-cost coverage, pending preparation, and separate remake/waste costs.
 - Added a shop setup checklist for menu, POS, PromptPay, LINE, and a trial sale, plus a public QR menu that shows current prices and sold-out items without login.
 - Added cash reconciliation by payment method, payment review history, provider charge verification, and Omise PromptPay support for accepted QR orders. Staff-recorded PromptPay remains distinct from provider-confirmed payment.
 - Added shift opening and closing with opening float, expected and counted cash, variance, and handoff staff; added a preparation queue with order numbers, item notes, and received, preparing, and ready states.
@@ -16,6 +20,8 @@ versioning (pre-1.0: minor = features, patch = fixes).
 - Reserve recipe ingredients for 30 minutes when staff open a PromptPay QR, refreshed while the QR stays open. Other sales cannot consume reserved stock, and the QR is withheld when stock cannot be reserved.
 
 ### Changed
+- Reject paid-order voids with `409 use_refund`; reverse paid sales through refund approval and separately confirmed payout. Only unpaid open bills can be cancelled without moving money.
+- Apply loyalty rewards to the cheapest eligible base price while retaining add-on charges; free reward units and zero-price drinks earn no stamps. Refund reward units first without reversing unearned stamps.
 - Tightened staff role changes so managers cannot create owners or change higher-privilege PINs; expanded shop scoping across member, POS, order, and report operations.
 - Recover unresolved checkouts after reload using the original sale request and prevent duplicate order/payment creation on retries.
 - Update the preparation queue every five seconds while online and visible, including immediately after reconnecting or returning to the tab.
@@ -23,8 +29,16 @@ versioning (pre-1.0: minor = features, patch = fixes).
 - Block recipe edits while a PromptPay stock reservation is active and explain the wait in the inventory admin; waste and adjustments now count reserved stock as unavailable.
 - Let search engines index public QR menus at `/menu/[shopSlug]`; their order pages stay `noindex`.
 - Extend the API schema and OpenAPI client types for payment review, shifts, preparation, expiry, self-orders, inventory, refunds, shared loyalty, subscriptions, and provider payment intents.
+- Show a banner on the POS sale screen when no cash shift is open, with a link to open one; PromptPay sales stay available.
+- Refresh QR order requests every five seconds while online and visible, and ask for confirmation before rejecting a request.
+- Restyle the QR-order checkout with line totals, modifiers and the order total; give queue statuses distinct colours.
+- Enter shift and drawer amounts on the on-screen keypad instead of the tablet keyboard; drawer movements sit in a collapsible section so the shift page shows one keypad.
+- Add icons to the POS header shortcuts so they fit on one row, a bottom cart bar with item count and total on narrow screens, a five-second undo after removing a cart line, and a note when search covers all categories.
+- Disable Pay while the cart contains a sold-out item.
 
 ### Operations
+- Apply migrations `0032`–`0038` before deploying the business-rule updates. Existing shops keep payment-time stock consumption until they opt into preparation tracking. Historical costs and closed cash balances are not backfilled; see `docs/pos-business-rules.md` for policies and setup.
+- Extend browser coverage to replacement recipes, cancellation before preparation, remakes and drawer movements; regenerate API contracts for inventory valuation, stock policy and margin reporting.
 - Add `pnpm test:e2e` and CI browser coverage for device pairing, cash sales with modifiers, receipts, preparation, partial refunds, shift reconciliation, offline checkout blocking, and recovery after a committed checkout response is lost. Tests use an isolated local database and retain failure traces; see `docs/pos-acceptance.md` for setup and remaining shop pilot checks.
 - Limit frontend test workers to two and allow 15 seconds per test to reduce module-import timeouts under resource contention, without enabling retries.
 - Apply migrations `0023_payment_reviews` through `0031_promptpay_stock_holds` before deploying the updated API. `0031` only adds the `promptpay_stock_holds` and `promptpay_stock_hold_items` tables.
@@ -44,6 +58,9 @@ versioning (pre-1.0: minor = features, patch = fixes).
 - Handle empty HTTP 200 responses from nullable API lookups as missing records instead of JSON parse errors.
 - Keep required modifier groups visible in the POS and block items whose required options are not configured.
 - Authorize rich-menu previews against the requested branch membership, including branches outside the active admin cookie path.
+- Stop the preparation queue's background refresh from disabling its buttons and dropping taps every five seconds.
+- Show PromptPay reservation errors once instead of twice, and keep POS notices from overlapping each other, the header, or the Pay button.
+- Format QR-order and provider-payment amounts with the shared baht formatter.
 
 ### Added
 - Password recovery from the login page, with single-use links, request throttling, and admin session revocation after a reset.

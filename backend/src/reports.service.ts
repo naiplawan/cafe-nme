@@ -1,6 +1,8 @@
 import { Inject, Injectable } from "@nestjs/common";
 import { DatabaseService } from "./database.service.js";
 
+export interface MarginItem { name: string; qty: number; revenueSatang: number; knownCostSatang: number; unknownCostQty: number; pendingQty: number; marginSatang: number | null }
+export interface MarginReport { items: MarginItem[]; remakeCostSatang: number; wasteCostSatang: number; unknownExtraCostMovements: number }
 export interface DateRange { from: string; to: string }
 export interface RefundSummary { approvedSatang: number; approvedCount: number; paidSatang: number; paidCount: number; unpaidApprovedSatang: number; cashPaidSatang: number; promptpayPaidSatang: number }
 export interface SalesSummary {
@@ -22,6 +24,38 @@ const asNumber = (value: number | string) => Number(value);
 @Injectable()
 export class ReportsService {
   constructor(@Inject(DatabaseService) private readonly database: DatabaseService) {}
+
+  async marginByItem(shopId: string, { from, to }: DateRange): Promise<MarginReport> {
+    const sql = this.database.connection;
+    const items = await sql<MarginItem[]>`with sale_lines as (
+      select i.*,o.total_satang,o.recipe_snapshot_at,o.inventory_deducted_at,
+        sum(i.unit_price_satang::numeric*i.qty) over(partition by o.id order by i.line_no,i.id) as cumulative,
+        sum(i.unit_price_satang::numeric*i.qty) over(partition by o.id) as gross
+      from orders o join order_items i on i.order_id=o.id
+      where o.shop_id=${shopId}::uuid and o.status='paid' and o.business_date between ${from} and ${to}
+    ), net_lines as (
+      select i.name_snapshot,i.qty,
+        coalesce(i.paid_satang,case when i.gross=0 then 0 else
+          trunc(i.cumulative*i.total_satang/i.gross)-trunc((i.cumulative-i.unit_price_satang::numeric*i.qty)*i.total_satang/i.gross) end)
+          -coalesce(refunded.amount,0) as revenue,
+        case when i.unit_cost_satang is not null then round(i.unit_cost_satang*coalesce(i.prepared_qty,0)) else 0 end as cost,
+        case when i.unit_cost_satang is null then i.qty else 0 end as unknown_qty,
+        case when i.recipe_snapshot_at is not null and i.inventory_deducted_at is null then i.qty-coalesce(refunded.qty,0) else 0 end as pending_qty
+      from sale_lines i left join lateral (
+        select sum((line->>'amountSatang')::bigint) as amount,sum((line->>'qty')::int) as qty from refunds r cross join lateral jsonb_array_elements(r.lines) line
+        where r.shop_id=${shopId}::uuid and r.order_id=i.order_id and line->>'itemId'=i.id::text
+      ) refunded on true
+    ) select name_snapshot as name,sum(qty)::int as qty,sum(revenue)::float8 as "revenueSatang",sum(cost)::float8 as "knownCostSatang",
+      sum(unknown_qty)::int as "unknownCostQty",sum(pending_qty)::int as "pendingQty",case when sum(unknown_qty)=0 and sum(pending_qty)=0 then sum(revenue-cost)::float8 else null end as "marginSatang"
+      from net_lines group by name_snapshot order by name_snapshot`;
+    const [extra] = await sql<{ remakeCostSatang: number; wasteCostSatang: number; unknownExtraCostMovements: number }[]>`
+      select coalesce(sum(m.cost_satang) filter(where m.kind='remake'),0)::float8 as "remakeCostSatang",
+        coalesce(sum(m.cost_satang) filter(where m.kind='waste'),0)::float8 as "wasteCostSatang",
+        count(*) filter(where m.cost_satang is null)::int as "unknownExtraCostMovements"
+      from inventory_movements m join shops s on s.id=m.shop_id where m.shop_id=${shopId}::uuid and m.kind in ('remake','waste')
+        and (m.created_at at time zone s.timezone)::date between ${from}::date and ${to}::date`;
+    return { items, ...extra };
+  }
 
   async refundSummary(shopId: string, { from, to }: DateRange): Promise<RefundSummary> {
     const [row] = await this.database.connection<{

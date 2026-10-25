@@ -28,7 +28,7 @@ describe("priceCart", () => {
     expect(priceCart([{ productId: "latte", qty: 2, modifierIds: ["large", "oat"], note: "  ร้อน  " }], menu))
       .toEqual({ lines: [{ productId: "latte", name: "ลาเต้", qty: 2, note: "ร้อน", earnsStamp: true,
         modifiers: [menu.products[0].groups[0].modifiers[1], menu.products[0].groups[1].modifiers[0]],
-        unitPriceSatang: 7500, lineTotalSatang: 15_000 }], subtotalSatang: 15_000 });
+        basePriceSatang: 5000, unitPriceSatang: 7500, lineTotalSatang: 15_000 }], subtotalSatang: 15_000 });
   });
 
   it("orders selected modifiers by group and modifier order instead of tap order", () => {
@@ -93,4 +93,10 @@ it("computes cheapest eligible reward discount and stamp quantity", () => {
   expect(rewardDiscount(lines)).toBe(5000);
   expect(stampsForLines(lines)).toBe(3);
   expect(rewardDiscount([])).toBe(0);
+});
+
+it('keeps premium modifiers payable and excludes the reward cup from stamps', () => {
+  const { lines } = priceCart([{ productId: 'latte', qty: 2, modifierIds: ['large','oat'] }], menu);
+  expect(rewardDiscount(lines)).toBe(5000);
+  expect(stampsForLines(lines, true)).toBe(1);
 });

@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireStaff } from "@/lib/auth";
 import { logger } from "@/lib/logger";
-import { createIngredient, InventoryApiError, moveInventory, saveRecipe, setInventoryThreshold } from "@/server/inventory";
+import { createIngredient, InventoryApiError, moveInventory, saveRecipe, setInventoryThreshold, setStockPolicy, valueStock } from "@/server/inventory";
 
 export type InventoryActionState = { success: boolean; message: string } | null;
 const amount = z.string().regex(/^-?\d+(\.\d{1,3})?$/).transform((value) => {
@@ -45,7 +45,13 @@ export async function moveInventoryAction(_previous: InventoryActionState, form:
     reason: z.string().trim().min(1).max(500) }).safeParse({ ingredientId: form.get("ingredientId"), requestId: form.get("requestId"),
     kind: form.get("kind"), quantityMilliunits: form.get("quantity"), reason: form.get("reason") });
   if (!parsed.success || parsed.data.quantityMilliunits === 0 || (parsed.data.kind !== "adjust" && parsed.data.quantityMilliunits < 0)) { return invalid; }
-  const { ingredientId, ...input } = parsed.data;
+  const cost = z.string().regex(/^\d+(\.\d{1,2})?$/).transform(value => {
+    const [whole, fraction = ''] = value.split('.');
+    return Number(whole)*100 + Number(fraction.padEnd(2,'0'));
+  }).pipe(z.number().int().min(0).max(2147483647)).safeParse(form.get('cost'));
+  if (parsed.data.kind === 'receive' && !cost.success) return { success: false, message: 'กรอกต้นทุนรวมของการรับเข้าครั้งนี้เป็นบาท' };
+  const { ingredientId, ...movement } = parsed.data;
+  const input = { ...movement, costSatang: movement.kind === 'receive' && cost.success ? cost.data : null };
   try { await moveInventory(session.shopId, session.staff.id, ingredientId, input); }
   catch (error) {
     if (error instanceof InventoryApiError && error.code === "insufficient_inventory_stock") {
@@ -63,13 +69,15 @@ export async function saveRecipeAction(_previous: InventoryActionState, form: Fo
   if (session.staff.role !== "owner" && session.staff.role !== "manager") { return forbidden; }
   const target = z.object({ kind: z.enum(["product", "modifier"]), id: z.uuid() }).safeParse({ kind: form.get("kind"), id: form.get("targetId") });
   if (!target.success) { return invalid; }
-  const lines: { ingredientId: string; quantityMilliunits: number }[] = [];
+  const lines: { ingredientId: string; quantityMilliunits: number; replacesIngredientId?: string | null }[] = [];
   for (const [key, value] of form.entries()) {
     if (!key.startsWith("quantity:") || value === "") { continue; }
     const parsed = z.object({ ingredientId: z.uuid(), quantityMilliunits: amount.pipe(z.number().nonnegative()) })
       .safeParse({ ingredientId: key.slice(9), quantityMilliunits: value });
     if (!parsed.success) { return invalid; }
-    if (parsed.data.quantityMilliunits > 0) { lines.push(parsed.data); }
+    const replacement = z.uuid().nullable().safeParse(form.get(`replaces:${key.slice(9)}`) || null);
+    if (!replacement.success || (replacement.data && target.data.kind !== 'modifier')) return invalid;
+    if (parsed.data.quantityMilliunits > 0) { lines.push({ ...parsed.data, replacesIngredientId: replacement.data }); }
   }
   if (lines.length > 100) { return invalid; }
   try { await saveRecipe(session.shopId, session.staff.id, target.data.kind, target.data.id, lines); }
@@ -82,4 +90,37 @@ export async function saveRecipeAction(_previous: InventoryActionState, form: Fo
   }
   revalidatePath("/admin/inventory");
   return { success: true, message: "บันทึกสูตรสำหรับการขายครั้งถัดไปแล้ว" };
+}
+
+export async function setStockPolicyAction(_previous: InventoryActionState, form: FormData): Promise<InventoryActionState> {
+  const session = await requireStaff();
+  if (session.staff.role !== 'owner' && session.staff.role !== 'manager') return forbidden;
+  const mode = z.enum(['payment','preparation']).safeParse(form.get('mode'));
+  if (!mode.success) return invalid;
+  try { await setStockPolicy(session.shopId, session.staff.id, mode.data); }
+  catch (error) {
+    logger.error({ err: error, shopId: session.shopId }, 'Stock policy update failed');
+    return { success: false, message: 'บันทึกไม่สำเร็จ กรุณาทำหรือคืนเงินออเดอร์ที่จองวัตถุดิบค้างไว้ก่อนเปลี่ยนวิธีตัดสต็อก' };
+  }
+  revalidatePath('/admin/inventory');
+  return { success: true, message: 'บันทึกวิธีตัดสต็อกแล้ว' };
+}
+
+export async function valueStockAction(_previous: InventoryActionState, form: FormData): Promise<InventoryActionState> {
+  const session = await requireStaff();
+  if (session.staff.role !== 'owner' && session.staff.role !== 'manager') return forbidden;
+  const parsed = z.object({ ingredientId: z.uuid(), requestId: z.uuid(), onHandMilliunits: z.coerce.number().int().min(1).max(Number.MAX_SAFE_INTEGER),
+    cost: z.string().regex(/^\d+(\.\d{1,2})?$/), reason: z.string().trim().min(1).max(500) }).safeParse(Object.fromEntries(form));
+  if (!parsed.success) return invalid;
+  const [whole, fraction = ''] = parsed.data.cost.split('.');
+  const costSatang = Number(whole)*100 + Number(fraction.padEnd(2,'0'));
+  if (!Number.isSafeInteger(costSatang) || costSatang > 2147483647) return invalid;
+  try { await valueStock(session.shopId, session.staff.id, parsed.data.ingredientId, {
+    requestId: parsed.data.requestId, onHandMilliunits: parsed.data.onHandMilliunits, costSatang, reason: parsed.data.reason,
+  }); } catch (error) {
+    logger.error({ err: error, shopId: session.shopId }, 'Stock valuation failed');
+    return { success: false, message: 'บันทึกมูลค่าไม่สำเร็จ หากยอดสต็อกเปลี่ยน กรุณารีเฟรชและตรวจยอดก่อนยืนยันอีกครั้ง' };
+  }
+  revalidatePath('/admin/inventory');
+  return { success: true, message: 'บันทึกมูลค่าปัจจุบันและประวัติแล้ว ต้นทุนบิลเดิมไม่เปลี่ยน' };
 }

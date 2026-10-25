@@ -20,5 +20,7 @@ it("removes a rejected draft from the staff waiting list", async () => {
   api.decideRequestAction.mockResolvedValue({ ok: true, order: { ...order, status: "rejected" } });
   render(createElement(RequestsScreen, { initial: [order] }));
   fireEvent.click(screen.getByRole("button", { name: "ไม่รับรายการ" }));
+  expect(api.decideRequestAction).not.toHaveBeenCalledWith(order.id, "rejected");
+  fireEvent.click(screen.getByRole("button", { name: "ยืนยันไม่รับรายการ" }));
   await waitFor(() => expect(screen.getByText("ไม่มีรายการรอรับ")).toBeTruthy());
 });

@@ -57,19 +57,20 @@ it("automatically shows new orders and status changes made on another device", a
   expect(screen.getByRole("heading", { name: "#008" })).toBeTruthy();
   expect(screen.getByText("พร้อมรับแล้ว")).toBeTruthy();
 });
-it("does not overlap a slow refresh with another poll or a preparation change", async () => {
+it("does not overlap polls and gives a preparation tap priority over a slow refresh", async () => {
   vi.useFakeTimers();
   let resolveRefresh!: (value: { ok: true; rows: typeof initial }) => void;
   api.loadQueueAction.mockImplementation(() => new Promise((resolve) => { resolveRefresh = resolve; }));
   render(createElement(QueueScreen, { initial }));
 
   await act(() => vi.advanceTimersByTimeAsync(15_000));
-  fireEvent.click(screen.getByRole("button", { name: "เริ่มทำ" }));
+  api.advancePreparationAction.mockResolvedValue({ ok: true, update: { id: "order", status: "preparing", updatedAt: null } });
+  await act(async () => { fireEvent.click(screen.getByRole("button", { name: "เริ่มทำ" })); });
   expect(api.loadQueueAction).toHaveBeenCalledTimes(1);
-  expect(api.advancePreparationAction).not.toHaveBeenCalled();
+  expect(api.advancePreparationAction).toHaveBeenCalledWith("order", "received", "preparing");
 
   await act(async () => { resolveRefresh({ ok: true, rows: [] }); });
-  expect(screen.getByText("ไม่มีคิววันนี้")).toBeTruthy();
+  expect(screen.getByRole("button", { name: "พร้อมเสิร์ฟ" })).toBeTruthy();
 });
 it("keeps the last queue on a polling failure and clears the error after automatic recovery", async () => {
   vi.useFakeTimers();

@@ -307,7 +307,7 @@ export function PaymentDialog({ orderLabel, lines: cartLines, subtotalSatang: ca
               <Keypad value={cashInput} onChange={(next) => setCashInput(next.replace(/^0+(?=\d)/, ""))} maxLength={9} decimal
                 className="w-full sm:w-[min(280px,43%)] content-start" keyClassName="h-[min(72px,9vh)] min-h-[50px]" />
             </div> : ready && stockReserved ? <PromptPayQr amountSatang={totalSatang} shopName={shopName} />
-              : ready ? <p className="rounded-xl bg-amber-100 p-3" role="status">{error ?? "กำลังตรวจสอบและจองวัตถุดิบก่อนแสดง QR…"}</p> : null}
+              : ready && !error ? <p className="rounded-xl bg-amber-100 p-3" role="status">กำลังตรวจสอบและจองวัตถุดิบก่อนแสดง QR…</p> : null}
           </div>
 
           </fieldset>

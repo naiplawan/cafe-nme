@@ -38,8 +38,8 @@ describe("preparation queue", { skip: !process.env.TEST_DATABASE_URL }, () => {
   after(async () => { await fixture?.dispose(); });
   it("lists today's paid bills in queue-number order with immutable recipe snapshots", async () => {
     const rows = await service.list(fixture.shopId, fixture.baristaId);
-    assert.deepEqual(rows.map((row) => row.dailyNo), [1, 2]);
-    assert.deepEqual(rows[1], { id: orderId, dailyNo: 2, status: "received", updatedAt: null,
+    assert.deepEqual(rows.map((row) => row.dailyNo), [2]);
+    assert.deepEqual(rows[0], { id: orderId, dailyNo: 2, status: "received", updatedAt: null,
       items: [{ id: itemId, name: "Iced coffee", qty: 2, note: "No ice", modifiers: ["Oat milk"] }] });
   });
   it("denies inactive and foreign-shop actors on every read and mutation", async () => {
@@ -53,7 +53,7 @@ describe("preparation queue", { skip: !process.env.TEST_DATABASE_URL }, () => {
   });
   it("rejects invalid jumps without changing received state", async () => {
     await assert.rejects(service.transition(fixture.shopId, fixture.baristaId, orderId, "received", "ready"), BadRequestException);
-    assert.equal((await service.list(fixture.shopId, fixture.baristaId))[1].status, "received");
+    assert.equal((await service.list(fixture.shopId, fixture.baristaId))[0].status, "received");
   });
   it("serializes concurrent starts and makes the same desired-state retry idempotent", async () => {
     const results = await Promise.all([
@@ -68,11 +68,11 @@ describe("preparation queue", { skip: !process.env.TEST_DATABASE_URL }, () => {
     const ready = await service.transition(fixture.shopId, fixture.baristaId, orderId, "preparing", "ready");
     assert.equal(ready.status, "ready");
     await assert.rejects(service.transition(fixture.shopId, fixture.baristaId, orderId, "received", "preparing"), ConflictException);
-    assert.equal((await service.list(fixture.shopId, fixture.baristaId))[1].status, "ready");
+    assert.equal((await service.list(fixture.shopId, fixture.baristaId))[0].status, "ready");
   });
   it("cannot update a bill after it is voided", async () => {
     await fixture.database.connection`update orders set status='void' where id=${orderId}`;
     await assert.rejects(service.transition(fixture.shopId, fixture.baristaId, orderId, "preparing", "ready"), NotFoundException);
-    assert.equal((await service.list(fixture.shopId, fixture.baristaId)).length, 1);
+    assert.equal((await service.list(fixture.shopId, fixture.baristaId)).length, 0);
   });
 });

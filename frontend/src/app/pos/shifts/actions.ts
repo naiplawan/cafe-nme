@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { logger } from "@/lib/logger";
 import { requirePosStaff } from "@/server/pos-session";
-import { closeShift, openShift } from "@/server/shifts";
+import { closeShift, openShift, recordCashMovement } from "@/server/shifts";
 
 export type ShiftActionState = { ok: boolean; message: string } | null;
 const amountSchema = z.string().regex(/^\d+(\.\d{1,2})?$/).transform((value) => {
@@ -43,4 +43,22 @@ export async function closeShiftAction(_previous: ShiftActionState, form: FormDa
   }
   revalidatePath("/pos/shifts");
   return { ok: true, message: "ปิดกะและบันทึกยอดนับแล้ว" };
+}
+
+export async function cashMovementAction(_previous: ShiftActionState, form: FormData): Promise<ShiftActionState> {
+  const session = await requirePosStaff();
+  if (session.staff.role === 'barista') return { ok: false, message: 'ต้องใช้สิทธิ์ผู้จัดการหรือเจ้าของร้าน' };
+  const parsed = inputSchema.extend({ shiftId: z.uuid(), kind: z.enum(['float_topup','petty_cash','bank_deposit']),
+    reason: z.string().trim().min(1).max(500) }).safeParse(Object.fromEntries(form));
+  if (!parsed.success || parsed.data.amount <= 0) return { ok: false, message: 'ตรวจสอบยอดเงินและระบุเหตุผล' };
+  try {
+    await recordCashMovement(session.shopId, session.staff.id, parsed.data.shiftId, {
+      requestId: parsed.data.requestId, kind: parsed.data.kind, amountSatang: parsed.data.amount, reason: parsed.data.reason,
+    });
+  } catch (error) {
+    logger.error({ err: error, shopId: session.shopId }, 'Cash movement failed');
+    return { ok: false, message: 'บันทึกไม่สำเร็จ ตรวจสอบกะและยอดเงินในลิ้นชัก แล้วลองรายการเดิมอีกครั้ง' };
+  }
+  revalidatePath('/pos/shifts');
+  return { ok: true, message: 'บันทึกการรับ–จ่ายเงินแล้ว' };
 }

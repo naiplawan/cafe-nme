@@ -1,4 +1,4 @@
-import { deductRecipeStock, reservePromptPayRecipeStock } from "./inventory.service.js";
+import { reserveOrderRecipeStock, reservePromptPayRecipeStock } from "./inventory.service.js";
 import { createHash, randomUUID } from 'node:crypto';
 import { BadRequestException, ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import type { TransactionSql } from 'postgres';
@@ -8,13 +8,13 @@ import {
   CheckoutDomainError,
   MAX_CHECKOUT_UNITS,
   rewardDiscount,
+  rewardLineIndex,
   stampsForLines,
   type CheckoutCartLine,
   type CheckoutProduct,
 } from './checkout-domain.js';
 import { DatabaseService } from './database.service.js';
-import { resolveSharedLoyalty, consumeSharedStamps, redeemSharedReward, restoreOrderSharedStamps, reverseOrderEarnedStamps, type SharedLoyaltyScope } from './loyalty-groups.service.js';
-import { allocateLinePayments } from './refund-domain.js';
+import { resolveSharedLoyalty, consumeSharedStamps, redeemSharedReward, type SharedLoyaltyScope } from './loyalty-groups.service.js';
 import { clearExpiredSoldOut } from './sold-out.js';
 import { lockSelfOrderForCheckout, completeSelfOrderCheckout } from './self-orders.service.js';
 
@@ -313,7 +313,8 @@ export class OrdersService {
         await tx`select pg_advisory_xact_lock(hashtext(${lockShopId + day}))`;
         const priced = await checkoutPrice(tx, shopId, input);
         const { subtotalSatang, discountSatang, totalSatang, member } = priced;
-        const stampsEarned = stampsForLines(priced.lines);
+        const rewardIndex = input.redeemRewardId ? rewardLineIndex(priced.lines) : -1;
+        const stampsEarned = stampsForLines(priced.lines, Boolean(input.redeemRewardId));
         let rewardsCreated = 0;
         if (input.expectedTotalSatang !== undefined && input.expectedTotalSatang !== totalSatang) {
           throw new CheckoutDomainError('price_changed');
@@ -348,10 +349,10 @@ export class OrdersService {
           if (!redeemed) throw new CheckoutDomainError('reward_unavailable');
         }
         const itemIds = priced.lines.map(() => randomUUID());
-        const paidByLine = allocateLinePayments(priced.lines.map((line) => line.lineTotalSatang), totalSatang);
+        const paidByLine = priced.lines.map((line, index) => line.lineTotalSatang - (index === rewardIndex ? discountSatang : 0));
         await tx`
-          insert into order_items (id, order_id, product_id, name_snapshot, unit_price_satang, qty, note, paid_satang, stamps_earned, line_no)
-          select input.id, ${order.id}::uuid, product.id, input.name, input.price, input.qty, input.note, input.paid_satang, input.stamps_earned, input.line_no
+          insert into order_items (id, order_id, product_id, name_snapshot, unit_price_satang, qty, note, paid_satang, stamps_earned, reward_discount_satang, line_no)
+          select input.id, ${order.id}::uuid, product.id, input.name, input.price, input.qty, input.note, input.paid_satang, input.stamps_earned, input.reward_discount_satang, input.line_no
           from unnest(
             ${itemIds}::uuid[],
             ${priced.lines.map((line) => line.productId)}::uuid[],
@@ -360,8 +361,9 @@ export class OrdersService {
             ${priced.lines.map((line) => line.qty)}::integer[],
             ${priced.lines.map((line) => line.note)}::text[],
             ${paidByLine}::integer[],
-            ${priced.lines.map((line) => member && line.earnsStamp ? line.qty : 0)}::integer[]
-          ) with ordinality as input(id, product_id, name, price, qty, note, paid_satang, stamps_earned, line_no)
+            ${priced.lines.map((line, index) => member && line.earnsStamp && line.unitPriceSatang > 0 ? line.qty - (index === rewardIndex ? 1 : 0) : 0)}::integer[],
+            ${priced.lines.map((_, index) => index === rewardIndex ? discountSatang : 0)}::integer[]
+          ) with ordinality as input(id, product_id, name, price, qty, note, paid_satang, stamps_earned, reward_discount_satang, line_no)
           left join products product on product.id = input.product_id and product.shop_id = ${shopId}::uuid
           order by input.line_no
         `;
@@ -397,7 +399,7 @@ export class OrdersService {
               select ${shopId}::uuid, ${member.id}::uuid, ${order.id}::uuid, ${member.loyalty.newExpiresAt} from generate_series(1, ${rewardsCreated})`;
           }
         }
-        await deductRecipeStock(tx, shopId, order.id, input.lines, stockReservationRequestId);
+        await reserveOrderRecipeStock(tx, shopId, order.id, input.lines, itemIds, stockReservationRequestId);
         const receipt: CheckoutReceipt = {
           orderId: order.id,
           dailyNo,
@@ -420,79 +422,20 @@ export class OrdersService {
   }
 
   async voidOrder(shopId: string, orderId: string, managerStaffId: string): Promise<void> {
-    try {
-      await this.database.connection.begin(async (tx) => {
-        const [order] = await tx<{ id: string; memberId: string | null }[]>`
-          select id::text as id, member_id::text as "memberId" from orders
-          where id = ${orderId}::uuid and shop_id = ${shopId}::uuid and status = 'paid' for update
-        `;
-        if (!order) throw new ConflictException('Paid order not found');
-        const [manager] = await tx<{ id: string }[]>`
-          select id::text as id from staff where id = ${managerStaffId}::uuid and shop_id = ${shopId}::uuid
-            and role in ('owner', 'manager') and is_active = true limit 1
-        `;
-        if (!manager) throw new NotFoundException('Manager not found');
-        const loyalty = order.memberId ? await resolveSharedLoyalty(tx, shopId, order.memberId) : null;
-        const [refund] = await tx`select id from refunds where shop_id=${shopId}::uuid and order_id=${orderId}::uuid limit 1`;
-        if (refund) throw new ConflictException('Refunded bills cannot also be voided');
-        let earnedRewards: {
-          id: string;
-          status: 'available' | 'redeemed' | 'expired';
-          redeemedOrderId: string | null;
-        }[] = [];
-        if (order.memberId) {
-          earnedRewards = await tx<
-            { id: string; status: 'available' | 'redeemed' | 'expired'; redeemedOrderId: string | null }[]
-          >`
-            select id::text as id, status, redeemed_order_id::text as "redeemedOrderId"
-            from rewards where shop_id = ${shopId}::uuid and member_id = ${order.memberId}::uuid
-              and earned_order_id = ${orderId}::uuid order by id for update
-          `;
-          const [activeRedemption] = await tx<{ id: string }[]>`
-            select redemption.id::text as id from rewards reward
-            join orders redemption on redemption.id = reward.redeemed_order_id
-              and redemption.status = 'paid'
-            where reward.shop_id = ${shopId}::uuid and reward.member_id = ${order.memberId}::uuid
-              and reward.earned_order_id = ${orderId}::uuid and reward.status = 'redeemed'
-            limit 1
-          `;
-          if (activeRedemption) {
-            throw new ConflictException({
-              code: 'reward_redemption_active',
-              message: 'Void the reward redemption order first',
-            });
-          }
-        }
-        if (earnedRewards.some((reward) => reward.status === 'available')) {
-          const [legacy] = await tx`select id from stamp_ledger where shop_id=${shopId}::uuid and order_id=${orderId}::uuid
-            and reason='redeem' and source_entry_id is null limit 1`;
-          if (legacy) throw new ConflictException('Legacy loyalty conversion requires manual review');
-        }
-        const updated = await tx<{ id: string }[]>`
-          update orders set status = 'void', voided_at = now(), voided_by = ${managerStaffId}::uuid
-          where id = ${orderId}::uuid and shop_id = ${shopId}::uuid and status = 'paid' returning id::text as id
-        `;
-        if (!updated.length) throw new ConflictException('Paid order not found');
-        if (order.memberId) {
-          if (!loyalty) throw new NotFoundException('Member not found');
-          const availableRewards = earnedRewards.filter((reward) => reward.status === 'available');
-          if (availableRewards.length) {
-            await tx`update rewards set status = 'expired' where shop_id = ${shopId}::uuid and member_id = ${order.memberId}::uuid
-              and earned_order_id = ${orderId}::uuid and status = 'available'`;
-            await restoreOrderSharedStamps(tx, loyalty, orderId, managerStaffId, `void:${orderId}`, availableRewards.length * loyalty.stampGoal);
-          }
-          const current = await resolveSharedLoyalty(tx, shopId, order.memberId, loyalty.asOf);
-          if (!current) throw new NotFoundException('Member not found');
-          await reverseOrderEarnedStamps(tx, current, orderId, managerStaffId, Number.MAX_SAFE_INTEGER);
-          await tx`update rewards set status = case when expires_at <= ${loyalty?.asOf ?? new Date()} then 'expired'::reward_status else 'available'::reward_status end, redeemed_order_id = null
-            where member_id = any(${loyalty.aliases.map((alias) => alias.memberId)}::uuid[]) and redeemed_order_id = ${orderId}::uuid and status = 'redeemed'`;
-        }
-        await tx`insert into audit_log (shop_id, actor, action, payload)
-          values (${shopId}::uuid, ${managerStaffId}, 'orders.void', ${tx.json({ orderId })})`;
-      });
-    } catch (error) {
-      if (error instanceof ConflictException || error instanceof NotFoundException) throw error;
-      throw error;
-    }
+    await this.database.connection.begin(async (tx) => {
+      const [manager] = await tx`select id from staff where id=${managerStaffId}::uuid
+        and shop_id=${shopId}::uuid and role in ('owner','manager') and is_active=true for share`;
+      if (!manager) throw new NotFoundException('Manager not found');
+      const [order] = await tx`select status from orders where id=${orderId}::uuid and shop_id=${shopId}::uuid for update`;
+      if (!order) throw new NotFoundException('Order not found');
+      const [payment] = await tx`select id from payments where order_id=${orderId}::uuid limit 1`;
+      if (order.status !== 'open' || payment) {
+        throw new ConflictException({ code: 'use_refund', message: 'Paid bills require refund approval and payout' });
+      }
+      await tx`update orders set status='void', voided_at=now(), voided_by=${managerStaffId}::uuid
+        where id=${orderId}::uuid`;
+      await tx`insert into audit_log(shop_id,actor,action,payload)
+        values(${shopId}::uuid,${managerStaffId},'orders.void',${tx.json({ orderId })})`;
+    });
   }
 }

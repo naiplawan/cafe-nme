@@ -96,6 +96,8 @@ export function ProductGrid({ menu, categoryId, addedProductId, onChoose }: Prod
       </button>
     </div>
     {manageSoldOut && <div role="status" className="mb-3 shrink-0 rounded-xl border border-dashed border-[#B4441C] bg-[#F7DCD0] px-4 py-2 text-sm font-semibold text-[#8E3415]">แตะเมนูเพื่อสลับ หมด/มีขาย</div>}
+    {notice ? <div role="status" className="mb-3 shrink-0 rounded-xl bg-[#3B2A20] px-5 py-3 text-base font-semibold text-white">{notice}</div> : null}
+    {searchTerm ? <p className="mb-3 text-sm text-[#6B5547]">กำลังค้นหาเมนูจากทุกหมวดหมู่</p> : null}
     {products.length === 0 ? <div className="flex flex-1 items-center justify-center text-lg text-[#6B5547]">{searchTerm ? "ไม่พบเมนูที่ค้นหา" : "ยังไม่มีเมนูในหมวดหมู่นี้"}</div> :
       <div ref={gridRef} className="grid grid-cols-[repeat(auto-fill,minmax(160px,1fr))] content-start gap-3">
         {products.map((product) => {
@@ -111,6 +113,5 @@ export function ProductGrid({ menu, categoryId, addedProductId, onChoose }: Prod
           </button>;
         })}
       </div>}
-    {notice && <div role="status" className="fixed bottom-5 left-1/2 z-50 -translate-x-1/2 rounded-xl bg-[#3B2A20] px-5 py-3 text-base font-semibold text-white shadow-xl">{notice}</div>}
   </main>;
 }

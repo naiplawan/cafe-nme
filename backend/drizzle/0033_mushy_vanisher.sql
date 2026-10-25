@@ -1,0 +1,2 @@
+ALTER TABLE "modifier_recipe_lines" ADD COLUMN "replaces_ingredient_id" uuid;--> statement-breakpoint
+ALTER TABLE "modifier_recipe_lines" ADD CONSTRAINT "modifier_recipe_lines_replaces_ingredient_id_ingredients_id_fk" FOREIGN KEY ("replaces_ingredient_id") REFERENCES "public"."ingredients"("id") ON DELETE no action ON UPDATE no action;

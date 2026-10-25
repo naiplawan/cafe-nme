@@ -10,10 +10,14 @@ Next.js and Nest builds, with real server actions and PostgreSQL. It covers:
 - Receipt content and preparation progressing to ready, persisted across reload.
 - A ฿70 partial refund: approval leaves expected cash at ฿640; recording the cash
   payout reduces it to ฿570; closing at ฿570 records zero difference.
+- Read-back of the closed shift cash statement, frozen count, actual refund reference and matching entry count.
 - Rejection of a cash sale after the shift closes.
 - A checkout response dropped **after** the server responds: reloading and
   recovering produces the same order and only one payment.
 - An empty cart after recovery and disabled checkout while offline.
+- Oat replacing dairy, reservation at checkout, a one-cup cancellation before
+  preparation, and an idempotent remake without an additional payment.
+- Drawer top-up, petty cash and bank deposit reconciling to a zero-difference close.
 
 The tests do not transfer money or contact a payment provider. Receipt assertions
 check browser content, not physical printing. Each test creates its own shop and

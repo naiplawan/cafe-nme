@@ -8,6 +8,7 @@ import { gsap, MOTION, prefersReducedMotion, useGSAP } from "@/components/motion
 type KeypadProps = {
   value: string;
   decimal?: boolean;
+  maxIntegerDigits?: number;
   onChange: (next: string) => void;
   maxLength: number;
   /** Label for the bottom-left key; it clears the value. */
@@ -19,7 +20,7 @@ type KeypadProps = {
 const DIGITS = ["1", "2", "3", "4", "5", "6", "7", "8", "9"];
 
 /** Large touch number pad shared by cash entry, phone search and PIN screens. */
-export function Keypad({ value, onChange, maxLength, decimal = false, clearLabel = "ล้าง", keyClassName, className }: KeypadProps) {
+export function Keypad({ value, onChange, maxLength, decimal = false, maxIntegerDigits = 6, clearLabel = "ล้าง", keyClassName, className }: KeypadProps) {
   const keypadRef = useRef<HTMLDivElement>(null);
   const { contextSafe } = useGSAP({ scope: keypadRef });
   const animatePress = contextSafe((button: HTMLButtonElement) => {
@@ -32,7 +33,7 @@ export function Keypad({ value, onChange, maxLength, decimal = false, clearLabel
   );
   const press = (digit: string) => {
     const next = value + digit;
-    if (next.length <= maxLength && (!decimal || /^\d{0,6}(\.\d{0,2})?$/.test(next))) onChange(next);
+    if (next.length <= maxLength && (!decimal || new RegExp(`^\\d{0,${maxIntegerDigits}}(\\.\\d{0,2})?$`).test(next))) onChange(next);
   };
 
   return (

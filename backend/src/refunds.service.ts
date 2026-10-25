@@ -1,3 +1,4 @@
+import { releaseRefundStock } from './inventory.service.js';
 import { BadRequestException,ConflictException,ForbiddenException,Inject,Injectable,NotFoundException } from "@nestjs/common";
 import type { Sql,TransactionSql } from "postgres";
 import { resolveSharedLoyalty, restoreOrderSharedStamps, reverseOrderEarnedStamps } from "./loyalty-groups.service.js";
@@ -37,7 +38,7 @@ export class RefundsService {
     return {id:existing.id as string,amountSatang:existing.amount_satang as number};
    }
    if(order.status!=="paid") { throw new ConflictException("Only paid bills can be refunded"); }
-   const sold=await tx`select id::text,qty,unit_price_satang,paid_satang,stamps_earned from order_items where order_id=${orderId}::uuid order by line_no,id`;
+   const sold=await tx`select id::text,qty,unit_price_satang,paid_satang,stamps_earned,reward_discount_satang from order_items where order_id=${orderId}::uuid order by line_no,id`;
    const prior=await tx`select amount_satang,lines from refunds where shop_id=${shopId}::uuid and order_id=${orderId}::uuid`;
    const previous=prior.flatMap(row=>row.lines as RefundLine[]);
    const allocations=allocateLinePayments(sold.map(row=>row.unit_price_satang*row.qty),order.total_satang);
@@ -47,7 +48,14 @@ export class RefundsService {
     const refundedQty=previous.filter(row=>row.itemId===line.itemId).reduce((sum,row)=>sum+row.qty,0);
     if(refundedQty+line.qty>item.qty) { throw new ConflictException("Quantity already refunded"); }
     if(order.member_id&&item.stamps_earned===null) { throw new ConflictException("Legacy member bill has no stamp snapshot; manual review required"); }
-    return {...line,amountSatang:refundQuantityAmount(item.paid_satang??allocations[index],item.qty,refundedQty,line.qty),stampsReversed:item.stamps_earned?line.qty:0};
+    // For new bills, the reward unit is refunded first; only its paid add-ons return as money.
+    const amountSatang = item.reward_discount_satang === null
+      ? refundQuantityAmount(item.paid_satang??allocations[index],item.qty,refundedQty,line.qty)
+      : item.unit_price_satang * line.qty - (refundedQty === 0 ? item.reward_discount_satang : 0);
+    const previousStamps = previous.filter(row=>row.itemId===line.itemId).reduce((sum,row)=>sum+row.stampsReversed,0);
+    const unpaidUnits = item.reward_discount_satang > 0 && refundedQty === 0 ? 1 : 0;
+    const stampsReversed = Math.min(Math.max(0,(item.stamps_earned ?? 0)-previousStamps),line.qty-unpaidUnits);
+    return {...line,amountSatang,stampsReversed};
    });
    const amountSatang=refundLines.reduce((sum,line)=>sum+line.amountSatang,0);
    if(amountSatang+prior.reduce((sum,row)=>sum+row.amount_satang,0)>order.total_satang) { throw new ConflictException("Refund exceeds amount paid"); }
@@ -79,6 +87,7 @@ export class RefundsService {
     }
    }
    const [refund]=await tx`insert into refunds(shop_id,order_id,request_id,amount_satang,lines,reason,approved_by) values(${shopId},${orderId},${input.requestId},${amountSatang},${tx.json(refundLines.map(line=>({...line})))},${reason},${actor}) returning id::text`;
+   await releaseRefundStock(tx,shopId,orderId);
    return {id:refund.id as string,amountSatang};
   });
  }

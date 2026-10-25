@@ -2,7 +2,7 @@ import type { PosMenu, PosModifier } from "@/lib/validation/pos-menu";
 export type { PosMenu, PosModifier, PosModifierGroup, PosProduct } from "@/lib/validation/pos-menu";
 
 export type CartLineInput = { productId: string; qty: number; modifierIds: string[]; note?: string };
-export type PricedLine = { productId: string; name: string; qty: number; note: string | null; earnsStamp: boolean; modifiers: PosModifier[]; unitPriceSatang: number; lineTotalSatang: number };
+export type PricedLine = { productId: string; name: string; qty: number; note: string | null; earnsStamp: boolean; modifiers: PosModifier[]; basePriceSatang: number; unitPriceSatang: number; lineTotalSatang: number };
 
 export class PricingError extends Error {
   constructor(public code: "unknown_product" | "bad_qty" | "bad_modifier" | "group_min" | "group_max") {
@@ -36,7 +36,7 @@ export function priceCart(lines: CartLineInput[], menu: PosMenu): { lines: Price
     const note = line.note?.trim().slice(0, 120) || null;
     const unitPriceSatang = Math.max(0, product.basePriceSatang + modifiers.reduce((sum, modifier) => sum + modifier.priceDeltaSatang, 0));
     return { productId: product.id, name: product.name, qty: line.qty, note, earnsStamp: product.earnsStamp,
-      modifiers, unitPriceSatang, lineTotalSatang: unitPriceSatang * line.qty };
+      modifiers, basePriceSatang: product.basePriceSatang, unitPriceSatang, lineTotalSatang: unitPriceSatang * line.qty };
   });
   return { lines: pricedLines, subtotalSatang: pricedLines.reduce((sum, line) => sum + line.lineTotalSatang, 0) };
 }
@@ -49,11 +49,20 @@ export function suggestCashAmounts(totalSatang: number): number[] {
   return [exactAmount, ...[...new Set(suggestions)].sort((a, b) => a - b).slice(0, 4)];
 }
 
-export function rewardDiscount(lines: PricedLine[]): number {
-  const eligible = lines.filter((line) => line.earnsStamp);
-  return eligible.length === 0 ? 0 : Math.min(...eligible.map((line) => line.unitPriceSatang));
+/** First cart line wins equal base-price ties. Premium additions remain payable. */
+export function rewardLineIndex(lines: PricedLine[]): number {
+  let chosen = -1;
+  for (const [index, line] of lines.entries()) {
+    if (!line.earnsStamp || line.basePriceSatang <= 0 || line.unitPriceSatang <= 0) continue;
+    if (chosen === -1 || line.basePriceSatang < lines[chosen].basePriceSatang) chosen = index;
+  }
+  return chosen;
 }
-
-export function stampsForLines(lines: PricedLine[]): number {
-  return lines.reduce((sum, line) => sum + (line.earnsStamp ? line.qty : 0), 0);
+export function rewardDiscount(lines: PricedLine[]): number {
+  const index = rewardLineIndex(lines);
+  return index < 0 ? 0 : Math.min(lines[index].basePriceSatang, lines[index].unitPriceSatang);
+}
+export function stampsForLines(lines: PricedLine[], redeemReward = false): number {
+  const rewardIndex = redeemReward ? rewardLineIndex(lines) : -1;
+  return lines.reduce((sum, line, index) => sum + (line.earnsStamp && line.unitPriceSatang > 0 ? line.qty - (index === rewardIndex ? 1 : 0) : 0), 0);
 }

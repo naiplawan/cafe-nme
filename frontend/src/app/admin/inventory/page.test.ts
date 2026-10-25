@@ -3,7 +3,7 @@ import { beforeEach, expect, it, vi } from "vitest";
 
 const api = vi.hoisted(() => ({ staff: vi.fn(), inventory: vi.fn(), subscription: vi.fn() }));
 vi.mock("@/lib/auth", () => ({ requireStaff: api.staff }));
-vi.mock("@/server/inventory", () => ({ listInventory: api.inventory }));
+vi.mock("@/server/inventory", () => ({ listInventory: api.inventory, getStockPolicy: vi.fn(async () => ({ mode: "payment" })) }));
 vi.mock("@/server/subscriptions", () => ({ getSubscription: api.subscription }));
 
 beforeEach(() => {

@@ -20,7 +20,7 @@ it("converts signed adjustments to exact milliunits and ignores client actor sco
   form.set("shopId", "foreign");
   expect(await moveInventoryAction(null, form)).toMatchObject({ success: true });
   expect(api.moveInventory).toHaveBeenCalledWith("shop", "manager", ingredientId,
-    { requestId: targetId, kind: "adjust", quantityMilliunits: -1, reason: "Stock count" });
+    { requestId: targetId, kind: "adjust", quantityMilliunits: -1, reason: "Stock count", costSatang: null });
 });
 it("rejects excessive precision and unauthorized mutation", async () => {
   const { moveInventoryAction } = await import("./actions");
@@ -51,7 +51,7 @@ it("saves nonzero recipe quantities while allowing omitted ingredients to remove
   form.set("quantity:33333333-3333-4333-8333-333333333333", "0");
   expect(await saveRecipeAction(null, form)).toMatchObject({ success: true });
   expect(api.saveRecipe).toHaveBeenCalledWith("shop", "manager", "product", targetId,
-    [{ ingredientId, quantityMilliunits: 18005 }]);
+    [{ ingredientId, quantityMilliunits: 18005, replacesIngredientId: null }]);
 });
 it("explains that a recipe change waits for an active PromptPay stock reservation", async () => {
   const { saveRecipeAction } = await import("./actions");
