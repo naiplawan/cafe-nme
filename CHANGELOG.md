@@ -27,6 +27,7 @@ versioning (pre-1.0: minor = features, patch = fixes).
 ### Operations
 - Apply migrations `0023_payment_reviews` through `0031_promptpay_stock_holds` before deploying the updated API. `0031` only adds the `promptpay_stock_holds` and `promptpay_stock_hold_items` tables.
 - Follow `docs/omise-payments.md` to configure per-shop Omise credentials and webhooks. Live charging remains disabled unless `OMISE_LIVE_ENABLED=true` is explicitly configured.
+- Run API tests with `TEST_DATABASE_URL=… pnpm --filter @cafenme/backend test:db`, which migrates the disposable database first. The refund and Omise reconciliation tests now query the current Bangkok business date instead of a fixed day, so they no longer fail after 2026-10-24.
 - Set `NEXT_PUBLIC_SITE_URL` to the public frontend origin before deploying the landing page; without it, canonical URLs, the sitemap, `robots.txt`, and JSON-LD point to `http://localhost:3000`.
 - Follow `docs/operations-readiness.md` for the isolated restore drill and operator alert receiver. Local restore evidence does not establish production retention, alert delivery, or recovery objectives.
 

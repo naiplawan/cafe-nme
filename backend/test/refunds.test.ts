@@ -5,6 +5,7 @@ import { ForbiddenException,ConflictException } from "@nestjs/common";
 import { RefundsService } from "../src/refunds.service.js";
 import { ShiftsService } from "../src/shifts.service.js";
 import { ReportsService } from "../src/reports.service.js";
+import { businessDate } from "../src/checkout-domain.js";
 import { createPaymentSettingsFixture,type PaymentSettingsFixture } from "./payment-settings-fixture.js";
 describe("partial refunds",{skip:!process.env.TEST_DATABASE_URL},()=>{
  let f:PaymentSettingsFixture;let service:RefundsService;let orderId:string;let itemId:string;
@@ -21,12 +22,12 @@ describe("partial refunds",{skip:!process.env.TEST_DATABASE_URL},()=>{
  const [a,b]=await Promise.all([service.create(f.shopId,f.managerId,orderId,input),service.create(f.shopId,f.managerId,orderId,input)]);
  assert.equal(a.amountSatang,3333);assert.deepEqual(a,b);
  const [r]=await f.database.connection`select paid_at,paid_by from refunds where id=${a.id}`;assert.deepEqual(r,{paid_at:null,paid_by:null});
- const reports=new ReportsService(f.database as never);
- const approved=await reports.refundSummary(f.shopId,{from:'2026-10-24',to:'2026-10-24'});
+ const reports=new ReportsService(f.database as never);const today=businessDate(new Date(),'Asia/Bangkok');
+ const approved=await reports.refundSummary(f.shopId,{from:today,to:today});
  assert.equal(approved.approvedSatang,3333);assert.equal(approved.paidSatang,0);assert.equal(approved.unpaidApprovedSatang,3333);
  const shifts=new ShiftsService(f.database as never);const shift=await shifts.open(f.shopId,f.ownerId,{requestId:randomUUID(),openingFloatSatang:10000});
  await service.payout(f.shopId,f.managerId,a.id,'cash','drawer payout');await service.payout(f.shopId,f.managerId,a.id,'cash','drawer payout');
- const payoutSummary=await reports.refundSummary(f.shopId,{from:'2026-10-24',to:'2026-10-24'});
+ const payoutSummary=await reports.refundSummary(f.shopId,{from:today,to:today});
  assert.equal(payoutSummary.paidSatang,3333);assert.equal(payoutSummary.cashPaidSatang,3333);assert.equal(payoutSummary.promptpayPaidSatang,0);
  const [paid]=await f.database.connection`select cash_shift_id,paid_at is not null as paid from refunds where id=${a.id}`;assert.equal(paid.cash_shift_id,shift.id);assert.equal(paid.paid,true);
  const summary=await shifts.list(f.shopId,f.ownerId);assert.equal(summary.shifts[0].expectedCashSatang,6667);

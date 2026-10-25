@@ -3,6 +3,7 @@ import { randomBytes, randomUUID } from "node:crypto";
 import { after, before, describe, it } from "node:test";
 import { ConflictException } from "@nestjs/common";
 import { OrdersService } from "../src/orders.service.js";
+import { businessDate } from "../src/checkout-domain.js";
 import { ReconciliationService } from "../src/reconciliation.service.js";
 import { SelfOrdersService } from "../src/self-orders.service.js";
 import { createPaymentSettingsFixture, type PaymentSettingsFixture } from "./payment-settings-fixture.js";
@@ -90,7 +91,7 @@ describe("verified Omise self-order payments", { skip: !process.env.TEST_DATABAS
     assert.equal(state.status, 'completed'); assert.ok(state.orderId);
     const [count] = await fixture.database.connection`select count(*)::int as n from orders where checkout_key=${intent.id}`;
     assert.equal(count.n, 1);
-    const rows = await new ReconciliationService(fixture.database as never).list(fixture.shopId, fixture.ownerId, '2026-10-24');
+    const rows = await new ReconciliationService(fixture.database as never).list(fixture.shopId, fixture.ownerId, businessDate(new Date(), 'Asia/Bangkok'));
     const providerRow = rows.find((row) => row.paymentId && row.source === 'provider');
     assert.equal(providerRow?.status, 'matched'); assert.equal(providerRow?.recordedBy, 'Omise');
   });

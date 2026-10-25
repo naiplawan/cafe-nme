@@ -9,6 +9,7 @@
     "dev:workspace": "NODE_ENV=development nest start --watch",
     "build": "nest build",
     "test": "tsx --test test/*.test.ts",
+    "test:db": "test -n \"$TEST_DATABASE_URL\" && DATABASE_URL=\"$TEST_DATABASE_URL\" drizzle-kit migrate && tsx --test test/*.test.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "openapi:generate": "NODE_ENV=development nest build && NODE_ENV=development node scripts/generate-openapi.mjs",
     "db:generate": "drizzle-kit generate",
