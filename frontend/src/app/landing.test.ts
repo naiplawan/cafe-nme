@@ -42,6 +42,7 @@ describe("crawler files", () => {
     for (const path of ["/admin", "/pos", "/liff", "/api"]) {
       expect(PRIVATE_PATHS).toContain(path);
     }
+    expect(PRIVATE_PATHS).not.toContain("/menu");
     expect(sitemapUrl).toMatch(/\/sitemap\.xml$/);
   });
 

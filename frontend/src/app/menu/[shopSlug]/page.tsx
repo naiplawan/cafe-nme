@@ -1,4 +1,5 @@
 import "server-only";
+import type { Metadata } from "next";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
@@ -11,6 +12,8 @@ import { getPosMenu } from "@/server/catalog";
 import { internalApiFetch, readInternalJson } from "@/server/internal-api";
 
 export const instant = false;
+// Public QR menus opt back into search; the root layout keeps app screens noindex.
+export const metadata: Metadata = { robots: { index: true, follow: true } };
 const SHOP_SLUG = /^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$/i;
 const shopSchema = z.object({ shopId: z.uuid(), name: z.string() }).nullable();
 

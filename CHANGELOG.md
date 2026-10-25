@@ -19,6 +19,7 @@ versioning (pre-1.0: minor = features, patch = fixes).
 - Recover unresolved checkouts after reload using the original sale request and prevent duplicate order/payment creation on retries.
 - Update the preparation queue every five seconds while online and visible, including immediately after reconnecting or returning to the tab.
 - Require an open cash shift before a cash sale, and reject recipe consumption, waste, or stock adjustments that would make tracked ingredient balances negative. Stock receiving remains available to owners and managers after Pro expires so they can replenish ingredients and continue core POS sales.
+- Let search engines index public QR menus at `/menu/[shopSlug]`; their order pages stay `noindex`.
 - Extend the API schema and OpenAPI client types for payment review, shifts, preparation, expiry, self-orders, inventory, refunds, shared loyalty, subscriptions, and provider payment intents.
 
 ### Operations

@@ -7,7 +7,6 @@ export const PRIVATE_PATHS = [
   "/liff",
   "/onboarding",
   "/select-shop",
-  "/menu",
   "/api",
   "/login",
   "/signup",
