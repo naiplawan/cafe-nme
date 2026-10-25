@@ -82,6 +82,22 @@ jobs:
           exit 1
       - name: Run frontend integration tests
         run: pnpm test:int
+      - name: Create isolated browser-test database
+        run: psql "$DATABASE_URL" -c 'CREATE DATABASE cafe_pos_e2e'
+      - name: Install browser for POS acceptance tests
+        run: pnpm --filter @cafenme/frontend exec playwright install --with-deps chromium
+      - name: Run POS browser acceptance tests
+        env:
+          E2E_DATABASE_URL: postgresql://postgres:cafe-ci-password@127.0.0.1:5432/cafe_pos_e2e
+        run: pnpm test:e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: pos-browser-failures
+          path: |
+            frontend/playwright-report/
+            frontend/test-results/
+          if-no-files-found: ignore
       - name: Stop API
         if: always()
         run: |

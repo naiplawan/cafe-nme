@@ -105,6 +105,7 @@ Verify delivery with a controlled mailbox after configuring the deployment.
 | `pnpm typecheck` / `lint` | TypeScript checks for both apps and workspace lint. |
 | `pnpm api:generate` / `api:check` | Regenerate Nest OpenAPI and frontend TypeScript types; CI checks for stale generated contracts. |
 | `pnpm test` / `test:int` | Unit tests / integration tests against the database. |
+| `pnpm test:e2e` | Real browser sale-to-shift-close and lost-response recovery checks; requires an isolated local database. See [POS acceptance](docs/pos-acceptance.md). |
 | `TEST_DATABASE_URL=… pnpm --filter @cafenme/backend test:db` | Migrate a disposable PostgreSQL database, then run the API tests against it. Without the migration, database tests fail and leave connections open. |
 | `pnpm db:generate` / `db:migrate` | Generate and apply Drizzle migrations. |
 | `pnpm db:seed` / `db:seed-menu` / `db:seed-sales` | Demo shop, stock menu, demo sales. |

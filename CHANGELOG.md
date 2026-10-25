@@ -25,6 +25,8 @@ versioning (pre-1.0: minor = features, patch = fixes).
 - Extend the API schema and OpenAPI client types for payment review, shifts, preparation, expiry, self-orders, inventory, refunds, shared loyalty, subscriptions, and provider payment intents.
 
 ### Operations
+- Add `pnpm test:e2e` and CI browser coverage for device pairing, cash sales with modifiers, receipts, preparation, partial refunds, shift reconciliation, offline checkout blocking, and recovery after a committed checkout response is lost. Tests use an isolated local database and retain failure traces; see `docs/pos-acceptance.md` for setup and remaining shop pilot checks.
+- Limit frontend test workers to two and allow 15 seconds per test to reduce module-import timeouts under resource contention, without enabling retries.
 - Apply migrations `0023_payment_reviews` through `0031_promptpay_stock_holds` before deploying the updated API. `0031` only adds the `promptpay_stock_holds` and `promptpay_stock_hold_items` tables.
 - Follow `docs/omise-payments.md` to configure per-shop Omise credentials and webhooks. Live charging remains disabled unless `OMISE_LIVE_ENABLED=true` is explicitly configured.
 - Run API tests with `TEST_DATABASE_URL=… pnpm --filter @cafenme/backend test:db`, which migrates the disposable database first. The refund and Omise reconciliation tests now query the current Bangkok business date instead of a fixed day, so they no longer fail after 2026-10-24.

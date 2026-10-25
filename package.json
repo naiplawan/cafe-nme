@@ -20,6 +20,7 @@
     "format": "prettier --write \"**/*.{js,jsx,ts,tsx,mjs,cjs,mts,cts,json,css}\"",
     "format:check": "prettier --check \"**/*.{js,jsx,ts,tsx,mjs,cjs,mts,cts,json,css}\"",
     "test": "pnpm --filter @cafenme/frontend test",
+    "test:e2e": "pnpm --filter @cafenme/frontend test:e2e",
     "test:watch": "pnpm --filter @cafenme/frontend test:watch",
     "test:int": "pnpm --filter @cafenme/frontend test:int",
     "db:generate": "pnpm --filter @cafenme/backend db:generate",

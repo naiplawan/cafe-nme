@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit",
     "react:doctor": "react-doctor --verbose --json --json-out .react-doctor-report.json",
     "test": "vitest run",
+    "test:e2e": "playwright test",
     "test:watch": "vitest",
     "test:int": "INTEGRATION=1 vitest run"
   },
@@ -38,6 +39,7 @@
     "zod": "^4.6.6"
   },
   "devDependencies": {
+    "@playwright/test": "^1.64.1",
     "@tailwindcss/turbopack": "^4",
     "@testing-library/react": "^16.3.3",
     "@types/node": "^20",

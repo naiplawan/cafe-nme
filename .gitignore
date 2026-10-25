@@ -13,6 +13,8 @@
 
 # testing
 /coverage
+frontend/playwright-report/
+frontend/test-results/
 **/.react-doctor-report.json
 
 # next.js
