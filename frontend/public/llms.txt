@@ -1,0 +1,18 @@
+# Cafe'nMe
+
+> Cafe'nMe is a point-of-sale (POS) system for Thai cafés with a built-in LINE stamp-card membership. Staff sell on a tablet, owners manage the menu and see sales reports on the web, and customers collect stamps and redeem free drinks through the shop's LINE Official Account.
+
+Cafe'nMe คือระบบขายหน้าร้าน (POS) สำหรับร้านกาแฟไทย ที่รวมบัตรสะสมแต้มสมาชิกบน LINE ไว้ในระบบเดียว
+
+## Features
+
+- Tablet POS: pair a tablet with a 6-digit code or QR, staff sign in with a PIN, photo menu with search and categories, add-ons (sweetness, hot/iced, milk, extra shot), one-tap sold-out toggle, voids require a manager PIN, 58 mm receipts.
+- Payments: cash with quick amounts, PromptPay QR with the bill amount built in.
+- LINE membership: rich menu, LIFF member card with a rotating QR, automatic stamps and free-drink rewards, PDPA consent and self-service data deletion.
+- Admin and reports: sales trend, hourly sales, categories, best sellers, payment mix, members, CSV export, staff roles, POS devices.
+- Brand kit: shop logo and colour applied to the member card, stamps, receipts and a generated LINE rich menu.
+
+## Links
+
+- [Home](/): product overview, how to start, comparison and FAQ (Thai)
+- [Sign up](/signup)

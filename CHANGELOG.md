@@ -12,6 +12,7 @@ versioning (pre-1.0: minor = features, patch = fixes).
 - Added shift opening and closing with opening float, expected and counted cash, variance, and handoff staff; added a preparation queue with order numbers, item notes, and received, preparing, and ready states.
 - Added ingredient recipes and stock movements, self-service QR order requests with staff acceptance, partial refunds with approval and separately recorded payouts, subscription trials and payment history, and explicitly grouped cross-branch loyalty.
 - Added configurable stamp and reward expiry with ledger history, plus checkout/API failure alerts and a repeatable isolated PostgreSQL restore drill.
+- Added a public Thai landing page at `/` with features, setup steps, comparison, FAQ, and matching JSON-LD, plus `robots.txt`, `sitemap.xml`, `llms.txt`, and a generated Open Graph image. Signed-in users are still sent to `/admin`; app screens stay `noindex` and out of the sitemap.
 
 ### Changed
 - Tightened staff role changes so managers cannot create owners or change higher-privilege PINs; expanded shop scoping across member, POS, order, and report operations.
@@ -23,6 +24,7 @@ versioning (pre-1.0: minor = features, patch = fixes).
 ### Operations
 - Apply migrations `0023_payment_reviews` through `0030_fluffy_dracula` before deploying the updated API.
 - Follow `docs/omise-payments.md` to configure per-shop Omise credentials and webhooks. Live charging remains disabled unless `OMISE_LIVE_ENABLED=true` is explicitly configured.
+- Set `NEXT_PUBLIC_SITE_URL` to the public frontend origin before deploying the landing page; without it, canonical URLs, the sitemap, `robots.txt`, and JSON-LD point to `http://localhost:3000`.
 - Follow `docs/operations-readiness.md` for the isolated restore drill and operator alert receiver. Local restore evidence does not establish production retention, alert delivery, or recovery objectives.
 
 ### Security
