@@ -8,6 +8,8 @@ const { default: LandingPage } = await import("./page");
 const { landing, landingJsonLd } = await import("./landing-content");
 const { default: robots, PRIVATE_PATHS } = await import("./robots");
 const { default: sitemap } = await import("./sitemap");
+const { config: proxyConfig } = await import("../proxy");
+const { AUTH_COOKIE_NAME } = await import("@/server/auth-api");
 
 describe("landing page", () => {
   const markup = renderToStaticMarkup(createElement(LandingPage));
@@ -31,6 +33,12 @@ describe("landing page", () => {
 
   it("escapes < inside the JSON-LD script", () => {
     expect(JSON.stringify(landingJsonLd()).replace(/</g, "\\u003c")).not.toMatch(/</);
+  });
+});
+
+describe("signed-in redirect", () => {
+  it("runs the proxy on / only when the session cookie is present", () => {
+    expect(proxyConfig.matcher).toEqual([{ source: "/", has: [{ type: "cookie", key: AUTH_COOKIE_NAME }] }]);
   });
 });
 

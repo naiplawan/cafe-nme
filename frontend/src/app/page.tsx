@@ -3,9 +3,6 @@ import type { Metadata } from "next";
 import { Noto_Serif_Thai } from "next/font/google";
 import Image from "next/image";
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { Suspense } from "react";
-import { getUser } from "@/lib/auth";
 import { LANDING_UPDATED, landing, landingJsonLd } from "./landing-content";
 
 const serif = Noto_Serif_Thai({ variable: "--font-landing-serif", subsets: ["latin", "thai"], weight: ["600", "700"] });
@@ -41,20 +38,9 @@ function Ticks({ items }: { items: readonly string[] }) {
   );
 }
 
-// Signed-in users go straight to the app. The session read streams behind Suspense so the landing
-// page stays in the static shell, and an auth API failure shows the landing page instead of an error.
-async function SignedInRedirect() {
-  const user = await getUser().catch(() => null);
-  if (user) redirect("/admin");
-  return null;
-}
-
 export default function LandingPage() {
   return (
     <div className={`${serif.variable} bg-[#FBF6EF] text-[#1E1A17]`}>
-      <Suspense fallback={null}>
-        <SignedInRedirect />
-      </Suspense>
       {/* biome-ignore lint/security/noDangerouslySetInnerHtml: static JSON-LD with "<" escaped, as the Next.js JSON-LD guide recommends. */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(landingJsonLd()).replace(/</g, "\\u003c") }} />
 
