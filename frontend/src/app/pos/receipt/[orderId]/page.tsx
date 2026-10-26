@@ -13,5 +13,6 @@ export default async function ReceiptPage({ params }: { params: Promise<{ orderI
   const { orderId } = await params;
   const [order, brand] = await Promise.all([getOrder(session.shopId, orderId), getBrand(session.shopId)]);
   if (!order) notFound();
-  return <ReceiptView order={order} logoUrl={brand.logoUrl} />;
+  const logoUrl = brand.logoUrl ?? (session.shop.name === "YELO COFFEE" ? "/assets/yelo-coffee-mascot.png" : null);
+  return <ReceiptView order={order} logoUrl={logoUrl} />;
 }

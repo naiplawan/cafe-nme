@@ -56,7 +56,7 @@ export function DonutChart({ data, format = "number", ariaLabel, size = 160, cen
               </path>
               {segment.value > 0 && <path data-donut-line d={segment.arc} fill="none" stroke={segment.color} strokeWidth="3" strokeLinecap="round" />}
             </g>)}
-            {(centerLabel || centerValue) && <text x={center} y={center} textAnchor="middle" className="fill-[#3B2A20]">
+            {(centerLabel || centerValue) && <text x={center} y={center} textAnchor="middle" className="fill-[#4A2C1A]">
               {centerLabel && <tspan x={center} dy={centerValue ? "-0.25em" : "0.35em"} className="text-[10px]">{centerLabel}</tspan>}
               {centerValue && <tspan x={center} dy={centerLabel ? "1.5em" : "0.35em"} className="text-sm font-semibold tabular-nums">{centerValue}</tspan>}
             </text>}

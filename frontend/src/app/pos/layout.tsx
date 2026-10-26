@@ -1,3 +1,3 @@
 export default function PosLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <div className="min-h-dvh overflow-hidden bg-[#F5EDE3] text-[#3B2A20]">{children}</div>;
+  return <div className="min-h-dvh overflow-hidden bg-[#F7F1E7] text-[#2F2A25]">{children}</div>;
 }

@@ -90,26 +90,26 @@ export function ScanDialog({ onClose, onAttach, onLookupStart, onLookupEnd }: Sc
   return <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
     <button ref={backdropRef} type="button" tabIndex={-1} aria-label="ปิดหน้าต่าง" onClick={onClose} className="absolute inset-0 bg-[rgba(43,30,22,0.55)]" />
     <div ref={dialogRef} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby={`${id}-scan-title`} onKeyDown={(event) => { trapDialogTab(event); if (event.key === "Escape") onClose(); }}
-      className="relative flex w-[min(560px,calc(100vw-32px))] flex-col items-center gap-4 rounded-3xl bg-[#FFFBF6] p-6 outline-none">
-      <button type="button" aria-label="ปิดหน้าต่าง" onClick={onClose} className="absolute right-3 top-3 flex size-11 items-center justify-center rounded-xl text-[#6B5547]"><X aria-hidden="true" /></button>
+      className="relative flex w-[min(560px,calc(100vw-32px))] flex-col items-center gap-4 rounded-3xl bg-[#FFFFFF] p-6 outline-none">
+      <button type="button" aria-label="ปิดหน้าต่าง" onClick={onClose} className="absolute right-3 top-3 flex size-11 items-center justify-center rounded-xl text-[#817668]"><X aria-hidden="true" /></button>
       <h2 id={`${id}-scan-title`} className="text-[22px] font-bold">สแกนบัตรสมาชิก</h2>
-      <div className="relative flex h-[280px] w-full items-center justify-center overflow-hidden rounded-2xl bg-[#3B2A20]">
+      <div className="relative flex h-[280px] w-full items-center justify-center overflow-hidden rounded-2xl bg-[#4A2C1A]">
         <video ref={videoRef} muted playsInline className="h-full w-full object-cover" />
         <div aria-hidden="true" className="pointer-events-none absolute inset-[14%]">
           <svg className="size-full" viewBox="0 0 100 100" preserveAspectRatio="none" fill="none">
             <title>กรอบสำหรับจัด QR</title>
-            <path data-scan-corner d="M2 22V2H22 M78 2H98V22 M98 78V98H78 M22 98H2V78" stroke="#F5EDE3" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+            <path data-scan-corner d="M2 22V2H22 M78 2H98V22 M98 78V98H78 M22 98H2V78" stroke="#F7F1E7" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
           {scanning && <span data-scan-line className="absolute left-2 right-2 top-1/2 h-[2px] rounded-full bg-[#D9653B] shadow-[0_0_12px_rgba(217,101,59,0.85)]" />}
         </div>
-        {!scanning && <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-[#F5EDE3]"><Camera aria-hidden="true" size={38} /><span>พร้อมสแกนเมื่อเปิดกล้องได้</span></div>}
+        {!scanning && <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-[#F7F1E7]"><Camera aria-hidden="true" size={38} /><span>พร้อมสแกนเมื่อเปิดกล้องได้</span></div>}
       </div>
-      <p className="text-sm text-[#6B5547]">วาง QR ให้อยู่ในกรอบ หรือใช้เครื่องสแกน USB</p>
+      <p className="text-sm text-[#817668]">วาง QR ให้อยู่ในกรอบ หรือใช้เครื่องสแกน USB</p>
       <input ref={inputRef} aria-label="รหัส QR สมาชิกจากเครื่องสแกน" autoComplete="off" onKeyDown={(event) => {
         if (event.key === "Enter") { event.preventDefault(); const target = event.currentTarget; void submitToken(target.value); target.value = ""; }
       }} className="fixed left-0 top-0 size-px opacity-0" />
       {error && <p role="alert" className="w-full rounded-xl bg-[#F7DCD0] p-3 text-center font-semibold text-[#8E3415]">{error}</p>}
-      <button type="button" onClick={onClose} className="h-[60px] w-full rounded-[14px] border border-[#D9C5B0] bg-[#FFFBF6] text-[17px] font-semibold">ยกเลิก</button>
+      <button type="button" onClick={onClose} className="h-[60px] w-full rounded-[14px] border border-[#E2D8C7] bg-[#FFFFFF] text-[17px] font-semibold">ยกเลิก</button>
     </div>
   </div>;
 }

@@ -44,12 +44,12 @@ export function PromptPayQr({ amountSatang, shopName }: PromptPayQrProps) {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2 text-center">
-      <div ref={qrRef} className={`relative flex size-[292px] max-h-[40vh] max-w-full items-center justify-center rounded-[20px] border bg-white p-4 shadow-[0_8px_28px_rgba(59,42,32,0.08)] ${error ? "border-[#E9B29B] bg-[#FFF9F5]" : "border-[#E4D6C6]"}`}>
+      <div ref={qrRef} className={`relative flex size-[292px] max-h-[40vh] max-w-full items-center justify-center rounded-[20px] border bg-white p-4 shadow-[0_8px_28px_rgba(59,42,32,0.08)] ${error ? "border-[#E9B29B] bg-[#FFF9F5]" : "border-[#E2D8C7]"}`}>
         {svg ? <>
           <Image src={`data:image/svg+xml,${encodeURIComponent(svg)}`} alt="QR พร้อมเพย์" width={260} height={260} unoptimized className="h-full max-h-full w-full max-w-full" />
           <span ref={maskRef} aria-hidden="true" className="absolute inset-4 z-10 origin-right bg-white" />
           <svg className="pointer-events-none absolute inset-2 size-[calc(100%-1rem)]" viewBox="0 0 260 260" fill="none" aria-hidden="true">
-            <rect ref={frameRef} x="1.5" y="1.5" width="257" height="257" rx="14" stroke="#B4441C" strokeWidth="3" strokeLinecap="round" />
+            <rect ref={frameRef} x="1.5" y="1.5" width="257" height="257" rx="14" stroke="#F4B942" strokeWidth="3" strokeLinecap="round" />
           </svg>
         </> : error ? (
           <div className="flex flex-col items-center gap-2 px-5" role="alert">
@@ -59,17 +59,17 @@ export function PromptPayQr({ amountSatang, shopName }: PromptPayQrProps) {
         ) : (
           <div className="flex size-full flex-col items-center justify-center gap-3 rounded-[14px] bg-[#FCFAF7]" role="status" aria-label="กำลังสร้าง QR พร้อมเพย์">
             <div className="grid size-[194px] grid-cols-4 gap-2 opacity-70" aria-hidden="true">
-              <span className="col-span-2 row-span-2 rounded-md bg-[#EADFD3]" />
-              <span className="rounded-md bg-[#EEE5DB]" /><span className="rounded-md bg-[#EADFD3]" />
-              <span className="rounded-md bg-[#EADFD3]" /><span className="rounded-md bg-[#EEE5DB]" />
-              <span className="col-span-2 rounded-md bg-[#EADFD3]" />
+              <span className="col-span-2 row-span-2 rounded-md bg-[#E2D8C7]" />
+              <span className="rounded-md bg-[#F7F1E7]" /><span className="rounded-md bg-[#E2D8C7]" />
+              <span className="rounded-md bg-[#E2D8C7]" /><span className="rounded-md bg-[#F7F1E7]" />
+              <span className="col-span-2 rounded-md bg-[#E2D8C7]" />
             </div>
-            <span className="text-sm text-[#6B5547]">กำลังสร้าง QR พร้อมเพย์…</span>
+            <span className="text-sm text-[#817668]">กำลังสร้าง QR พร้อมเพย์…</span>
           </div>
         )}
       </div>
-      <p className="font-semibold text-[#3B2A20]">สแกนจ่าย {formatBaht(amountSatang)} · {shopName}</p>
-      <p className="text-sm text-[#6B5547]">ตรวจยอดเงินเข้าในแอปธนาคาร แล้วกด “ได้รับเงินแล้ว”</p>
+      <p className="font-semibold text-[#4A2C1A]">สแกนจ่าย {formatBaht(amountSatang)} · {shopName}</p>
+      <p className="text-sm text-[#817668]">ตรวจยอดเงินเข้าในแอปธนาคาร แล้วกด “ได้รับเงินแล้ว”</p>
     </div>
   );
 }

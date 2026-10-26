@@ -17,7 +17,7 @@ type Props = {
   currentHour: number;
 };
 
-const paymentColors = ["#3B2A20", "#C69C72"];
+const paymentColors = ["#4A2C1A", "#B88A5A"];
 
 export function TodaySummary({ summary, hourlySales, topItems, currentHour }: Props) {
   const currentHourInRange = currentHour >= 6 && currentHour <= 21;
@@ -41,11 +41,11 @@ export function TodaySummary({ summary, hourlySales, topItems, currentHour }: Pr
   return <section aria-label="สรุปวันนี้" className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-4">
     <h2 className="sr-only">สรุปวันนี้</h2>
     <div className="grid shrink-0 grid-cols-4 gap-3 max-[760px]:grid-cols-2">
-      {stats.map((stat) => <article key={stat.label} className="flex min-h-[92px] flex-col justify-center rounded-2xl border border-[#E4D6C6] bg-[#FFFBF6] px-4 py-3">
-        <p className="m-0 text-sm font-medium text-[#6B5547]">{stat.label}</p>
-        <p className="m-0 mt-1 flex items-baseline gap-1 text-[26px] font-bold leading-tight text-[#3B2A20]">
+      {stats.map((stat) => <article key={stat.label} className="flex min-h-[92px] flex-col justify-center rounded-2xl border border-[#E2D8C7] bg-[#FFFFFF] px-4 py-3">
+        <p className="m-0 text-sm font-medium text-[#817668]">{stat.label}</p>
+        <p className="m-0 mt-1 flex items-baseline gap-1 text-[26px] font-bold leading-tight text-[#4A2C1A]">
           <CountUp value={stat.value} format={stat.format} />
-          <span className="text-sm font-medium text-[#6B5547]">{stat.note}</span>
+          <span className="text-sm font-medium text-[#817668]">{stat.note}</span>
         </p>
       </article>)}
     </div>

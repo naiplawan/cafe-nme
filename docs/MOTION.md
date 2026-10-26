@@ -18,7 +18,7 @@ Never import from "gsap" directly in components (plugins must be registered once
    like width/height/top in loops. Clean up is automatic via useGSAP; don't leak tweens.
 5. **"Animation lines" (SVG line drawing)** is the signature motif: draw strokes with `drawSVG` (`"0%"` → `"100%"`):
    check marks, progress lines, scanning lines, countdown rings, active-indicator underlines. Keep stroke widths
-   2–4 px, round caps, colors from the palette (espresso #3B2A20, latte #C69C72, terracotta #B4441C/#D9653B, success #2F6B3F).
+   2–4 px, round caps, colors from the palette (espresso #4A2C1A, latte #B88A5A, golden amber #F4B942/#D9653B, success #2F6B3F).
 6. **Accessibility stays intact.** Animations never remove focus outlines, never hide content from screen readers,
    and decorative SVGs get `aria-hidden="true"`.
 7. **Server/client.** GSAP only in client components ("use client"). Keep server pages as server components.

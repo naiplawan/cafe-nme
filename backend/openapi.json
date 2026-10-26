@@ -15675,8 +15675,8 @@
     }
   },
   "info": {
-    "title": "Cafe'nMe Backend API",
-    "description": "Internal API used by the Cafe'nMe frontend server.",
+    "title": "YELO Coffee Backend API",
+    "description": "Internal API used by the YELO Coffee frontend server.",
     "version": "1.0",
     "contact": {}
   },

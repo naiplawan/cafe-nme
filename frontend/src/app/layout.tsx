@@ -11,11 +11,11 @@ const notoSansThai = Noto_Sans_Thai({
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
-  title: { default: "Cafe'nMe", template: "%s · Cafe'nMe" },
+  title: { default: "YELO Coffee", template: "%s · YELO Coffee" },
   description: "ระบบจัดการร้านกาแฟและหน้าร้านที่ใช้งานง่าย",
   // App screens stay out of search by default; public pages opt in (see app/page.tsx).
   robots: { index: false, follow: false },
-  openGraph: { type: "website", locale: "th_TH", siteName: "Cafe'nMe" },
+  openGraph: { type: "website", locale: "th_TH", siteName: "YELO Coffee" },
   twitter: { card: "summary_large_image" },
 };
 

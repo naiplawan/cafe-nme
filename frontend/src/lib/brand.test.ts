@@ -26,6 +26,11 @@ describe("contrast", () => {
   it("every preset gives at least 4.5:1 for its text colour", () => {
     for (const preset of BRAND_PRESETS) expect(contrastRatio(preset.accent, onAccent(preset.accent))).toBeGreaterThanOrEqual(4.5);
   });
+
+  it("includes the YELO Coffee golden amber brand preset", () => {
+    expect(BRAND_PRESETS).toContainEqual({ id: "yelo", name: "YELO Coffee", accent: "#F4B942" });
+    expect(onAccent("#F4B942")).toBe(INK);
+  });
 });
 
 describe("brandVars", () => {

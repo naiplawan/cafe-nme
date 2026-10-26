@@ -8,7 +8,7 @@ import { getBrand, getLogo } from "@/server/brand";
 export const RICH_MENU_LABELS = ["บัตรสมาชิก", "แต้มของฉัน", "เมนู", "สมัครสมาชิก", "ร้านของเรา", "ติดต่อร้าน"] as const;
 
 const cream = "#FFF6E5";
-const ink = "#1E1A17";
+const ink = "#2F2A25";
 const fontPromise = readFile(join(process.cwd(), "src/server/fonts/IBMPlexSansThai-Bold.ttf"));
 
 function MenuIcon({ kind, color }: { kind: number; color: string }) {

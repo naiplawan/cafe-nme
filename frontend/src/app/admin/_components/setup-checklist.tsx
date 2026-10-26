@@ -41,7 +41,7 @@ export function SetupChecklist({ steps, role }: { steps: Record<SetupStepKey, bo
           <CardTitle className="text-lg">เริ่มต้นใช้งานร้าน</CardTitle>
           <p className="mt-1 text-sm text-muted-foreground">ทำตามขั้นตอนเพื่อเตรียมร้านให้พร้อมใช้งาน</p>
         </div>
-        <p className="mt-2 w-fit rounded-full bg-primary/10 px-3 py-1 text-sm font-semibold text-primary sm:mt-0">
+        <p className="mt-2 w-fit rounded-full bg-primary/10 px-3 py-1 text-sm font-semibold text-secondary-foreground sm:mt-0">
           {completedCount}/{requiredSteps.length}
         </p>
       </CardHeader>

@@ -1,6 +1,6 @@
 # Branding — sample CI directions
 
-Two sample corporate-identity (CI) directions for a shop on Cafe'nMe, applied to the demo shop.
+YELO Coffee corporate identity applied across the POS codebase and demo shop.
 Concept images were generated with Codex image generation; they are **references**, not production artwork
 (re-draw the final logo as vector before printing).
 
@@ -13,13 +13,28 @@ Research behind this (Oct 2026):
 
 Both directions are original — they do not reuse any real brand's name, logo or mark.
 
+## YELO Coffee — POS demo identity
+
+The current POS demo shop uses the user-provided YELO Coffee brand board. The generated logo and mascot assets are in `frontend/public/assets/yelo-coffee-logo.png` and `frontend/public/assets/yelo-coffee-mascot.png`.
+
+| Token | Hex | Use |
+|---|---|---|
+| deep coffee | `#4A2C1A` | navigation, headings, primary text |
+| medium roast | `#6B4226` | secondary controls |
+| latte | `#B88A5A` | accents and highlights |
+| warm cream | `#F7F1E7` | POS background |
+| ink | `#2F2A25` | content text |
+| golden amber | `#F4B942` | primary actions and brand preset |
+
+The demo seed sets the shop name to `YELO COFFEE` and its accent to golden amber. Existing shops are not changed by the seed script.
+
 ## A — Playful (`a-playful/`)
 
 | Token | Hex | Use |
 |---|---|---|
 | tomato | `#E8432E` | primary, sleeves, CTAs (in-app preset uses `#D23A26` for 4.5:1 text contrast) |
 | butter | `#FFD449` | secondary, highlights, stickers |
-| ink | `#1E1A17` | outlines, text |
+| ink | `#2F2A25` | outlines, text |
 | cream | `#FFF6E5` | backgrounds |
 
 - Mark: smiling cup with "pop" rays; chunky rounded wordmark with thick ink outline.
@@ -43,9 +58,9 @@ Both directions are original — they do not reuse any real brand's name, logo o
 
 ## Asset set (per direction)
 
-| File | Size | Maps to in Cafe'nMe |
+| File | Size | Maps to in YELO Coffee |
 |---|---|---|
-| `logo-sheet.png` | 1536×1024 | shop logo upload, `logo-mark.png` |
+| `logo-sheet.png` | 1536×1024 | shop logo upload, `yelo-coffee-logo.png` |
 | `cups.png` | 1536×1024 | print only (sleeve, sticker) |
 | `stamp-passport.png` | 1536×1024 | LIFF stamp card, `stamp-filled` / `stamp-empty` |
 | `line-richmenu.png` | 1536×1024 | LINE rich menu — resize to 2500×1686, add Thai labels in code/LINE OA Manager |

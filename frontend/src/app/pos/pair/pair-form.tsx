@@ -12,7 +12,7 @@ import { pairDeviceAction } from "./actions";
 
 function PairButton({ disabled }: { disabled: boolean }) {
   const { pending } = useFormStatus();
-  return <Button type="submit" disabled={disabled || pending} className="h-16 w-full rounded-2xl bg-[#3B2A20] text-xl font-bold text-[#F5EDE3] hover:bg-[#574235] disabled:bg-[#C9B6A4]">
+  return <Button type="submit" disabled={disabled || pending} className="h-16 w-full rounded-2xl bg-[#4A2C1A] text-xl font-bold text-[#F7F1E7] hover:bg-[#6B4226] disabled:bg-[#D1C1A8]">
     {pending ? "กำลังเชื่อมต่อ…" : "จับคู่แท็บเล็ต"}
   </Button>;
 }
@@ -65,16 +65,16 @@ export function PairForm({ initialCode = "" }: { initialCode?: string }) {
     return () => media.revert();
   }, { scope: formRef, dependencies: [state.message, state.success], revertOnUpdate: true });
 
-  return <section ref={formRef} className="w-full max-w-[460px] rounded-[24px] border border-[#E4D6C6] bg-[#FFFBF6] p-8 text-[#3B2A20] shadow-[0_18px_48px_rgba(59,42,32,0.08)] sm:p-10">
+  return <section ref={formRef} className="w-full max-w-[460px] rounded-[24px] border border-[#E2D8C7] bg-[#FFFFFF] p-8 text-[#4A2C1A] shadow-[0_18px_48px_rgba(59,42,32,0.08)] sm:p-10">
     <header className="mb-7 flex flex-col items-center gap-4 text-center">
-      <Image src="/assets/logo-mark.png" alt="" width={64} height={64} className="size-16 rounded-2xl" />
+      <Image src="/assets/yelo-coffee-mascot.png" alt="" width={64} height={64} className="size-16 rounded-2xl" />
       <h1 className="m-0 text-[28px] font-bold">จับคู่แท็บเล็ตกับร้าน</h1>
     </header>
     <form action={action} className="space-y-4">
       <input type="hidden" name="code" value={code} />
       <div ref={boxesRef} role="img" aria-label={`รหัสจับคู่ ${code.length} จาก 8 หลัก`} className="relative flex justify-center gap-1.5">
-        {Array.from({ length: 8 }, (_, index) => index + 1).map((position) => <span key={position} data-code-index={position - 1} className={`relative flex h-14 w-9 items-center justify-center rounded-xl border-2 text-xl font-bold tabular-nums sm:w-11 sm:text-2xl ${state.success ? "border-[#2F6B3F] bg-[#E7F1E8] text-[#245232]" : code[position - 1] ? "border-[#3B2A20] bg-[#F5EDE3]" : "border-[#D9C5B0] bg-white"}`}>
-          {code[position - 1] ?? (position - 1 === code.length && !state.success ? <span aria-hidden="true" className="absolute left-1/2 top-1/2 h-7 w-[2px] -translate-x-1/2 -translate-y-1/2 rounded bg-[#B4441C]" data-pair-caret /> : "")}
+        {Array.from({ length: 8 }, (_, index) => index + 1).map((position) => <span key={position} data-code-index={position - 1} className={`relative flex h-14 w-9 items-center justify-center rounded-xl border-2 text-xl font-bold tabular-nums sm:w-11 sm:text-2xl ${state.success ? "border-[#2F6B3F] bg-[#E7F1E8] text-[#245232]" : code[position - 1] ? "border-[#4A2C1A] bg-[#F7F1E7]" : "border-[#E2D8C7] bg-white"}`}>
+          {code[position - 1] ?? (position - 1 === code.length && !state.success ? <span aria-hidden="true" className="absolute left-1/2 top-1/2 h-7 w-[2px] -translate-x-1/2 -translate-y-1/2 rounded bg-[#F4B942]" data-pair-caret /> : "")}
         </span>)}
         {state.success ? <svg aria-hidden="true" className="pointer-events-none absolute -bottom-3 right-2 size-7" viewBox="0 0 24 24" fill="none" stroke="#2F6B3F" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path data-pair-check d="m5 12 4 4L19 6" /></svg> : null}
       </div>
@@ -82,6 +82,6 @@ export function PairForm({ initialCode = "" }: { initialCode?: string }) {
       <Keypad value={code} onChange={(value) => setCode(value.replace(/\D/g, "").slice(0, 8))} maxLength={8} keyClassName="h-[68px]" className="gap-2.5" />
       <PairButton disabled={code.length !== 8 || Boolean(state.success)} />
     </form>
-    <p className="mt-5 text-center text-sm text-[#6B5547]">ดูรหัสได้ที่หลังร้าน › เครื่อง POS</p>
+    <p className="mt-5 text-center text-sm text-[#817668]">ดูรหัสได้ที่หลังร้าน › เครื่อง POS</p>
   </section>;
 }

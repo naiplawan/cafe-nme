@@ -6,9 +6,9 @@ V1 is implemented: an owner can add branches, accounts with multiple active memb
 
 ## Goal and scope
 
-Allow one business owner to manage more than one of their own Cafe'nMe shops from the existing web admin. Each branch remains a separate `shops` record with its own menu, staff, devices, LINE settings, members, sales, reports, and payment configuration. The owner signs in once, selects a branch, and uses the existing shop admin for that branch.
+Allow one business owner to manage more than one of their own YELO Coffee shops from the existing web admin. Each branch remains a separate `shops` record with its own menu, staff, devices, LINE settings, members, sales, reports, and payment configuration. The owner signs in once, selects a branch, and uses the existing shop admin for that branch.
 
-This plan is for a business owner managing their own branches. It does not create a Cafe'nMe staff console that can browse every customer's shops.
+This plan is for a business owner managing their own branches. It does not create a YELO Coffee staff console that can browse every customer's shops.
 
 ### V1 user outcomes
 
@@ -21,7 +21,7 @@ This plan is for a business owner managing their own branches. It does not creat
 
 ### Explicitly out of scope for V1
 
-- A Cafe'nMe platform-operator admin or global access to customer shops.
+- A YELO Coffee platform-operator admin or global access to customer shops.
 - Shared menus, shared member balances, pooled staff, or cross-branch inventory.
 - Cross-branch sales reports or consolidated exports.
 - User invitations and a single manager account spanning many shops. The data model should allow this later, but V1 focuses on one owner account managing its own branches.

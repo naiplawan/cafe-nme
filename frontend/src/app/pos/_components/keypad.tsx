@@ -28,7 +28,7 @@ export function Keypad({ value, onChange, maxLength, decimal = false, maxInteger
     gsap.fromTo(button, { scale: 1 }, { scale: 0.96, duration: MOTION.fast / 2, yoyo: true, repeat: 1, ease: "power1.out" });
   });
   const keyClass = cn(
-    "h-[72px] rounded-2xl border border-[#E4D6C6] bg-[#F5EDE3] text-[26px] font-semibold text-[#3B2A20] active:bg-[#EADBC8] disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#B4441C]",
+    "h-[72px] rounded-2xl border border-[#E2D8C7] bg-[#F7F1E7] text-[26px] font-semibold text-[#4A2C1A] active:bg-[#F7F1E7] disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#F4B942]",
     keyClassName,
   );
   const press = (digit: string) => {

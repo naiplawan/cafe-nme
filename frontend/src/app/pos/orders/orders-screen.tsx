@@ -223,95 +223,95 @@ export function OrdersScreen({ orders, initialDetail, netSalesSatang, todaySumma
 
   const voidCount = orders.filter((order) => order.status === "void").length;
 
-  return <main ref={screenRef} className="relative flex min-h-dvh flex-col overflow-hidden bg-[#F5EDE3] text-[#3B2A20]">
-    <header className="flex min-h-[68px] shrink-0 items-center gap-4 bg-[#3B2A20] px-5 text-[#F5EDE3] max-[850px]:flex-wrap max-[850px]:py-3">
-      <Link href="/pos" className="flex h-12 shrink-0 items-center gap-2 rounded-xl bg-[#574235] px-[18px] text-base font-semibold text-[#F5EDE3] no-underline">
+  return <main ref={screenRef} className="relative flex min-h-dvh flex-col overflow-hidden bg-[#F7F1E7] text-[#4A2C1A]">
+    <header className="flex min-h-[68px] shrink-0 items-center gap-4 bg-[#4A2C1A] px-5 text-[#F7F1E7] max-[850px]:flex-wrap max-[850px]:py-3">
+      <Link href="/pos" className="flex h-12 shrink-0 items-center gap-2 rounded-xl bg-[#6B4226] px-[18px] text-base font-semibold text-[#F7F1E7] no-underline">
         <ArrowLeft aria-hidden="true" size={20} /> กลับหน้าขาย
       </Link>
       <h1 className="m-0 text-[22px] font-bold">ออเดอร์วันนี้</h1>
-      <fieldset className="flex h-12 shrink-0 rounded-xl bg-[#574235] p-1"><legend className="sr-only">เลือกมุมมอง</legend>
-        <button type="button" aria-pressed={view === "orders"} onClick={() => setView("orders")} className={`min-w-[92px] rounded-lg px-3 text-sm font-semibold ${view === "orders" ? "bg-[#F5EDE3] text-[#3B2A20]" : "text-[#F5EDE3]"}`}>ออเดอร์</button>
-        <button type="button" aria-pressed={view === "summary"} onClick={() => setView("summary")} className={`min-w-[92px] rounded-lg px-3 text-sm font-semibold ${view === "summary" ? "bg-[#F5EDE3] text-[#3B2A20]" : "text-[#F5EDE3]"}`}>สรุปยอด</button>
+      <fieldset className="flex h-12 shrink-0 rounded-xl bg-[#6B4226] p-1"><legend className="sr-only">เลือกมุมมอง</legend>
+        <button type="button" aria-pressed={view === "orders"} onClick={() => setView("orders")} className={`min-w-[92px] rounded-lg px-3 text-sm font-semibold ${view === "orders" ? "bg-[#F7F1E7] text-[#4A2C1A]" : "text-[#F7F1E7]"}`}>ออเดอร์</button>
+        <button type="button" aria-pressed={view === "summary"} onClick={() => setView("summary")} className={`min-w-[92px] rounded-lg px-3 text-sm font-semibold ${view === "summary" ? "bg-[#F7F1E7] text-[#4A2C1A]" : "text-[#F7F1E7]"}`}>สรุปยอด</button>
       </fieldset>
-      <div className="ml-auto flex flex-wrap gap-x-6 gap-y-1 text-[15px] text-[#E9D9C6] max-[850px]:ml-0">
-        <span>ยอดขาย <b className="text-lg tabular-nums text-[#F5EDE3]">{formatBaht(netSalesSatang)}</b></span>
+      <div className="ml-auto flex flex-wrap gap-x-6 gap-y-1 text-[15px] text-[#F7F1E7] max-[850px]:ml-0">
+        <span>ยอดขาย <b className="text-lg tabular-nums text-[#F7F1E7]">{formatBaht(netSalesSatang)}</b></span>
         <span>{orders.length} บิล</span>
         <span>ยกเลิก {voidCount}</span>
       </div>
     </header>
 
     {view === "orders" ? <div className="flex min-h-0 flex-1 max-[760px]:flex-col">
-      <section ref={orderListRef} aria-label="รายการออเดอร์" className="relative flex w-[min(520px,42vw)] shrink-0 flex-col gap-2 overflow-y-auto border-r border-[#E4D6C6] p-3 max-[760px]:w-full max-[760px]:border-r-0 max-[760px]:border-b">
-        {selectedId ? <span ref={selectionMarkerRef} aria-hidden="true" className="pointer-events-none absolute left-0 top-0 z-[1] h-[76px] w-[3px] origin-top rounded-r-full bg-[#B4441C] shadow-[0_0_10px_rgba(180,68,28,0.25)]" /> : null}
+      <section ref={orderListRef} aria-label="รายการออเดอร์" className="relative flex w-[min(520px,42vw)] shrink-0 flex-col gap-2 overflow-y-auto border-r border-[#E2D8C7] p-3 max-[760px]:w-full max-[760px]:border-r-0 max-[760px]:border-b">
+        {selectedId ? <span ref={selectionMarkerRef} aria-hidden="true" className="pointer-events-none absolute left-0 top-0 z-[1] h-[76px] w-[3px] origin-top rounded-r-full bg-[#F4B942] shadow-[0_0_10px_rgba(244,185,66,0.25)]" /> : null}
         {orders.length ? orders.map((order) => {
           const isSelected = selectedId === order.id;
           return <button key={order.id} data-order-item data-order-id={order.id} type="button" aria-pressed={isSelected} onClick={() => void selectOrder(order.id)}
-            className={`relative flex min-h-[76px] items-center gap-3.5 rounded-2xl border px-4 py-3 text-left text-[#3B2A20] transition-colors ${isSelected ? "border-[#3B2A20] bg-[#FFFBF6] shadow-[0_6px_18px_rgba(59,42,32,0.06)]" : "border-[#E4D6C6] bg-[#FBF5EE]"}`}>
+            className={`relative flex min-h-[76px] items-center gap-3.5 rounded-2xl border px-4 py-3 text-left text-[#4A2C1A] transition-colors ${isSelected ? "border-[#4A2C1A] bg-[#FFFFFF] shadow-[0_6px_18px_rgba(59,42,32,0.06)]" : "border-[#E2D8C7] bg-[#FBF5EE]"}`}>
             <span className="w-[72px] shrink-0 text-[22px] font-bold">{orderLabel(order.dailyNo)}</span>
             <span className="min-w-0 flex-1 leading-snug">
               <span className="text-base font-semibold">{orderTimestamp(order.paidAt)} · {order.itemCount} รายการ</span><br />
-              <span className="text-sm text-[#6B5547]">{methodLabel(order.paymentMethod)} · {order.memberName ?? "ไม่ใช่สมาชิก"}</span>
+              <span className="text-sm text-[#817668]">{methodLabel(order.paymentMethod)} · {order.memberName ?? "ไม่ใช่สมาชิก"}</span>
             </span>
             <span className="text-right leading-snug">
-              <span className="relative inline-block whitespace-nowrap text-lg font-bold tabular-nums">{formatBaht(order.totalSatang)}{order.status === "void" ? <svg data-list-total aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-1/2 h-2 w-full -translate-y-1/2" viewBox="0 0 100 8" preserveAspectRatio="none"><path d="M2 4H98" fill="none" stroke="#B4441C" strokeWidth="2.5" strokeLinecap="round" /></svg> : null}</span><br />
+              <span className="relative inline-block whitespace-nowrap text-lg font-bold tabular-nums">{formatBaht(order.totalSatang)}{order.status === "void" ? <svg data-list-total aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-1/2 h-2 w-full -translate-y-1/2" viewBox="0 0 100 8" preserveAspectRatio="none"><path d="M2 4H98" fill="none" stroke="#F4B942" strokeWidth="2.5" strokeLinecap="round" /></svg> : null}</span><br />
               <span data-list-status className={`inline-block rounded-full px-2 py-0.5 text-[13px] font-semibold ${statusClass(order.status)}`}>{order.status === "void" ? "ยกเลิกแล้ว" : "ชำระแล้ว"}</span>
             </span>
           </button>;
         }) : <div className="flex flex-1 flex-col items-center justify-center gap-3 p-8 text-center">
           <Image src="/assets/empty-orders.png" alt="" width={128} height={128} className="size-32 object-contain" />
           <p className="m-0 text-xl font-semibold">วันนี้ยังไม่มีออเดอร์</p>
-          <p className="m-0 text-[#6B5547]">รายการขายจะแสดงที่นี่</p>
+          <p className="m-0 text-[#817668]">รายการขายจะแสดงที่นี่</p>
         </div>}
       </section>
 
-      <section ref={detailsRef} aria-label="รายละเอียดออเดอร์" className="flex min-w-0 flex-1 flex-col gap-4 overflow-y-auto bg-[#FFFBF6] px-8 py-7 max-[760px]:min-h-[420px] max-[760px]:px-5">
+      <section ref={detailsRef} aria-label="รายละเอียดออเดอร์" className="flex min-w-0 flex-1 flex-col gap-4 overflow-y-auto bg-[#FFFFFF] px-8 py-7 max-[760px]:min-h-[420px] max-[760px]:px-5">
         {detailError && <div role="alert">{detailError}<button type="button" className="ml-3 min-h-11 underline" onClick={() => { if (selectedId) void selectOrder(selectedId); }}>ลองใหม่</button></div>}
         {detail && detail.id === selectedId && !loadingDetail ? <>
           <div className="flex flex-wrap items-baseline gap-x-3.5 gap-y-2">
             <span className="text-[40px] font-bold">{orderLabel(detail.dailyNo)}</span>
-            <span className="text-base text-[#6B5547]">{orderTimestamp(detail.paidAt ?? detail.voidedAt)} · โดย {detail.staffName ?? "—"}</span>
+            <span className="text-base text-[#817668]">{orderTimestamp(detail.paidAt ?? detail.voidedAt)} · โดย {detail.staffName ?? "—"}</span>
             <span data-void-status className={`ml-auto rounded-full px-3 py-1 text-sm font-semibold ${statusClass(detail.status)}`}>{detail.status === "void" ? "ยกเลิกแล้ว" : "ชำระแล้ว"}</span>
           </div>
-          {loadingDetail ? <p className="text-[#6B5547]">กำลังโหลดรายละเอียด…</p> : <>
-            <div className="flex flex-col border-t border-[#E4D6C6]">
+          {loadingDetail ? <p className="text-[#817668]">กำลังโหลดรายละเอียด…</p> : <>
+            <div className="flex flex-col border-t border-[#E2D8C7]">
               {detail.items.map((item) => <div key={item.id} className="flex gap-3 border-b border-[#EFE3D5] py-3 text-[17px]">
                 <span className="w-10 shrink-0 font-bold">{item.qty}×</span>
                 <span className="min-w-0 flex-1">{item.name}
-                  {item.modifiers.length || item.note ? <span className="block text-sm text-[#6B5547]">{[...item.modifiers.map((modifier) => modifier.name), item.note].filter(Boolean).join(" · ")}</span> : null}
+                  {item.modifiers.length || item.note ? <span className="block text-sm text-[#817668]">{[...item.modifiers.map((modifier) => modifier.name), item.note].filter(Boolean).join(" · ")}</span> : null}
                 </span>
                 <span className="shrink-0 font-semibold tabular-nums">{formatBaht(item.unitPriceSatang * item.qty)}</span>
               </div>)}
             </div>
-            <div className="flex justify-between text-base text-[#6B5547]"><span>ชำระด้วย</span><span>{methodLabel(detail.paymentMethod)}</span></div>
-            <div className="flex justify-between text-base text-[#6B5547]"><span>สมาชิก</span><span>{detail.memberName ?? "ไม่ใช่สมาชิก"}</span></div>
-            {detail.discountSatang > 0 ? <div className="flex justify-between text-base text-[#6B5547]"><span>ส่วนลด</span><span>-{formatBaht(detail.discountSatang)}</span></div> : null}
-            {detail.paymentMethod === "cash" && detail.cashReceivedSatang !== null ? <div className="flex justify-between text-sm text-[#6B5547]"><span>รับเงินสด · เงินทอน</span><span className="tabular-nums">{formatBaht(detail.cashReceivedSatang)} · {formatBaht(detail.cashReceivedSatang - detail.totalSatang)}</span></div> : null}
-            <div className="flex items-baseline justify-between"><span className="text-lg font-semibold">ยอดรวม</span><span className="relative inline-block text-[34px] font-bold tabular-nums">{formatBaht(detail.totalSatang)}{detail.status === "void" ? <svg data-void-total aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-1/2 h-2 w-full -translate-y-1/2" viewBox="0 0 100 8" preserveAspectRatio="none"><path d="M2 4H98" fill="none" stroke="#B4441C" strokeWidth="2.5" strokeLinecap="round" /></svg> : null}</span></div>
+            <div className="flex justify-between text-base text-[#817668]"><span>ชำระด้วย</span><span>{methodLabel(detail.paymentMethod)}</span></div>
+            <div className="flex justify-between text-base text-[#817668]"><span>สมาชิก</span><span>{detail.memberName ?? "ไม่ใช่สมาชิก"}</span></div>
+            {detail.discountSatang > 0 ? <div className="flex justify-between text-base text-[#817668]"><span>ส่วนลด</span><span>-{formatBaht(detail.discountSatang)}</span></div> : null}
+            {detail.paymentMethod === "cash" && detail.cashReceivedSatang !== null ? <div className="flex justify-between text-sm text-[#817668]"><span>รับเงินสด · เงินทอน</span><span className="tabular-nums">{formatBaht(detail.cashReceivedSatang)} · {formatBaht(detail.cashReceivedSatang - detail.totalSatang)}</span></div> : null}
+            <div className="flex items-baseline justify-between"><span className="text-lg font-semibold">ยอดรวม</span><span className="relative inline-block text-[34px] font-bold tabular-nums">{formatBaht(detail.totalSatang)}{detail.status === "void" ? <svg data-void-total aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-1/2 h-2 w-full -translate-y-1/2" viewBox="0 0 100 8" preserveAspectRatio="none"><path d="M2 4H98" fill="none" stroke="#F4B942" strokeWidth="2.5" strokeLinecap="round" /></svg> : null}</span></div>
           </>}
           <div className="mt-auto flex gap-3 pt-2 max-[520px]:flex-col">
-            <Link href={`/pos/receipt/${detail.id}`} className="flex h-[68px] flex-1 items-center justify-center gap-2 rounded-2xl border border-[#D9C5B0] bg-[#FFFBF6] text-lg font-semibold text-[#3B2A20] no-underline">
+            <Link href={`/pos/receipt/${detail.id}`} className="flex h-[68px] flex-1 items-center justify-center gap-2 rounded-2xl border border-[#E2D8C7] bg-[#FFFFFF] text-lg font-semibold text-[#4A2C1A] no-underline">
               <Printer aria-hidden="true" size={22} /> พิมพ์ใบเสร็จซ้ำ
             </Link>
             {detail.status === "paid" ? <Link href={`/pos/refunds/${detail.id}`} className="flex min-h-12 items-center justify-center rounded-xl border px-4 font-semibold">คืนเงิน / ยกเลิกรายการที่ชำระแล้ว</Link> : null}
-            {detail.status === "open" ? <button type="button" onClick={openVoid} className="h-[68px] flex-1 rounded-2xl border-2 border-[#8E3415] bg-[#FFFBF6] text-lg font-bold text-[#8E3415]">ยกเลิกบิลนี้</button> : null}
+            {detail.status === "open" ? <button type="button" onClick={openVoid} className="h-[68px] flex-1 rounded-2xl border-2 border-[#8E3415] bg-[#FFFFFF] text-lg font-bold text-[#8E3415]">ยกเลิกบิลนี้</button> : null}
           </div>
-        </> : orders.length ? <p className="m-auto text-center text-[#6B5547]">{loadingDetail ? "กำลังโหลดรายละเอียด…" : "เลือกออเดอร์เพื่อดูรายละเอียด"}</p> : <div className="m-auto text-center text-[#6B5547]">ยังไม่มีรายละเอียดออเดอร์</div>}
+        </> : orders.length ? <p className="m-auto text-center text-[#817668]">{loadingDetail ? "กำลังโหลดรายละเอียด…" : "เลือกออเดอร์เพื่อดูรายละเอียด"}</p> : <div className="m-auto text-center text-[#817668]">ยังไม่มีรายละเอียดออเดอร์</div>}
       </section>
     </div> : <TodaySummary summary={todaySummary} hourlySales={hourlySales} topItems={topItems} currentHour={currentHour} />}
 
     {showVoid && detail ? <div ref={dialogOverlayRef} className="absolute inset-0 z-10 flex items-center justify-center overflow-y-auto bg-[rgba(43,30,22,0.55)] p-4">
       <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby={voidTitleId} tabIndex={-1} onKeyDown={trapDialogTab}
-        className="flex w-full max-w-[520px] flex-col items-center gap-4 rounded-3xl bg-[#FFFBF6] p-7 outline-none">
+        className="flex w-full max-w-[520px] flex-col items-center gap-4 rounded-3xl bg-[#FFFFFF] p-7 outline-none">
         <h2 id={voidTitleId} className="m-0 text-center text-2xl font-bold">ยกเลิกบิล {orderLabel(detail.dailyNo)} ({formatBaht(detail.totalSatang)})</h2>
-        <p className="m-0 text-center text-base text-[#6B5547]">ต้องใช้ PIN ผู้จัดการหรือเจ้าของร้าน · ยกเลิกได้เฉพาะบิลที่ยังไม่ชำระเงิน</p>
+        <p className="m-0 text-center text-base text-[#817668]">ต้องใช้ PIN ผู้จัดการหรือเจ้าของร้าน · ยกเลิกได้เฉพาะบิลที่ยังไม่ชำระเงิน</p>
         <div ref={pinDotsRef} role="img" aria-label={`PIN ที่ใส่แล้ว ${pin.length} หลัก`} className="flex gap-3 py-1">
-          {Array.from({ length: 6 }, (_, index) => index + 1).map((pinPosition) => <span key={pinPosition} data-pin-index={pinPosition - 1} className={`size-[22px] rounded-full border-2 border-[#3B2A20] ${pinPosition <= pin.length ? "bg-[#3B2A20]" : "bg-transparent"}`} />)}
+          {Array.from({ length: 6 }, (_, index) => index + 1).map((pinPosition) => <span key={pinPosition} data-pin-index={pinPosition - 1} className={`size-[22px] rounded-full border-2 border-[#4A2C1A] ${pinPosition <= pin.length ? "bg-[#4A2C1A]" : "bg-transparent"}`} />)}
         </div>
         <Keypad value={pin} onChange={(value) => { setPin(value); setVoidMessage(null); }} maxLength={6} keyClassName="h-[68px] rounded-[14px] text-[26px]" className="w-full gap-2.5" />
         {voidMessage ? <p data-void-error role="alert" className="m-0 text-center font-semibold text-[#8E3415]">{voidMessage}</p> : null}
         <div className="flex w-full gap-3 max-[420px]:flex-col">
-          <button type="button" disabled={voiding} onClick={closeVoid} className="h-16 flex-1 rounded-2xl border border-[#D9C5B0] bg-[#FFFBF6] text-lg font-semibold text-[#3B2A20]">ไม่ยกเลิก</button>
-          <button type="button" disabled={pin.length < 4 || voiding} onClick={() => void confirmVoid()} className="h-16 flex-1 rounded-2xl bg-[#8E3415] text-lg font-bold text-white disabled:bg-[#C9B6A4]">{voiding ? "กำลังยกเลิก…" : "ยืนยันยกเลิก"}</button>
+          <button type="button" disabled={voiding} onClick={closeVoid} className="h-16 flex-1 rounded-2xl border border-[#E2D8C7] bg-[#FFFFFF] text-lg font-semibold text-[#4A2C1A]">ไม่ยกเลิก</button>
+          <button type="button" disabled={pin.length < 4 || voiding} onClick={() => void confirmVoid()} className="h-16 flex-1 rounded-2xl bg-[#8E3415] text-lg font-bold text-white disabled:bg-[#D1C1A8]">{voiding ? "กำลังยกเลิก…" : "ยืนยันยกเลิก"}</button>
         </div>
       </div>
     </div> : null}

@@ -15,6 +15,7 @@ import {
   shops,
   staff,
   stampLedger,
+  shopBrands,
   users,
 } from "../src/db/schema";
 
@@ -80,8 +81,10 @@ async function seed() {
       }).returning({ id: users.id }))[0].id;
       const [shop] = await tx
         .insert(shops)
-        .values({ name: "Cafe'nMe", slug: "demo-cafe", promptpayId: null })
+        .values({ name: "YELO COFFEE", slug: "demo-cafe", promptpayId: null })
         .returning({ id: shops.id });
+
+      await tx.insert(shopBrands).values({ shopId: shop.id, accent: "#F4B942" });
 
       const [owner] = await tx
         .insert(staff)

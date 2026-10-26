@@ -15,17 +15,17 @@ export default async function ShiftsPage() {
   const active = state.shifts.find((shift) => !shift.closedAt);
   const movements = active ? await listCashMovements(session.shopId, session.staff.id, active.id) : [];
   const canClose = active && (active.openedBy === session.staff.id || session.staff.role !== "barista");
-  return <main className="min-h-dvh bg-[#F5EDE3] p-4 text-[#3B2A20] sm:p-6"><div className="mx-auto max-w-4xl space-y-6">
-    <Link href="/pos" className="inline-flex min-h-12 items-center rounded-xl border border-[#D9C5B0] bg-[#FFFBF6] px-5 font-semibold">กลับไปขายหน้าร้าน</Link>
+  return <main className="min-h-dvh bg-[#F7F1E7] p-4 text-[#4A2C1A] sm:p-6"><div className="mx-auto max-w-4xl space-y-6">
+    <Link href="/pos" className="inline-flex min-h-12 items-center rounded-xl border border-[#E2D8C7] bg-[#FFFFFF] px-5 font-semibold">กลับไปขายหน้าร้าน</Link>
     <h1 className="text-3xl font-bold">กะเงินสดและส่งมอบลิ้นชัก</h1>
-    <section className="rounded-2xl border border-[#D9C5B0] bg-[#FFFBF6] p-6 shadow-sm">
+    <section className="rounded-2xl border border-[#E2D8C7] bg-[#FFFFFF] p-6 shadow-sm">
       {active ? <>
         <h2 className="text-xl font-semibold">กะที่เปิดอยู่ — {active.openedByName}</h2>
         <p className="mt-2">เงินทอนเริ่มต้น {formatBaht(active.openingFloatSatang)}</p>
         <p className="mt-2 text-xl">เงินสดที่ควรมี {formatBaht(active.expectedCashSatang)}</p>
         <Link href={`/pos/shifts/${active.id}`} className="inline-block py-3 underline">ดูบัญชีเงินสดกะนี้</Link>
         <p className="mt-2 text-sm">ยอดจะคำนวณอีกครั้งเมื่อยืนยันปิดกะ กรุณานับเงินสดจริง รวมเงินทอนเริ่มต้น</p>
-        {session.staff.role !== 'barista' ? <details className="mt-6 rounded-xl border border-[#D9C5B0] px-4">
+        {session.staff.role !== 'barista' ? <details className="mt-6 rounded-xl border border-[#E2D8C7] px-4">
           <summary className="flex min-h-12 cursor-pointer items-center font-semibold">บันทึกเงินเข้า–ออกลิ้นชัก (ผู้จัดการ)</summary>
           <div className="pb-4"><CashMovementForm key={movements.length} requestId={randomUUID()} shiftId={active.id} /></div>
         </details> : null}
@@ -33,7 +33,7 @@ export default async function ShiftsPage() {
           {{ float_topup: 'เติมเงินทอน', petty_cash: 'จ่ายเงินสดย่อย', bank_deposit: 'นำเงินออกฝาก' }[movement.kind]} {formatBaht(movement.amountSatang)} — {movement.reason}
           {' · '}{state.recipients.find((staff) => staff.id === movement.approvedByStaffId)?.name ?? 'พนักงานที่ไม่ได้ใช้งานแล้ว'}
         </li>)}</ul> : null}
-        {canClose ? <div className="mt-6 border-t border-[#E4D6C6] pt-6">
+        {canClose ? <div className="mt-6 border-t border-[#E2D8C7] pt-6">
           <h3 className="text-lg font-semibold">ปิดกะและส่งมอบลิ้นชัก</h3>
           <ShiftForm requestId={randomUUID()} shiftId={active.id} recipients={state.recipients} />
         </div>
@@ -46,7 +46,7 @@ export default async function ShiftsPage() {
     </section>
     <section className="space-y-3">
       <h2 className="text-xl font-semibold">กะล่าสุด</h2>
-      {state.shifts.filter((shift) => shift.closedAt).map((shift) => <article key={shift.id} className="rounded-xl border border-[#D9C5B0] bg-[#FFFBF6] p-4">
+      {state.shifts.filter((shift) => shift.closedAt).map((shift) => <article key={shift.id} className="rounded-xl border border-[#E2D8C7] bg-[#FFFFFF] p-4">
         <p className="font-semibold">{shift.openedByName} — {new Date(shift.closedAt!).toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}</p>
         <p>ควรมี {formatBaht(shift.expectedCashSatang)} · นับได้ {formatBaht(shift.countedCashSatang ?? 0)} · ส่วนต่าง {formatBaht(shift.differenceSatang ?? 0)}</p>
         <Link href={`/pos/shifts/${shift.id}`} className="inline-block py-3 underline">ดูบัญชีเงินสดและผู้อนุมัติ</Link>

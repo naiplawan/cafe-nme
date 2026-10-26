@@ -45,7 +45,7 @@ function SetupFlow() {
   return <section aria-label="ขั้นตอนตั้งค่าตัวเลือกเสริม" className="flex flex-col gap-2 rounded-xl border bg-card p-3 sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:px-5">
     {steps.map((step, index) => <div key={step} className="contents">
       <div className="flex items-center gap-3">
-        <span className="grid size-8 shrink-0 place-items-center rounded-full bg-primary/10 text-sm font-semibold text-primary">{index + 1}</span>
+        <span className="grid size-8 shrink-0 place-items-center rounded-full bg-primary/10 text-sm font-semibold text-secondary-foreground">{index + 1}</span>
         <span className="text-sm font-medium">{step}</span>
       </div>
       {index < steps.length - 1 && <ArrowRight aria-hidden="true" className="hidden size-4 shrink-0 text-muted-foreground sm:block" />}
@@ -101,7 +101,7 @@ export default async function ModifiersPage() {
         {groups.length === 0 ? (
           <Card>
             <CardContent className="px-6 py-10 text-center">
-              <span className="mx-auto grid size-12 place-items-center rounded-full bg-primary/10 text-primary" aria-hidden="true"><SlidersHorizontal className="size-5" /></span>
+              <span className="mx-auto grid size-12 place-items-center rounded-full bg-primary/10 text-secondary-foreground" aria-hidden="true"><SlidersHorizontal className="size-5" /></span>
               <h3 className="mt-2 font-semibold">เริ่มจากสร้างกลุ่มตัวเลือก</h3>
               <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">ตัวอย่างเช่น ความหวานหรือชนิดนม จากนั้นเพิ่มตัวเลือกและผูกกลุ่มกับสินค้า</p>
               <Link href={`#${newGroupId}`} className={buttonVariants({ className: "mt-4" })}>สร้างกลุ่มแรก</Link>

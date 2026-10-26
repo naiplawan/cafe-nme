@@ -90,7 +90,7 @@ export function BrandForms({ shopId, shopName, accent: initialAccent, logoUrl, l
     <section aria-label="ตั้งค่าแบรนด์ร้าน" className="grid items-start gap-5 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
       <Card>
         <CardHeader className="border-b pb-4">
-          <div className="mb-1 flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary"><Palette aria-hidden="true" size={20} /></div>
+          <div className="mb-1 flex size-10 items-center justify-center rounded-xl bg-primary/10 text-secondary-foreground"><Palette aria-hidden="true" size={20} /></div>
           <CardTitle>ตัวตนของร้าน</CardTitle>
           <p className="text-sm text-muted-foreground">ตั้งโลโก้และสีที่ลูกค้าจะเห็นบนบัตรสมาชิก ใบเสร็จ และหน้าขาย</p>
         </CardHeader>
@@ -130,7 +130,7 @@ export function BrandForms({ shopId, shopName, accent: initialAccent, logoUrl, l
               const selected = normalizeHex(accent) === preset.accent;
               return <Button key={preset.id} type="button" variant="outline" aria-pressed={selected} onClick={() => setAccent(preset.accent)} className={`justify-start gap-2 px-3 ${selected ? "border-primary ring-2 ring-primary/20" : ""}`}>
                 <span aria-hidden="true" className="size-5 shrink-0 rounded-full border border-foreground/20" style={{ backgroundColor: preset.accent }} />
-                <span>{preset.name}</span>{selected && <Check aria-hidden="true" className="text-primary" />}
+                <span>{preset.name}</span>{selected && <Check aria-hidden="true" className="text-secondary-foreground" />}
               </Button>;
             })}</div>
             <form action={accentAction} className="space-y-3">
@@ -152,7 +152,7 @@ export function BrandForms({ shopId, shopName, accent: initialAccent, logoUrl, l
 
       <Card className="xl:sticky xl:top-24">
         <CardHeader className="border-b pb-4">
-          <div className="mb-1 flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary"><Eye aria-hidden="true" size={20} /></div>
+          <div className="mb-1 flex size-10 items-center justify-center rounded-xl bg-primary/10 text-secondary-foreground"><Eye aria-hidden="true" size={20} /></div>
           <CardTitle>ตัวอย่างที่ลูกค้าจะเห็น</CardTitle>
           <p className="text-sm text-muted-foreground">ตัวอย่างบัตรสมาชิกอัปเดตทันทีเมื่อเปลี่ยนสี</p>
         </CardHeader>
@@ -190,7 +190,7 @@ export function BrandForms({ shopId, shopName, accent: initialAccent, logoUrl, l
             <form action={menuAction} className="space-y-3">
               <Button type="submit" disabled={menuPending || !lineConfigured}>{menuPending ? "กำลังอัปเดต…" : "อัปเดตริชเมนูใน LINE"}</Button>
               {!lineConfigured && <p className="text-sm text-muted-foreground">เริ่มจากเชื่อมต่อบัญชี LINE ของร้าน</p>}
-              {!lineConfigured && <Link href="/admin/line" className="inline-flex min-h-11 items-center font-medium text-primary underline underline-offset-4">ตั้งค่า LINE ก่อน</Link>}
+              {!lineConfigured && <Link href="/admin/line" className="inline-flex min-h-11 items-center font-medium text-secondary-foreground underline underline-offset-4">ตั้งค่า LINE ก่อน</Link>}
               <Result state={menuState} />
             </form>
           </div>

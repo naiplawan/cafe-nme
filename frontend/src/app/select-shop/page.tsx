@@ -28,7 +28,7 @@ async function SelectShopContent() {
     <main className="flex min-h-screen items-center justify-center bg-muted/40 px-4 py-10">
       <section className="w-full max-w-lg rounded-2xl bg-background p-6 shadow-[0_18px_44px_rgba(59,42,32,0.10)] ring-1 ring-foreground/10 sm:p-8">
         <div className="mb-6 text-center">
-          <Image src="/assets/logo-mark.png" alt="Cafe'nMe" width={56} height={56} className="mx-auto mb-4 size-14" />
+          <Image src="/assets/yelo-coffee-mascot.png" alt="YELO Coffee" width={56} height={56} className="mx-auto mb-4 size-14" />
           <h1 className="text-2xl font-semibold">เลือกสาขาที่ต้องการจัดการ</h1>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">เมนู พนักงาน และยอดขายจะแยกกันในแต่ละสาขา</p>
         </div>
@@ -41,7 +41,7 @@ async function SelectShopContent() {
                   <span className="block font-semibold">{shop.name}</span>
                   <span className="mt-2 inline-flex rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">{roleLabels[staff.role]}</span>
                 </span>
-                <span className="flex shrink-0 items-center gap-1 text-sm font-medium text-primary">
+                <span className="flex shrink-0 items-center gap-1 text-sm font-medium text-secondary-foreground">
                   เปิดสาขา <ArrowRight aria-hidden="true" className="size-4 transition-transform group-hover:translate-x-0.5" />
                 </span>
               </Button>

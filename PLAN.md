@@ -1,4 +1,4 @@
-# Cafe'nMe + LINE Membership: MVP Plan
+# YELO Coffee + LINE Membership: MVP Plan
 
 A POS for Thai coffee shops and cafés, with a stamp-card membership that lives inside LINE.
 

@@ -7,7 +7,7 @@ export interface ShopBrand {
   /** Resolved accent: the shop's own, or DEFAULT_ACCENT. */
   accent: string;
   hasCustomAccent: boolean;
-  /** Cache-busted public URL, or null when the shop has no logo (use /assets/logo-mark.png). */
+  /** Cache-busted public URL, or null when the shop has no logo (use the YELO Coffee mascot). */
   logoUrl: string | null;
 }
 

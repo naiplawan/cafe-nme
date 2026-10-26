@@ -11,7 +11,8 @@ export default async function LoginPage() {
   const device = await getPosDevice();
   if (!device) redirect("/pos/pair");
   const [staff, brand] = await Promise.all([listPosStaff(device.shop.id), getBrand(device.shop.id)]);
+  const logoUrl = brand.logoUrl ?? (device.shop.name === "YELO COFFEE" ? "/assets/yelo-coffee-mascot.png" : null);
   return <LoginForm shopName={device.shop.name} deviceName={device.deviceName}
-    logoUrl={brand.logoUrl}
+    logoUrl={logoUrl}
     staff={staff.filter((person) => person.hasPin).map(({ id, name, role }) => ({ id, name, role }))} />;
 }

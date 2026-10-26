@@ -1,10 +1,11 @@
 // Shop brand kit: accent colour + logo. Pure helpers shared by server and client.
 
-export const DEFAULT_ACCENT = "#B4441C";
-export const INK = "#1E1A17";
+export const DEFAULT_ACCENT = "#F4B942";
+export const INK = "#2F2A25";
 export const WHITE = "#FFFFFF";
 
 export const BRAND_PRESETS = [
+  { id: "yelo", name: "YELO Coffee", accent: "#F4B942" },
   { id: "terracotta", name: "เทอร์ราคอตต้า", accent: "#B4441C" },
   { id: "tomato", name: "แดงมะเขือเทศ", accent: "#D23A26" },
   { id: "matcha", name: "เขียวมัทฉะ", accent: "#5E7A3A" },

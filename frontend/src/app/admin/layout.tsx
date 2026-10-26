@@ -44,7 +44,7 @@ function BranchSwitcher({ staff, shop, shops }: Pick<StaffSession, "staff" | "sh
         </details>
       )}
       {staff.role === "owner" && (
-        <Link href="/admin/branches/new" className="flex min-h-10 items-center rounded-lg px-2 text-sm font-medium text-primary transition-colors hover:bg-sidebar-accent">
+        <Link href="/admin/branches/new" className="flex min-h-10 items-center rounded-lg px-2 text-sm font-medium text-secondary-foreground transition-colors hover:bg-sidebar-accent">
           + เพิ่มสาขา
         </Link>
       )}
@@ -59,7 +59,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
     <div className="min-h-screen bg-[linear-gradient(135deg,oklch(0.97_0.018_78),oklch(0.94_0.022_68))] md:grid md:grid-cols-[264px_minmax(0,1fr)]">
       <aside className="sticky top-0 hidden h-screen border-r border-sidebar-border/80 bg-sidebar/95 px-5 py-6 backdrop-blur md:flex md:flex-col">
         <Link href="/admin" className="mb-8 flex items-center gap-3 rounded-2xl p-2 transition-colors hover:bg-sidebar-accent/60">
-          <Image src="/assets/logo-mark.png" alt="Cafe'nMe" width={44} height={44} className="rounded-xl" />
+          <Image src="/assets/yelo-coffee-mascot.png" alt="YELO Coffee" width={44} height={44} className="rounded-xl" />
           <span className="min-w-0">
             <span className="block truncate font-semibold text-sidebar-foreground">{shop.name}</span>
             <span className="mt-0.5 block text-xs text-muted-foreground">จัดการร้าน</span>
@@ -87,7 +87,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
         <header className="sticky top-0 z-20 border-b border-border/80 bg-card/95 px-4 py-3 shadow-sm backdrop-blur md:hidden">
           <div className="flex items-center justify-between gap-3">
             <Link href="/admin" className="flex min-w-0 items-center gap-2">
-              <Image src="/assets/logo-mark.png" alt="Cafe'nMe" width={34} height={34} />
+              <Image src="/assets/yelo-coffee-mascot.png" alt="YELO Coffee" width={34} height={34} />
               <span className="truncate font-semibold">{shop.name}</span>
             </Link>
             <form action={signOut}>

@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { BrandLogo } from "@/components/brand/brand";
@@ -16,7 +17,7 @@ const roleNames: Record<string, string> = { owner: "เจ้าของร้�
 
 function LoginButton({ disabled }: { disabled: boolean }) {
   const { pending } = useFormStatus();
-  return <Button type="submit" disabled={disabled || pending} className="h-[72px] w-full rounded-[18px] bg-[#3B2A20] text-[22px] font-bold text-[#F5EDE3] hover:bg-[#574235] disabled:bg-[#C9B6A4]">
+  return <Button type="submit" disabled={disabled || pending} className="h-[72px] w-full rounded-[18px] bg-[#4A2C1A] text-[22px] font-bold text-[#F7F1E7] hover:bg-[#6B4226] disabled:bg-[#D1C1A8]">
     {pending ? "กำลังตรวจสอบ…" : "เข้าสู่ระบบ"}
   </Button>;
 }
@@ -97,13 +98,15 @@ export function LoginForm({ staff, shopName, deviceName, logoUrl }: { staff: Sta
     setDismissedError(true);
   }
 
-  return <main ref={mainRef} className="flex min-h-dvh w-full overflow-hidden bg-[#F5EDE3] text-[#3B2A20] max-[800px]:flex-col">
+  return <main ref={mainRef} className="flex min-h-dvh w-full overflow-hidden bg-[#F7F1E7] text-[#4A2C1A] max-[800px]:flex-col">
     <section className="flex min-w-0 flex-1 flex-col gap-7 overflow-y-auto px-10 py-10 lg:px-14">
       <div className="flex items-center gap-4">
-        <BrandLogo logoUrl={logoUrl} size={64} className="rounded-2xl" />
+        {shopName === "YELO COFFEE" && !logoUrl?.startsWith("/api/brand/")
+          ? <Image src="/assets/yelo-coffee-logo.png" alt="YELO COFFEE" width={288} height={192} className="h-16 w-36 object-contain" />
+          : <BrandLogo logoUrl={logoUrl} size={64} className="rounded-2xl" />}
         <div className="leading-tight">
-          <div className="text-[28px] font-bold">{shopName}</div>
-          <div className="mt-1 text-base text-[#6B5547]">{deviceName} · จับคู่แล้ว</div>
+          {shopName !== "YELO COFFEE" && <div className="text-[28px] font-bold">{shopName}</div>}
+          <div className="mt-1 text-base text-[#817668]">{deviceName} · จับคู่แล้ว</div>
         </div>
       </div>
       <h1 className="m-0 text-[32px] font-bold">ใครเข้ากะตอนนี้?</h1>
@@ -112,28 +115,28 @@ export function LoginForm({ staff, shopName, deviceName, logoUrl }: { staff: Sta
           const isSelected = selected?.id === person.id;
           return <button key={person.id} data-staff-tile data-staff-id={person.id} type="button" disabled={Boolean(state.success)} aria-pressed={isSelected}
             onClick={() => { setSelected(person); setPin(""); setDismissedError(true); }}
-            className={`relative flex h-[148px] min-w-0 flex-col items-center justify-center gap-2.5 rounded-[20px] border-[3px] p-2 text-[#3B2A20] transition-colors ${isSelected ? "border-transparent bg-[#FFFBF6] shadow-[0_8px_22px_rgba(59,42,32,0.08)]" : "border-[#E4D6C6] bg-[#FBF5EE]"}`}>
+            className={`relative flex h-[148px] min-w-0 flex-col items-center justify-center gap-2.5 rounded-[20px] border-[3px] p-2 text-[#4A2C1A] transition-colors ${isSelected ? "border-transparent bg-[#FFFFFF] shadow-[0_8px_22px_rgba(59,42,32,0.08)]" : "border-[#E2D8C7] bg-[#FBF5EE]"}`}>
             {isSelected ? <svg aria-hidden="true" className="pointer-events-none absolute inset-0 size-full" viewBox="0 0 100 100" preserveAspectRatio="none">
-              <rect data-selection-outline x="1.5" y="1.5" width="97" height="97" rx="15" fill="none" stroke="#3B2A20" strokeWidth="1.5" />
+              <rect data-selection-outline x="1.5" y="1.5" width="97" height="97" rx="15" fill="none" stroke="#4A2C1A" strokeWidth="1.5" />
             </svg> : null}
-            <span className={`flex size-16 items-center justify-center rounded-full text-[26px] font-bold ${isSelected ? "bg-[#3B2A20] text-[#F5EDE3]" : "bg-[#EADBC8] text-[#3B2A20]"}`}>{thaiInitial(person.name)}</span>
+            <span className={`flex size-16 items-center justify-center rounded-full text-[26px] font-bold ${isSelected ? "bg-[#4A2C1A] text-[#F7F1E7]" : "bg-[#F7F1E7] text-[#4A2C1A]"}`}>{thaiInitial(person.name)}</span>
             <span className="max-w-full truncate text-xl font-bold leading-tight">{person.name}</span>
-            <span className="text-sm text-[#6B5547]">{roleNames[person.role] ?? person.role}</span>
+            <span className="text-sm text-[#817668]">{roleNames[person.role] ?? person.role}</span>
           </button>;
         })}
       </div>
-      {staff.length === 0 ? <div className="rounded-2xl border border-[#E4D6C6] bg-[#FFFBF6] p-6 text-center text-[#6B5547]">
-        <p className="m-0 font-semibold text-[#3B2A20]">ยังไม่มีพนักงานที่ตั้ง PIN และเปิดใช้งาน</p>
+      {staff.length === 0 ? <div className="rounded-2xl border border-[#E2D8C7] bg-[#FFFFFF] p-6 text-center text-[#817668]">
+        <p className="m-0 font-semibold text-[#4A2C1A]">ยังไม่มีพนักงานที่ตั้ง PIN และเปิดใช้งาน</p>
         <p className="mb-0 mt-2">ให้เจ้าของร้านตั้ง PIN ที่หลังร้าน › พนักงาน</p>
       </div> : null}
     </section>
 
-    <aside className="flex w-[min(460px,42vw)] shrink-0 flex-col items-center gap-[22px] border-l border-[#E4D6C6] bg-[#FFFBF6] px-10 py-10 max-[800px]:w-full max-[800px]:border-l-0 max-[800px]:border-t">
+    <aside className="flex w-[min(460px,42vw)] shrink-0 flex-col items-center gap-[22px] border-l border-[#E2D8C7] bg-[#FFFFFF] px-10 py-10 max-[800px]:w-full max-[800px]:border-l-0 max-[800px]:border-t">
       {selected ? <div ref={panelRef} className="flex w-full flex-col items-center gap-[22px]">
-        <div className="text-lg text-[#6B5547]">ใส่ PIN ของ</div>
+        <div className="text-lg text-[#817668]">ใส่ PIN ของ</div>
         <div className="-mt-3 text-[28px] font-bold">{selected.name}</div>
         <div ref={pinDotsRef} role="img" aria-label={`PIN ที่ใส่แล้ว ${pin.length} หลัก`} className="flex h-7 items-center gap-3">
-          {Array.from({ length: 6 }, (_, index) => index + 1).map((pinPosition) => <span key={pinPosition} data-pin-index={pinPosition - 1} className={`pin-dot size-[22px] rounded-full border-2 ${state.success ? "border-[#2F6B3F] bg-[#2F6B3F]" : `border-[#3B2A20] ${pinPosition <= pin.length ? "bg-[#3B2A20]" : "bg-transparent"}`}`} />)}
+          {Array.from({ length: 6 }, (_, index) => index + 1).map((pinPosition) => <span key={pinPosition} data-pin-index={pinPosition - 1} className={`pin-dot size-[22px] rounded-full border-2 ${state.success ? "border-[#2F6B3F] bg-[#2F6B3F]" : `border-[#4A2C1A] ${pinPosition <= pin.length ? "bg-[#4A2C1A]" : "bg-transparent"}`}`} />)}
         </div>
         {showError && state.message ? <div data-login-error role="alert" className="text-center text-base font-semibold text-[#8E3415]">{state.message}</div> : null}
         <form action={action} onSubmit={() => { setDismissedError(false); }} className="flex w-full flex-col gap-3">
@@ -142,12 +145,12 @@ export function LoginForm({ staff, shopName, deviceName, logoUrl }: { staff: Sta
           <Keypad value={pin} onChange={updatePin} maxLength={6} keyClassName="h-[72px] rounded-[18px] text-[30px]" className="gap-3" />
           <LoginButton disabled={pin.length < 4 || Boolean(state.success)} />
         </form>
-      </div> : staff.length === 0 ? <div className="flex flex-1 flex-col items-center justify-center gap-3 text-center text-[#6B5547]">
-        <span className="text-xl font-semibold text-[#3B2A20]">ยังไม่มีพนักงานที่ตั้ง PIN และเปิดใช้งาน</span>
+      </div> : staff.length === 0 ? <div className="flex flex-1 flex-col items-center justify-center gap-3 text-center text-[#817668]">
+        <span className="text-xl font-semibold text-[#4A2C1A]">ยังไม่มีพนักงานที่ตั้ง PIN และเปิดใช้งาน</span>
         <span className="text-base">ให้เจ้าของร้านตั้ง PIN ที่หลังร้าน › พนักงาน</span>
-      </div> : <div className="flex flex-1 flex-col items-center justify-center gap-3 text-center text-[#6B5547]">
-        <svg aria-hidden="true" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#C69C72" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="10" width="16" height="11" rx="2" /><path d="M8 10V7a4 4 0 0 1 8 0v3" /></svg>
-        <span className="text-xl font-semibold text-[#3B2A20]">เลือกชื่อของคุณ</span>
+      </div> : <div className="flex flex-1 flex-col items-center justify-center gap-3 text-center text-[#817668]">
+        <svg aria-hidden="true" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#B88A5A" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="10" width="16" height="11" rx="2" /><path d="M8 10V7a4 4 0 0 1 8 0v3" /></svg>
+        <span className="text-xl font-semibold text-[#4A2C1A]">เลือกชื่อของคุณ</span>
         <span className="text-base">แล้วใส่ PIN 4–6 หลักเพื่อเริ่มขาย</span>
       </div>}
     </aside>

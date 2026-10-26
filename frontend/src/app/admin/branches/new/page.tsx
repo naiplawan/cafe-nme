@@ -12,7 +12,7 @@ export default async function NewBranchPage() {
       <h1 className="text-2xl font-semibold">เพิ่มสาขา</h1>
       <p className="mt-2 text-sm leading-6 text-muted-foreground">สร้างสาขาใหม่ภายใต้บัญชีเจ้าของเดิมของคุณ</p>
       <div role="note" className="my-5 flex gap-3 rounded-xl border border-border bg-muted/50 p-3 text-sm leading-6 text-muted-foreground">
-        <Info aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-primary" />
+        <Info aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-secondary-foreground" />
         <p>เมนู พนักงาน เครื่อง POS และการตั้งค่าจะเริ่มแยกสำหรับสาขานี้ บัญชีแอดมินของคุณยังใช้ได้ทุกสาขา</p>
       </div>
       <OnboardingForm variant="branch" />

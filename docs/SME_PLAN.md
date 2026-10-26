@@ -1,6 +1,6 @@
 # SME Template Plan: Retail and Restaurant
 
-Turn Cafe'nMe from a café POS into one multi-tenant POS where each shop picks a business type (`cafe`, `retail`, `restaurant`). The type controls the starter data, terminology and enabled modules. The codebase stays single: no per-client forks.
+Turn YELO Coffee from a café POS into one multi-tenant POS where each shop picks a business type (`cafe`, `retail`, `restaurant`). The type controls the starter data, terminology and enabled modules. The codebase stays single: no per-client forks.
 
 ## Assumptions
 
@@ -36,7 +36,7 @@ The goal is that a new shop chooses a business type at onboarding and gets match
 - `payment_method`: `ADD VALUE 'card'` and `'transfer'`. Add the buttons to `pos/_components/payment-dialog.tsx` (manual confirmation, like PromptPay), and add the methods to the reports payment mix.
 - Terminology: a new `frontend/src/lib/terminology.ts` maps each business type to its words (item noun: แก้ว / ชิ้น / จาน, reward label, staff label). Replace the hard-coded "cups"/"เครื่องดื่ม" wording in reports, the admin dashboard, the POS done screen, the member panel, LIFF and `server/line.ts`.
 - Rewards: add `shops.reward_label` (default "เครื่องดื่มฟรี 1 แก้ว") and use it in the LINE push message and on the LIFF card.
-- Product name: read `APP_NAME` from env, defaulting to "Cafe'nMe", wherever the app name appears.
+- Product name: read `APP_NAME` from env, defaulting to "YELO Coffee", wherever the app name appears.
 
 ### 0.3 Presets
 - `backend/src/presets/{cafe,retail,restaurant}.ts`: categories, modifier groups, sample products, `reward_label` and default features.

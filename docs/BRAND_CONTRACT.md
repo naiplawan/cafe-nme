@@ -1,8 +1,7 @@
 # Brand kit contract
 
 Per-shop accent colour + logo that flows into LIFF, stamps, receipts, POS header and the LINE rich menu.
-With no brand set, every screen must look exactly as before (default accent `#B4441C`, `/assets/logo-mark.png`,
-stock stamp images).
+With no shop-specific brand set, screens use the YELO Coffee defaults (amber accent `#F4B942`, YELO mascot, stock stamp images).
 
 ## Already provided — import, do not rewrite
 
@@ -29,5 +28,7 @@ stock stamp images).
 - Thai UI copy. No `console.*` (use `@/lib/logger`). Keep the existing GSAP motion and
   reduced-motion behaviour working. Touch targets ≥ 44px.
 - Colours on top of the accent use `var(--brand-fg)`, never hard-coded white.
+- YELO Coffee is the demo shop identity: espresso `#4A2C1A`, amber `#F4B942`, latte `#B88A5A`, cream `#F7F1E7`, ink `#2F2A25`.
+- YELO Coffee is the product and demo identity. All surfaces use the YELO visual system by default; shops can still provide their own logo and accent.
 - Next.js 16 here differs from older versions: read `frontend/node_modules/next/dist/docs/` before using
   an API you are unsure of (e.g. `next/og` ImageResponse, server actions, `connection()`).

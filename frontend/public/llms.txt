@@ -1,8 +1,8 @@
-# Cafe'nMe
+# YELO Coffee
 
-> Cafe'nMe is a point-of-sale (POS) system for Thai cafés with a built-in LINE stamp-card membership. Staff sell on a tablet, owners manage the menu and see sales reports on the web, and customers collect stamps and redeem free drinks through the shop's LINE Official Account.
+> YELO Coffee is a point-of-sale (POS) system for Thai cafés with a built-in LINE stamp-card membership. Staff sell on a tablet, owners manage the menu and see sales reports on the web, and customers collect stamps and redeem free drinks through the shop's LINE Official Account.
 
-Cafe'nMe คือระบบขายหน้าร้าน (POS) สำหรับร้านกาแฟไทย ที่รวมบัตรสะสมแต้มสมาชิกบน LINE ไว้ในระบบเดียว
+YELO Coffee คือระบบขายหน้าร้าน (POS) สำหรับร้านกาแฟไทย ที่รวมบัตรสะสมแต้มสมาชิกบน LINE ไว้ในระบบเดียว
 
 ## Features
 

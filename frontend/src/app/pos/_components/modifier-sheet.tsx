@@ -72,19 +72,19 @@ export function ModifierSheet({ product, initialModifierIds = [], initialQty = 1
   return <div className="fixed inset-0 z-40 flex items-center justify-center p-4">
     <button ref={backdropRef} type="button" tabIndex={-1} aria-label="ปิดหน้าต่าง" onClick={onClose} className="absolute inset-0 bg-[rgba(43,30,22,0.55)]" />
     <div ref={dialogRef} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby={`${id}-modifier-title`} onKeyDown={(event) => { trapDialogTab(event); if (event.key === "Escape") onClose(); }}
-      className="relative z-10 flex flex-col md:flex-row max-h-[calc(100dvh-32px)] md:h-[min(660px,calc(100dvh-32px))] w-[min(900px,calc(100vw-32px))] overflow-y-auto md:overflow-hidden rounded-3xl border border-[#E4D6C6] bg-[#FFFBF6] shadow-[0_24px_70px_rgba(43,30,22,0.22)] outline-none">
-      <div className="flex w-full md:w-[280px] shrink-0 flex-col gap-3 bg-[#F5EDE3] p-6">
+      className="relative z-10 flex flex-col md:flex-row max-h-[calc(100dvh-32px)] md:h-[min(660px,calc(100dvh-32px))] w-[min(900px,calc(100vw-32px))] overflow-y-auto md:overflow-hidden rounded-3xl border border-[#E2D8C7] bg-[#FFFFFF] shadow-[0_24px_70px_rgba(43,30,22,0.22)] outline-none">
+      <div className="flex w-full md:w-[280px] shrink-0 flex-col gap-3 bg-[#F7F1E7] p-6">
         {product.imageUrl ? <Image src={product.imageUrl} alt="" width={232} height={232} unoptimized className="hidden md:block size-[232px] object-contain" /> :
           <ProductTile name={product.name} tileColor={product.tileColor} className="hidden md:block size-[232px] rounded-2xl text-[80px]" />}
         <h2 id={`${id}-modifier-title`} className="text-[26px] font-bold">{product.name}</h2>
         {isEditing && <p className="-mt-2 text-sm font-medium text-[#8A6A4F]">แก้ไขรายการในออเดอร์</p>}
-        <p className="text-[17px] text-[#6B5547]">ราคาเริ่มต้น {formatBaht(product.basePriceSatang)}</p>
+        <p className="text-[17px] text-[#817668]">ราคาเริ่มต้น {formatBaht(product.basePriceSatang)}</p>
         <div className="mt-auto flex flex-col gap-2">
           <span className="text-[15px] font-semibold">จำนวน</span>
           <div className="flex items-center gap-2">
-            <button type="button" aria-label="ลดจำนวน" disabled={qty <= 1} onClick={() => setQty((value) => Math.max(1, value - 1))} className="flex size-16 items-center justify-center rounded-2xl border border-[#D9C5B0] bg-[#FFFBF6] disabled:opacity-40"><Minus aria-hidden="true" size={24} /></button>
+            <button type="button" aria-label="ลดจำนวน" disabled={qty <= 1} onClick={() => setQty((value) => Math.max(1, value - 1))} className="flex size-16 items-center justify-center rounded-2xl border border-[#E2D8C7] bg-[#FFFFFF] disabled:opacity-40"><Minus aria-hidden="true" size={24} /></button>
             <span className="flex-1 text-center text-[28px] font-bold">{qty}</span>
-            <button type="button" aria-label="เพิ่มจำนวน" disabled={qty >= 99} onClick={() => setQty((value) => Math.min(99, value + 1))} className="flex size-16 items-center justify-center rounded-2xl border border-[#D9C5B0] bg-[#FFFBF6] disabled:opacity-40"><Plus aria-hidden="true" size={24} /></button>
+            <button type="button" aria-label="เพิ่มจำนวน" disabled={qty >= 99} onClick={() => setQty((value) => Math.min(99, value + 1))} className="flex size-16 items-center justify-center rounded-2xl border border-[#E2D8C7] bg-[#FFFFFF] disabled:opacity-40"><Plus aria-hidden="true" size={24} /></button>
           </div>
         </div>
       </div>
@@ -96,14 +96,14 @@ export function ModifierSheet({ product, initialModifierIds = [], initialQty = 1
             const rule = group.minSelect > 0 ? `ต้องเลือก ${group.minSelect}` : group.maxSelect === 1 ? "ไม่บังคับ" : `เลือกได้สูงสุด ${group.maxSelect}`;
             return <section key={group.id} className="flex flex-col gap-2.5">
               <div className="flex items-center gap-2.5"><h3 className="text-[19px] font-bold">{group.name}</h3>
-                <span data-required-badge data-missing={missing} className={`rounded-full px-2.5 py-1 text-[13px] font-semibold ${missing ? "bg-[#F7DCD0] text-[#8E3415]" : "bg-[#EFE3D5] text-[#6B5547]"}`}>{rule}</span>
+                <span data-required-badge data-missing={missing} className={`rounded-full px-2.5 py-1 text-[13px] font-semibold ${missing ? "bg-[#F7DCD0] text-[#8E3415]" : "bg-[#EFE3D5] text-[#817668]"}`}>{rule}</span>
               </div>
-              {group.modifiers.length < group.minSelect && <p role="alert" className="text-sm text-[#B4441C]">ตัวเลือกไม่ครบ สินค้านี้ยังไม่พร้อมขาย กรุณาให้ผู้จัดการตั้งค่าตัวเลือกในหลังร้าน</p>}
+              {group.modifiers.length < group.minSelect && <p role="alert" className="text-sm text-[#6B4226]">ตัวเลือกไม่ครบ สินค้านี้ยังไม่พร้อมขาย กรุณาให้ผู้จัดการตั้งค่าตัวเลือกในหลังร้าน</p>}
               <div className="grid grid-cols-2 gap-2.5 min-[700px]:grid-cols-4">
                 {group.modifiers.map((modifier) => {
                   const isSelected = chosen.has(modifier.id);
                   return <button key={modifier.id} type="button" aria-pressed={isSelected} onClick={() => toggle(group.id, modifier.id, group.maxSelect)}
-                    className={`relative flex h-16 flex-col items-center justify-center rounded-[14px] border text-[17px] font-semibold leading-tight transition-[background-color,border-color,color] duration-150 active:scale-[0.98] motion-reduce:transform-none motion-reduce:transition-none ${isSelected ? "border-[#3B2A20] bg-[#3B2A20] text-[#F5EDE3]" : "border-[#D9C5B0] bg-[#FFFBF6] text-[#3B2A20]"}`}>
+                    className={`relative flex h-16 flex-col items-center justify-center rounded-[14px] border text-[17px] font-semibold leading-tight transition-[background-color,border-color,color] duration-150 active:scale-[0.98] motion-reduce:transform-none motion-reduce:transition-none ${isSelected ? "border-[#4A2C1A] bg-[#4A2C1A] text-[#F7F1E7]" : "border-[#E2D8C7] bg-[#FFFFFF] text-[#4A2C1A]"}`}>
                     {isSelected && <svg aria-hidden="true" className="absolute right-2 top-2 size-4" viewBox="0 0 16 16" fill="none"><path data-modifier-check d="m2 8 4 4 8-9" stroke="#D9653B" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg>}
                     {modifier.name}<span className="text-[13px] font-medium">{modifier.priceDeltaSatang ? `+${formatBaht(modifier.priceDeltaSatang)}` : "ไม่เพิ่มราคา"}</span>
                   </button>;
@@ -112,10 +112,10 @@ export function ModifierSheet({ product, initialModifierIds = [], initialQty = 1
             </section>;
           })}
         </div>
-        <div className="flex flex-wrap gap-3 border-t border-[#E4D6C6] p-4 min-[700px]:px-7 min-[700px]:pb-6">
-          <button type="button" onClick={onClose} className={`h-[68px] rounded-2xl border border-[#D9C5B0] bg-[#FFFBF6] text-lg font-semibold ${isEditing ? "w-20 md:w-28" : "w-20 md:w-40"}`}>ยกเลิก</button>
-          {isEditing && <button type="button" onClick={onRemove} className="h-[68px] rounded-2xl px-3 text-sm font-semibold text-[#B4441C] hover:bg-[#F7DCD0]">ลบรายการนี้</button>}
-          <button type="button" disabled={incomplete} onClick={() => valid ? onConfirm(selected, qty) : invalidAttemptRef.current()} className={`h-[68px] min-w-[140px] flex-1 rounded-2xl bg-[#B4441C] font-bold text-white shadow-sm disabled:opacity-50 ${isEditing ? "text-lg" : "text-xl"}`}>
+        <div className="flex flex-wrap gap-3 border-t border-[#E2D8C7] p-4 min-[700px]:px-7 min-[700px]:pb-6">
+          <button type="button" onClick={onClose} className={`h-[68px] rounded-2xl border border-[#E2D8C7] bg-[#FFFFFF] text-lg font-semibold ${isEditing ? "w-20 md:w-28" : "w-20 md:w-40"}`}>ยกเลิก</button>
+          {isEditing && <button type="button" onClick={onRemove} className="h-[68px] rounded-2xl px-3 text-sm font-semibold text-[#6B4226] hover:bg-[#F7DCD0]">ลบรายการนี้</button>}
+          <button type="button" disabled={incomplete} onClick={() => valid ? onConfirm(selected, qty) : invalidAttemptRef.current()} className={`h-[68px] min-w-[140px] flex-1 rounded-2xl bg-[#F4B942] font-bold text-[#2F2A25] shadow-sm disabled:opacity-50 ${isEditing ? "text-lg" : "text-xl"}`}>
             {valid ? `${isEditing ? "บันทึกการแก้ไข" : "เพิ่มลงออเดอร์"} · ${formatBaht(unitPrice * qty)}` : unavailableLabel}
           </button>
         </div>

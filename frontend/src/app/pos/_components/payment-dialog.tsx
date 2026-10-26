@@ -254,14 +254,14 @@ export function PaymentDialog({ orderLabel, lines: cartLines, subtotalSatang: ca
     <div ref={rootRef} className="fixed inset-0 z-40 flex items-center justify-center bg-[rgba(43,30,22,0.55)] p-3 sm:p-6">
       {/* biome-ignore lint/a11y/noNoninteractiveElementInteractions: the dialog container owns the keyboard focus trap. */}
       <div ref={dialogRef} tabIndex={-1} role="dialog" aria-modal="true" aria-busy={pending} aria-labelledby={`${id}-payment-title`} onKeyDown={trapDialogTab}
-        className="flex max-h-[calc(100dvh-24px)] flex-col overflow-y-auto md:h-[min(680px,calc(100dvh-24px))] md:flex-row w-full max-w-[1000px] md:overflow-hidden rounded-[24px] border border-white/60 bg-[#FFFBF6] shadow-[0_24px_80px_rgba(43,30,22,0.25)] outline-none">
+        className="flex max-h-[calc(100dvh-24px)] flex-col overflow-y-auto md:h-[min(680px,calc(100dvh-24px))] md:flex-row w-full max-w-[1000px] md:overflow-hidden rounded-[24px] border border-white/60 bg-[#FFFFFF] shadow-[0_24px_80px_rgba(43,30,22,0.25)] outline-none">
         <aside className="flex w-full shrink-0 md:w-[36%] md:min-w-[260px] flex-col gap-3 bg-gradient-to-b from-[#F7F0E7] to-[#F0E4D7] p-4 md:p-7">
-        <h2 id={`${id}-payment-title`} className="text-base text-[#6B5547]">ออเดอร์ {orderLabel}</h2>
+        <h2 id={`${id}-payment-title`} className="text-base text-[#817668]">ออเดอร์ {orderLabel}</h2>
           <div className="max-h-32 space-y-3 overflow-y-auto md:max-h-none md:min-h-0">
             {lines.map((line) => (
               <div key={line.key} className="flex justify-between gap-2 text-base">
                 <div className="min-w-0"><div>{line.qty} × {line.name}</div>
-                  {line.modifiersText && <div className="text-sm text-[#6B5547]">{line.modifiersText}</div>}
+                  {line.modifiersText && <div className="text-sm text-[#817668]">{line.modifiersText}</div>}
                 </div>
                 <span className="shrink-0 tabular-nums">{formatBaht(line.lineTotalSatang)}</span>
               </div>
@@ -271,7 +271,7 @@ export function PaymentDialog({ orderLabel, lines: cartLines, subtotalSatang: ca
             <span>รางวัลสมาชิก</span><span className="tabular-nums">−{formatBaht(discountSatang)}</span>
           </div>}
           <div className="mt-auto border-t border-[#E0CFBD] pt-3">
-            <div className="flex justify-between text-sm text-[#6B5547]"><span>รวม</span><span className="tabular-nums">{formatBaht(subtotalSatang)}</span></div>
+            <div className="flex justify-between text-sm text-[#817668]"><span>รวม</span><span className="tabular-nums">{formatBaht(subtotalSatang)}</span></div>
             <div className="mt-1 text-lg font-semibold">ยอดชำระ</div>
             <div className="text-[clamp(40px,5vw,56px)] font-bold leading-[1.1] tabular-nums">{formatBaht(totalSatang)}</div>
           </div>
@@ -285,20 +285,20 @@ export function PaymentDialog({ orderLabel, lines: cartLines, subtotalSatang: ca
           <fieldset disabled={!ready || pending || recovering} className="contents">
           <legend className="sr-only">วิธีชำระและจำนวนเงินที่รับ</legend>
           <div role="tablist" aria-label="วิธีชำระ" className="relative grid grid-cols-2 rounded-[18px] bg-[#F1E7DC] p-1.5">
-            <span ref={indicatorRef} aria-hidden="true" className="absolute inset-y-1.5 left-1.5 w-[calc(50%-6px)] rounded-[14px] bg-[#3B2A20] shadow-sm" />
+            <span ref={indicatorRef} aria-hidden="true" className="absolute inset-y-1.5 left-1.5 w-[calc(50%-6px)] rounded-[14px] bg-[#4A2C1A] shadow-sm" />
             <button type="button" role="tab" aria-selected={isCash} onClick={() => { releasePromptPay(); setMethod("cash"); setError(null); }}
-              className={`relative z-10 h-[60px] rounded-[14px] text-lg font-bold transition-colors ${isCash ? "text-[#F5EDE3]" : "text-[#3B2A20]"}`}>เงินสด</button>
+              className={`relative z-10 h-[60px] rounded-[14px] text-lg font-bold transition-colors ${isCash ? "text-[#F7F1E7]" : "text-[#4A2C1A]"}`}>เงินสด</button>
             <button type="button" role="tab" aria-selected={!isCash} disabled={!promptpayEnabled}
               onClick={() => void selectPromptPay()}
-              className={`relative z-10 h-[60px] rounded-[14px] text-lg font-bold transition-colors disabled:cursor-not-allowed disabled:text-[#8A796B] ${isCash ? "text-[#3B2A20]" : "text-[#F5EDE3]"}`}>พร้อมเพย์</button>
+              className={`relative z-10 h-[60px] rounded-[14px] text-lg font-bold transition-colors disabled:cursor-not-allowed disabled:text-[#8A796B] ${isCash ? "text-[#4A2C1A]" : "text-[#F7F1E7]"}`}>พร้อมเพย์</button>
           </div>
-          {!promptpayEnabled && <p className="-mt-3 text-sm text-[#6B5547]">ยังไม่ได้ตั้งค่าพร้อมเพย์ในหลังร้าน</p>}
+          {!promptpayEnabled && <p className="-mt-3 text-sm text-[#817668]">ยังไม่ได้ตั้งค่าพร้อมเพย์ในหลังร้าน</p>}
 
           <div ref={contentRef} className="flex shrink-0 flex-col">
             {isCash ? <div className="flex min-h-0 flex-1 flex-col gap-4 sm:flex-row">
               <div className="flex min-w-0 flex-1 flex-col gap-3">
-                <div className="rounded-2xl border border-[#D9C5B0] bg-white/60 px-4 py-2.5 shadow-[0_2px_8px_rgba(59,42,32,0.04)]">
-                  <div className="text-sm text-[#6B5547]">รับเงินมา</div>
+                <div className="rounded-2xl border border-[#E2D8C7] bg-white/60 px-4 py-2.5 shadow-[0_2px_8px_rgba(74,44,26,0.04)]">
+                  <div className="text-sm text-[#817668]">รับเงินมา</div>
                   <input aria-label="จำนวนเงินที่รับ (บาท)" inputMode="decimal" value={cashInput} placeholder="0" className="w-full min-w-0 bg-transparent text-[40px] font-bold leading-tight tabular-nums" onChange={(event) => { const value = event.target.value; if (/^\d{0,6}(\.\d{0,2})?$/.test(value)) setCashInput(value); }} />
                 </div>
                 <div className={`rounded-2xl border px-4 py-2.5 transition-colors duration-200 ${changeShort ? "border-[#E9B29B] bg-[#F7DCD0] text-[#8E3415]" : "border-[#BDD3C0] bg-[#E7F1E8] text-[#245232]"}`}>
@@ -307,7 +307,7 @@ export function PaymentDialog({ orderLabel, lines: cartLines, subtotalSatang: ca
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   {quickAmounts.map((amount, index) => <button key={amount} type="button"
-                    className="h-[52px] rounded-[14px] border border-[#D9C5B0] bg-[#FFFBF6] text-base font-bold shadow-[0_2px_5px_rgba(59,42,32,0.04)] transition-colors active:bg-[#F3E8DC]"
+                    className="h-[52px] rounded-[14px] border border-[#E2D8C7] bg-[#FFFFFF] text-base font-bold shadow-[0_2px_5px_rgba(74,44,26,0.04)] transition-colors active:bg-[#F3E8DC]"
                     onClick={() => setCashInput(String(amount))}>{index === 0 ? "พอดี" : formatBaht(amount * 100)}</button>)}
                 </div>
               </div>
@@ -320,9 +320,9 @@ export function PaymentDialog({ orderLabel, lines: cartLines, subtotalSatang: ca
           </fieldset>
           <div className="flex shrink-0 gap-3">
             <button type="button" disabled={pending || closing || recovering} onClick={requestClose}
-              className="h-[72px] w-20 shrink-0 sm:w-36 rounded-2xl border border-[#D9C5B0] bg-[#FFFBF6] text-lg font-semibold shadow-sm disabled:opacity-60">กลับ</button>
+              className="h-[72px] w-20 shrink-0 sm:w-36 rounded-2xl border border-[#E2D8C7] bg-[#FFFFFF] text-lg font-semibold shadow-sm disabled:opacity-60">กลับ</button>
             <button type="button" disabled={blocked} onClick={() => void confirm()}
-              className="relative h-[72px] min-w-0 flex-1 overflow-hidden rounded-2xl bg-[#2F6B3F] px-3 text-lg font-bold text-white shadow-[0_7px_16px_rgba(47,107,63,0.18)] transition-colors disabled:bg-[#C9B6A4]">
+              className="relative h-[72px] min-w-0 flex-1 overflow-hidden rounded-2xl bg-[#2F6B3F] px-3 text-lg font-bold text-white shadow-[0_7px_16px_rgba(47,107,63,0.18)] transition-colors disabled:bg-[#D1C1A8]">
               {pending && <svg className="absolute inset-x-4 bottom-0 h-1.5 w-[calc(100%-2rem)]" viewBox="0 0 100 4" preserveAspectRatio="none" aria-hidden="true"><line ref={progressRef} x1="0" y1="2" x2="100" y2="2" stroke="#D7E8D9" strokeWidth="3" strokeLinecap="round" /></svg>}
               {pending ? "กำลังบันทึก…" : recovering ? "ตรวจสอบรายการเดิมอีกครั้ง" : isCash ? (shortBySatang ? "ใส่จำนวนเงินที่รับ" : `รับเงิน · ทอน ${formatBaht(changeSatang)}`) : "ได้รับเงินแล้ว"}
             </button>

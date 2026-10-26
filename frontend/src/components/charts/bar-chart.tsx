@@ -43,7 +43,7 @@ export function BarChart({ data, format = "number", ariaLabel, height = 160, hig
             const x = step * index + (step - barWidth) / 2;
             const barHeight = (datum.value / maxValue) * plotHeight;
             const isHighlighted = highlightLast && index === safeData.length - 1;
-            const color = isHighlighted ? "#3B2A20" : CHART_COLORS[0];
+            const color = isHighlighted ? "#4A2C1A" : CHART_COLORS[0];
             const visibleBarHeight = Math.max(1, barHeight);
             return <g key={datum.label}>
               <rect data-chart-bar aria-label={`${datum.label}: ${formatChartValue(datum.value, format)}`} x={x} y={plotBottom - visibleBarHeight} width={barWidth} height={visibleBarHeight} rx={Math.min(5, barWidth / 2)} fill={color} style={{ transformBox: "fill-box", transformOrigin: "center bottom" }}>

@@ -79,9 +79,9 @@ export default async function MembersPage({ searchParams }: { searchParams: Sear
           {memberStats.map((stat, index) => {
             const isRewardsCard = index === 3;
             const card = <Card key={stat.label} className={isRewardsCard ? "h-full border-primary/25 bg-primary/[0.035] py-0 transition-colors group-hover:bg-primary/[0.07]" : undefined}><CardContent className="p-4">
-              <p className={`text-sm font-medium ${isRewardsCard ? "text-primary" : "text-muted-foreground"}`}>{stat.label}</p>
-              <CountUp value={stat.value} className={`mt-2 block text-2xl font-semibold tracking-tight ${isRewardsCard ? "text-primary" : ""}`} />
-              {isRewardsCard && <span className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-primary">ดูสมาชิกที่มีรางวัล <ArrowRight aria-hidden="true" size={14} /></span>}
+              <p className={`text-sm font-medium ${isRewardsCard ? "text-secondary-foreground" : "text-muted-foreground"}`}>{stat.label}</p>
+              <CountUp value={stat.value} className={`mt-2 block text-2xl font-semibold tracking-tight ${isRewardsCard ? "text-secondary-foreground" : ""}`} />
+              {isRewardsCard && <span className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-secondary-foreground">ดูสมาชิกที่มีรางวัล <ArrowRight aria-hidden="true" size={14} /></span>}
             </CardContent></Card>;
             return isRewardsCard
               ? <Link key={stat.label} href="/admin/members?reward=available" aria-label="ดูสมาชิกที่มีรางวัลพร้อมใช้" className="group block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">{card}</Link>

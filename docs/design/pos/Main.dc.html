@@ -14,15 +14,15 @@
 body{margin:0}
 button{font-family:inherit;cursor:pointer}
 button:disabled{cursor:not-allowed}
-a{color:#3B2A20}a:hover{color:#B4441C}
+a{color:#4A2C1A}a:hover{color:#F4B942}
 </style>
 </helmet>
-<div style="width: 1280px; height: 800px; position: relative; overflow: hidden; background: #F5EDE3; color: #3B2A20; font-family: 'Noto Sans Thai', sans-serif; display: flex; flex-direction: column">
+<div style="width: 1280px; height: 800px; position: relative; overflow: hidden; background: #F7F1E7; color: #4A2C1A; font-family: 'Noto Sans Thai', sans-serif; display: flex; flex-direction: column">
 
-  <header style="height: 68px; flex-shrink: 0; display: flex; align-items: center; gap: 16px; padding: 0 20px; background: #3B2A20; color: #F5EDE3">
+  <header style="height: 68px; flex-shrink: 0; display: flex; align-items: center; gap: 16px; padding: 0 20px; background: #4A2C1A; color: #F7F1E7">
     <img src="/_blob/347132067251bd7559386ef4c5c00171" alt="" style="width: 40px; height: 40px; border-radius: 10px">
     <div style="display: flex; flex-direction: column; line-height: 1.2">
-      <span style="font-size: 18px; font-weight: 700">Cafe'nMe</span>
+      <span style="font-size: 18px; font-weight: 700">YELO Coffee</span>
       <span style="font-size: 13px; color: #E9D9C6">แท็บเล็ตหน้าร้าน</span>
     </div>
     <div style="margin-left: 24px; padding: 6px 14px; border-radius: 999px; background: #574235; font-size: 16px; font-weight: 600">ออเดอร์ {{orderLabel}}</div>
@@ -30,15 +30,15 @@ a{color:#3B2A20}a:hover{color:#B4441C}
       <span style="width: 10px; height: 10px; border-radius: 999px; background: #6FCF8E"></span>ออนไลน์
     </div>
     <div style="margin-left: auto; display: flex; align-items: center; gap: 10px">
-      <a href="Orders.dc.html" style="height: 48px; display: flex; align-items: center; gap: 8px; padding: 0 18px; border-radius: 12px; background: #574235; color: #F5EDE3; text-decoration: none; font-size: 16px; font-weight: 600">
+      <a href="Orders.dc.html" style="height: 48px; display: flex; align-items: center; gap: 8px; padding: 0 18px; border-radius: 12px; background: #574235; color: #F7F1E7; text-decoration: none; font-size: 16px; font-weight: 600">
         <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"></path></svg>
         ออเดอร์วันนี้
       </a>
       <div style="height: 48px; display: flex; align-items: center; gap: 10px; padding: 0 14px; border-radius: 12px; background: #574235">
-        <span style="width: 32px; height: 32px; border-radius: 999px; background: #C69C72; color: #3B2A20; display: flex; align-items: center; justify-content: center; font-weight: 700">ม</span>
+        <span style="width: 32px; height: 32px; border-radius: 999px; background: #B88A5A; color: #4A2C1A; display: flex; align-items: center; justify-content: center; font-weight: 700">ม</span>
         <span style="font-size: 15px; line-height: 1.2">มินท์<br><span style="font-size: 12px; color: #E9D9C6">บาริสต้า</span></span>
       </div>
-      <a href="Login.dc.html" aria-label="ออกจากระบบ" style="width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; border-radius: 12px; background: #574235; color: #F5EDE3">
+      <a href="Login.dc.html" aria-label="ออกจากระบบ" style="width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; border-radius: 12px; background: #574235; color: #F7F1E7">
         <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"></path></svg>
       </a>
     </div>
@@ -58,32 +58,32 @@ a{color:#3B2A20}a:hover{color:#B4441C}
     <main style="flex: 1; min-width: 0; padding: 18px 20px; overflow-y: auto">
       <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px">
         <sc-for list="{{products}}" as="p" hint-placeholder-count="6">
-          <button type="button" onClick="{{p.open}}" style="text-align: left; padding: 12px; border-radius: 18px; border: 1px solid #E4D6C6; background: #FFFBF6; display: flex; flex-direction: column; gap: 10px; color: #3B2A20">
+          <button type="button" onClick="{{p.open}}" style="text-align: left; padding: 12px; border-radius: 18px; border: 1px solid #E4D6C6; background: #FFFFFF; display: flex; flex-direction: column; gap: 10px; color: #4A2C1A">
             <sc-if value="{{p.hasImg}}" hint-placeholder-val="{{ true }}">
-              <img src="{{p.img}}" alt="" style="width: 100%; height: 136px; object-fit: contain; border-radius: 12px; background: #F5EDE3">
+              <img src="{{p.img}}" alt="" style="width: 100%; height: 136px; object-fit: contain; border-radius: 12px; background: #F7F1E7">
             </sc-if>
             <sc-if value="{{p.noImg}}" hint-placeholder-val="{{ false }}">
               <div style="width: 100%; height: 136px; border-radius: 12px; background: #EADBC8; display: flex; align-items: center; justify-content: center; font-size: 48px; font-weight: 700; color: #8A6A4F">{{p.initial}}</div>
             </sc-if>
             <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px; width: 100%">
               <span style="font-size: 18px; font-weight: 600">{{p.name}}</span>
-              <span style="font-size: 18px; font-weight: 700; color: #B4441C">{{p.price}}</span>
+              <span style="font-size: 18px; font-weight: 700; color: #F4B942">{{p.price}}</span>
             </div>
           </button>
         </sc-for>
       </div>
     </main>
 
-    <aside aria-label="ออเดอร์ปัจจุบัน" style="width: 404px; flex-shrink: 0; display: flex; flex-direction: column; background: #FFFBF6; border-left: 1px solid #E4D6C6">
+    <aside aria-label="ออเดอร์ปัจจุบัน" style="width: 404px; flex-shrink: 0; display: flex; flex-direction: column; background: #FFFFFF; border-left: 1px solid #E4D6C6">
 
       <section style="padding: 14px 16px; border-bottom: 1px solid #E4D6C6">
         <sc-if value="{{noMember}}" hint-placeholder-val="{{ true }}">
           <div style="display: flex; gap: 10px">
-            <button type="button" onClick="{{openScan}}" style="flex: 1; height: 56px; border-radius: 14px; border: 0; background: #3B2A20; color: #F5EDE3; font-size: 16px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px">
+            <button type="button" onClick="{{openScan}}" style="flex: 1; height: 56px; border-radius: 14px; border: 0; background: #4A2C1A; color: #F7F1E7; font-size: 16px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px">
               <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2M7 12h10"></path></svg>
               สแกนบัตรสมาชิก
             </button>
-            <button type="button" onClick="{{openPhone}}" style="width: 128px; height: 56px; border-radius: 14px; border: 1px solid #D9C5B0; background: #FFFBF6; color: #3B2A20; font-size: 16px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 6px">
+            <button type="button" onClick="{{openPhone}}" style="width: 128px; height: 56px; border-radius: 14px; border: 1px solid #D9C5B0; background: #FFFFFF; color: #4A2C1A; font-size: 16px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 6px">
               <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2" width="12" height="20" rx="2"></rect><path d="M11 18h2"></path></svg>
               เบอร์โทร
             </button>
@@ -97,7 +97,7 @@ a{color:#3B2A20}a:hover{color:#B4441C}
                 <div style="font-size: 17px; font-weight: 700">{{memberName}}</div>
                 <div style="font-size: 14px; color: #6B5547">{{memberPhone}} · สะสม {{memberStamps}}</div>
               </div>
-              <button type="button" onClick="{{removeMember}}" aria-label="นำสมาชิกออก" style="width: 44px; height: 44px; border-radius: 12px; border: 1px solid #E4D6C6; background: #FFFBF6; color: #6B5547; display: flex; align-items: center; justify-content: center">
+              <button type="button" onClick="{{removeMember}}" aria-label="นำสมาชิกออก" style="width: 44px; height: 44px; border-radius: 12px; border: 1px solid #E4D6C6; background: #FFFFFF; color: #6B5547; display: flex; align-items: center; justify-content: center">
                 <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"></path></svg>
               </button>
             </div>
@@ -107,10 +107,10 @@ a{color:#3B2A20}a:hover{color:#B4441C}
               </sc-for>
             </div>
             <sc-if value="{{hasReward}}" hint-placeholder-val="{{ false }}">
-              <button type="button" onClick="{{toggleRedeem}}" style="height: 52px; border-radius: 14px; display: flex; align-items: center; gap: 10px; padding: 0 12px; font-size: 15px; font-weight: 600; border: 2px solid {{rewardBorder}}; background: {{rewardBg}}; color: #3B2A20">
+              <button type="button" onClick="{{toggleRedeem}}" style="height: 52px; border-radius: 14px; display: flex; align-items: center; gap: 10px; padding: 0 12px; font-size: 15px; font-weight: 600; border: 2px solid {{rewardBorder}}; background: {{rewardBg}}; color: #4A2C1A">
                 <img src="/_blob/9f38dc1fdf8c85d9bb7d71bc1fd56b5e" alt="" style="width: 36px; height: 36px">
                 <span style="flex: 1; text-align: left">{{rewardLabel}}</span>
-                <span style="font-size: 14px; color: #B4441C">{{rewardAction}}</span>
+                <span style="font-size: 14px; color: #F4B942">{{rewardAction}}</span>
               </button>
             </sc-if>
           </div>
@@ -120,7 +120,7 @@ a{color:#3B2A20}a:hover{color:#B4441C}
       <div style="flex: 1; min-height: 0; overflow-y: auto; padding: 6px 16px">
         <sc-if value="{{cartEmpty}}" hint-placeholder-val="{{ false }}">
           <div style="height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: #6B5547; text-align: center">
-            <svg aria-hidden="true" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#C69C72" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8h1a4 4 0 0 1 0 8h-1M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V8ZM6 2v2M10 2v2M14 2v2"></path></svg>
+            <svg aria-hidden="true" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#B88A5A" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8h1a4 4 0 0 1 0 8h-1M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V8ZM6 2v2M10 2v2M14 2v2"></path></svg>
             <span style="font-size: 17px; font-weight: 600">ยังไม่มีรายการ</span>
             <span style="font-size: 14px">แตะเมนูทางซ้ายเพื่อเริ่มออเดอร์</span>
           </div>
@@ -133,9 +133,9 @@ a{color:#3B2A20}a:hover{color:#B4441C}
               <div style="font-size: 15px; font-weight: 700; margin-top: 4px">{{l.total}}</div>
             </div>
             <div style="display: flex; align-items: center; gap: 4px">
-              <button type="button" onClick="{{l.dec}}" aria-label="ลดจำนวน" style="width: 44px; height: 44px; border-radius: 12px; border: 1px solid #D9C5B0; background: #FFFBF6; color: #3B2A20; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14"></path></svg></button>
+              <button type="button" onClick="{{l.dec}}" aria-label="ลดจำนวน" style="width: 44px; height: 44px; border-radius: 12px; border: 1px solid #D9C5B0; background: #FFFFFF; color: #4A2C1A; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14"></path></svg></button>
               <span style="width: 32px; text-align: center; font-size: 18px; font-weight: 700">{{l.qty}}</span>
-              <button type="button" onClick="{{l.inc}}" aria-label="เพิ่มจำนวน" style="width: 44px; height: 44px; border-radius: 12px; border: 1px solid #D9C5B0; background: #FFFBF6; color: #3B2A20; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg></button>
+              <button type="button" onClick="{{l.inc}}" aria-label="เพิ่มจำนวน" style="width: 44px; height: 44px; border-radius: 12px; border: 1px solid #D9C5B0; background: #FFFFFF; color: #4A2C1A; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg></button>
             </div>
           </div>
         </sc-for>
@@ -154,8 +154,8 @@ a{color:#3B2A20}a:hover{color:#B4441C}
 
   <sc-if value="{{showSheet}}" hint-placeholder-val="{{ false }}">
     <div style="position: absolute; inset: 0; background: rgba(43, 30, 22, 0.55); display: flex; align-items: center; justify-content: center">
-      <div role="dialog" aria-label="เลือกตัวเลือก" style="width: 900px; height: 660px; border-radius: 24px; background: #FFFBF6; display: flex; overflow: hidden">
-        <div style="width: 280px; flex-shrink: 0; background: #F5EDE3; padding: 24px; display: flex; flex-direction: column; gap: 12px">
+      <div role="dialog" aria-label="เลือกตัวเลือก" style="width: 900px; height: 660px; border-radius: 24px; background: #FFFFFF; display: flex; overflow: hidden">
+        <div style="width: 280px; flex-shrink: 0; background: #F7F1E7; padding: 24px; display: flex; flex-direction: column; gap: 12px">
           <sc-if value="{{sheet.hasImg}}" hint-placeholder-val="{{ true }}">
             <img src="{{sheet.img}}" alt="" style="width: 232px; height: 232px; object-fit: contain">
           </sc-if>
@@ -167,9 +167,9 @@ a{color:#3B2A20}a:hover{color:#B4441C}
           <div style="margin-top: auto; display: flex; flex-direction: column; gap: 8px">
             <span style="font-size: 15px; font-weight: 600">จำนวน</span>
             <div style="display: flex; align-items: center; gap: 8px">
-              <button type="button" onClick="{{sheet.dec}}" aria-label="ลดจำนวน" style="width: 64px; height: 64px; border-radius: 16px; border: 1px solid #D9C5B0; background: #FFFBF6; color: #3B2A20; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14"></path></svg></button>
+              <button type="button" onClick="{{sheet.dec}}" aria-label="ลดจำนวน" style="width: 64px; height: 64px; border-radius: 16px; border: 1px solid #D9C5B0; background: #FFFFFF; color: #4A2C1A; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14"></path></svg></button>
               <span style="flex: 1; text-align: center; font-size: 28px; font-weight: 700">{{sheet.qty}}</span>
-              <button type="button" onClick="{{sheet.inc}}" aria-label="เพิ่มจำนวน" style="width: 64px; height: 64px; border-radius: 16px; border: 1px solid #D9C5B0; background: #FFFBF6; color: #3B2A20; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg></button>
+              <button type="button" onClick="{{sheet.inc}}" aria-label="เพิ่มจำนวน" style="width: 64px; height: 64px; border-radius: 16px; border: 1px solid #D9C5B0; background: #FFFFFF; color: #4A2C1A; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg></button>
             </div>
           </div>
         </div>
@@ -193,7 +193,7 @@ a{color:#3B2A20}a:hover{color:#B4441C}
             </sc-for>
           </div>
           <div style="padding: 16px 28px 24px; border-top: 1px solid #E4D6C6; display: flex; gap: 12px">
-            <button type="button" onClick="{{closeSheet}}" style="width: 160px; height: 68px; border-radius: 16px; border: 1px solid #D9C5B0; background: #FFFBF6; color: #3B2A20; font-size: 18px; font-weight: 600">ยกเลิก</button>
+            <button type="button" onClick="{{closeSheet}}" style="width: 160px; height: 68px; border-radius: 16px; border: 1px solid #D9C5B0; background: #FFFFFF; color: #4A2C1A; font-size: 18px; font-weight: 600">ยกเลิก</button>
             <button type="button" onClick="{{sheet.add}}" disabled="{{sheet.blocked}}" style="flex: 1; height: 68px; border-radius: 16px; border: 0; color: #ffffff; font-size: 20px; font-weight: 700; background: {{sheet.addBg}}">{{sheet.addLabel}}</button>
           </div>
         </div>
@@ -203,8 +203,8 @@ a{color:#3B2A20}a:hover{color:#B4441C}
 
   <sc-if value="{{showPay}}" hint-placeholder-val="{{ false }}">
     <div style="position: absolute; inset: 0; background: rgba(43, 30, 22, 0.55); display: flex; align-items: center; justify-content: center">
-      <div role="dialog" aria-label="ชำระเงิน" style="width: 1000px; height: 680px; border-radius: 24px; background: #FFFBF6; display: flex; overflow: hidden">
-        <div style="width: 360px; flex-shrink: 0; background: #F5EDE3; padding: 28px; display: flex; flex-direction: column; gap: 10px">
+      <div role="dialog" aria-label="ชำระเงิน" style="width: 1000px; height: 680px; border-radius: 24px; background: #FFFFFF; display: flex; overflow: hidden">
+        <div style="width: 360px; flex-shrink: 0; background: #F7F1E7; padding: 28px; display: flex; flex-direction: column; gap: 10px">
           <span style="font-size: 16px; color: #6B5547">ออเดอร์ {{orderLabel}}</span>
           <sc-for list="{{lines}}" as="l" hint-placeholder-count="2">
             <div style="display: flex; justify-content: space-between; gap: 8px; font-size: 16px"><span>{{l.qty}} × {{l.name}}</span><span>{{l.total}}</span></div>
@@ -218,7 +218,7 @@ a{color:#3B2A20}a:hover{color:#B4441C}
           </div>
         </div>
         <div style="flex: 1; min-width: 0; padding: 24px 28px; display: flex; flex-direction: column; gap: 18px">
-          <div role="tablist" aria-label="วิธีชำระ" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; padding: 6px; border-radius: 18px; background: #F5EDE3">
+          <div role="tablist" aria-label="วิธีชำระ" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; padding: 6px; border-radius: 18px; background: #F7F1E7">
             <button type="button" role="tab" aria-selected="{{isCash}}" onClick="{{pickCash}}" style="height: 60px; border-radius: 14px; border: 0; font-size: 19px; font-weight: 700; background: {{cashTabBg}}; color: {{cashTabFg}}">เงินสด</button>
             <button type="button" role="tab" aria-selected="{{isPromptPay}}" onClick="{{pickPromptPay}}" style="height: 60px; border-radius: 14px; border: 0; font-size: 19px; font-weight: 700; background: {{ppTabBg}}; color: {{ppTabFg}}">พร้อมเพย์</button>
           </div>
@@ -226,7 +226,7 @@ a{color:#3B2A20}a:hover{color:#B4441C}
           <sc-if value="{{isCash}}" hint-placeholder-val="{{ true }}">
             <div style="flex: 1; display: flex; gap: 20px; min-height: 0">
               <div style="flex: 1; display: flex; flex-direction: column; gap: 12px">
-                <div style="padding: 14px 18px; border-radius: 16px; border: 2px solid #3B2A20">
+                <div style="padding: 14px 18px; border-radius: 16px; border: 2px solid #4A2C1A">
                   <div style="font-size: 14px; color: #6B5547">รับเงินมา</div>
                   <div style="font-size: 40px; font-weight: 700; line-height: 1.15">{{received}}</div>
                 </div>
@@ -236,13 +236,13 @@ a{color:#3B2A20}a:hover{color:#B4441C}
                 </div>
                 <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
                   <sc-for list="{{quick}}" as="q" hint-placeholder-count="4">
-                    <button type="button" onClick="{{q.pick}}" style="height: 60px; border-radius: 14px; border: 1px solid #D9C5B0; background: #FFFBF6; color: #3B2A20; font-size: 19px; font-weight: 700">{{q.label}}</button>
+                    <button type="button" onClick="{{q.pick}}" style="height: 60px; border-radius: 14px; border: 1px solid #D9C5B0; background: #FFFFFF; color: #4A2C1A; font-size: 19px; font-weight: 700">{{q.label}}</button>
                   </sc-for>
                 </div>
               </div>
               <div style="width: 280px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; align-content: start">
                 <sc-for list="{{keys}}" as="k" hint-placeholder-count="12">
-                  <button type="button" onClick="{{k.press}}" aria-label="{{k.aria}}" style="height: 72px; border-radius: 14px; border: 1px solid #E4D6C6; background: #F5EDE3; color: #3B2A20; font-size: 26px; font-weight: 600">{{k.label}}</button>
+                  <button type="button" onClick="{{k.press}}" aria-label="{{k.aria}}" style="height: 72px; border-radius: 14px; border: 1px solid #E4D6C6; background: #F7F1E7; color: #4A2C1A; font-size: 26px; font-weight: 600">{{k.label}}</button>
                 </sc-for>
               </div>
             </div>
@@ -258,13 +258,13 @@ a{color:#3B2A20}a:hover{color:#B4441C}
                   </sc-for>
                 </div>
               </div>
-              <div style="font-size: 18px; font-weight: 600">สแกนจ่าย {{total}} · Cafe'nMe</div>
+              <div style="font-size: 18px; font-weight: 600">สแกนจ่าย {{total}} · YELO Coffee</div>
               <div style="font-size: 14px; color: #6B5547">ตรวจยอดเข้าในแอปธนาคาร แล้วกด “ได้รับเงินแล้ว”</div>
             </div>
           </sc-if>
 
           <div style="display: flex; gap: 12px">
-            <button type="button" onClick="{{closePay}}" style="width: 160px; height: 72px; border-radius: 16px; border: 1px solid #D9C5B0; background: #FFFBF6; color: #3B2A20; font-size: 18px; font-weight: 600">กลับ</button>
+            <button type="button" onClick="{{closePay}}" style="width: 160px; height: 72px; border-radius: 16px; border: 1px solid #D9C5B0; background: #FFFFFF; color: #4A2C1A; font-size: 18px; font-weight: 600">กลับ</button>
             <button type="button" onClick="{{confirmPay}}" disabled="{{payBlocked}}" style="flex: 1; height: 72px; border-radius: 16px; border: 0; color: #ffffff; font-size: 22px; font-weight: 700; background: {{confirmBg}}">{{confirmLabel}}</button>
           </div>
         </div>
@@ -273,7 +273,7 @@ a{color:#3B2A20}a:hover{color:#B4441C}
   </sc-if>
 
   <sc-if value="{{showDone}}" hint-placeholder-val="{{ false }}">
-    <div style="position: absolute; inset: 0; background: #F5EDE3; display: flex; align-items: center; justify-content: center">
+    <div style="position: absolute; inset: 0; background: #F7F1E7; display: flex; align-items: center; justify-content: center">
       <div style="width: 620px; display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center">
         <span style="width: 96px; height: 96px; border-radius: 999px; background: #2F6B3F; display: flex; align-items: center; justify-content: center">
           <svg aria-hidden="true" width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5L20 7"></path></svg>
@@ -281,12 +281,12 @@ a{color:#3B2A20}a:hover{color:#B4441C}
         <div style="font-size: 20px; color: #6B5547">ชำระเงินเรียบร้อย · ออเดอร์</div>
         <div style="font-size: 72px; font-weight: 700; line-height: 1">{{done.orderLabel}}</div>
         <sc-if value="{{done.isCash}}" hint-placeholder-val="{{ true }}">
-          <div style="padding: 12px 32px; border-radius: 18px; background: #FFFBF6; border: 1px solid #E4D6C6">
+          <div style="padding: 12px 32px; border-radius: 18px; background: #FFFFFF; border: 1px solid #E4D6C6">
             <span style="font-size: 18px; color: #6B5547">เงินทอน </span><span style="font-size: 40px; font-weight: 700">{{done.change}}</span>
           </div>
         </sc-if>
         <sc-if value="{{done.hasMember}}" hint-placeholder-val="{{ true }}">
-          <div style="display: flex; align-items: center; gap: 12px; padding: 12px 20px; border-radius: 18px; background: #FFFBF6; border: 1px solid #E4D6C6">
+          <div style="display: flex; align-items: center; gap: 12px; padding: 12px 20px; border-radius: 18px; background: #FFFFFF; border: 1px solid #E4D6C6">
             <img src="/_blob/a15ffc33eaf81945780b47b32b43d888" alt="" style="width: 40px; height: 40px">
             <span style="font-size: 18px; text-align: left">{{done.memberName}} ได้ <b>+{{done.earned}} แสตมป์</b> · ตอนนี้ {{done.stampsNow}}</span>
           </div>
@@ -295,34 +295,34 @@ a{color:#3B2A20}a:hover{color:#B4441C}
           </sc-if>
         </sc-if>
         <div style="display: flex; gap: 12px; margin-top: 10px; width: 100%">
-          <button type="button" style="flex: 1; height: 64px; border-radius: 16px; border: 1px solid #D9C5B0; background: #FFFBF6; color: #3B2A20; font-size: 18px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px">
+          <button type="button" style="flex: 1; height: 64px; border-radius: 16px; border: 1px solid #D9C5B0; background: #FFFFFF; color: #4A2C1A; font-size: 18px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px">
             <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z"></path></svg>
             พิมพ์ใบเสร็จ
           </button>
           <sc-if value="{{done.hasMember}}" hint-placeholder-val="{{ true }}">
-            <button type="button" style="flex: 1; height: 64px; border-radius: 16px; border: 1px solid #D9C5B0; background: #FFFBF6; color: #3B2A20; font-size: 18px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px">
+            <button type="button" style="flex: 1; height: 64px; border-radius: 16px; border: 1px solid #D9C5B0; background: #FFFFFF; color: #4A2C1A; font-size: 18px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px">
               <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 21l1.9-5.4A8 8 0 1 1 21 12Z"></path></svg>
               ส่งใบเสร็จทาง LINE
             </button>
           </sc-if>
         </div>
-        <button type="button" onClick="{{newOrder}}" style="width: 100%; height: 76px; border-radius: 18px; border: 0; background: #3B2A20; color: #F5EDE3; font-size: 22px; font-weight: 700">เริ่มออเดอร์ใหม่</button>
+        <button type="button" onClick="{{newOrder}}" style="width: 100%; height: 76px; border-radius: 18px; border: 0; background: #4A2C1A; color: #F7F1E7; font-size: 22px; font-weight: 700">เริ่มออเดอร์ใหม่</button>
       </div>
     </div>
   </sc-if>
 
   <sc-if value="{{showScan}}" hint-placeholder-val="{{ false }}">
     <div style="position: absolute; inset: 0; background: rgba(43, 30, 22, 0.55); display: flex; align-items: center; justify-content: center">
-      <div role="dialog" aria-label="สแกนบัตรสมาชิก" style="width: 560px; border-radius: 24px; background: #FFFBF6; padding: 24px; display: flex; flex-direction: column; gap: 16px; align-items: center">
+      <div role="dialog" aria-label="สแกนบัตรสมาชิก" style="width: 560px; border-radius: 24px; background: #FFFFFF; padding: 24px; display: flex; flex-direction: column; gap: 16px; align-items: center">
         <div style="font-size: 22px; font-weight: 700">สแกน QR บัตรสมาชิก</div>
         <div style="width: 360px; height: 270px; border-radius: 18px; background: #2B1E16; position: relative; display: flex; align-items: center; justify-content: center">
-          <div style="width: 180px; height: 180px; border: 4px solid #F5EDE3; border-radius: 20px"></div>
+          <div style="width: 180px; height: 180px; border: 4px solid #F7F1E7; border-radius: 20px"></div>
           <span style="position: absolute; bottom: 12px; font-size: 14px; color: #E9D9C6">กล้องหน้า · ให้ลูกค้าเปิดบัตรใน LINE</span>
         </div>
         <div style="font-size: 14px; color: #6B5547">ใช้เครื่องสแกนบาร์โค้ด USB ได้เช่นกัน</div>
         <div style="display: flex; gap: 12px; width: 100%">
-          <button type="button" onClick="{{closeOverlay}}" style="flex: 1; height: 60px; border-radius: 14px; border: 1px solid #D9C5B0; background: #FFFBF6; color: #3B2A20; font-size: 17px; font-weight: 600">ยกเลิก</button>
-          <button type="button" onClick="{{simulateScan}}" style="flex: 1; height: 60px; border-radius: 14px; border: 0; background: #3B2A20; color: #F5EDE3; font-size: 17px; font-weight: 700">จำลองการสแกน</button>
+          <button type="button" onClick="{{closeOverlay}}" style="flex: 1; height: 60px; border-radius: 14px; border: 1px solid #D9C5B0; background: #FFFFFF; color: #4A2C1A; font-size: 17px; font-weight: 600">ยกเลิก</button>
+          <button type="button" onClick="{{simulateScan}}" style="flex: 1; height: 60px; border-radius: 14px; border: 0; background: #4A2C1A; color: #F7F1E7; font-size: 17px; font-weight: 700">จำลองการสแกน</button>
         </div>
       </div>
     </div>
@@ -330,25 +330,25 @@ a{color:#3B2A20}a:hover{color:#B4441C}
 
   <sc-if value="{{showPhone}}" hint-placeholder-val="{{ false }}">
     <div style="position: absolute; inset: 0; background: rgba(43, 30, 22, 0.55); display: flex; align-items: center; justify-content: center">
-      <div role="dialog" aria-label="ค้นหาสมาชิกด้วยเบอร์โทร" style="width: 760px; border-radius: 24px; background: #FFFBF6; padding: 24px; display: flex; gap: 24px">
+      <div role="dialog" aria-label="ค้นหาสมาชิกด้วยเบอร์โทร" style="width: 760px; border-radius: 24px; background: #FFFFFF; padding: 24px; display: flex; gap: 24px">
         <div style="flex: 1; display: flex; flex-direction: column; gap: 14px">
           <div style="font-size: 22px; font-weight: 700">ค้นหาด้วยเบอร์โทร</div>
-          <div style="height: 68px; border-radius: 16px; border: 2px solid #3B2A20; display: flex; align-items: center; padding: 0 18px; font-size: 30px; font-weight: 700; letter-spacing: 1px">{{phoneDisplay}}</div>
+          <div style="height: 68px; border-radius: 16px; border: 2px solid #4A2C1A; display: flex; align-items: center; padding: 0 18px; font-size: 30px; font-weight: 700; letter-spacing: 1px">{{phoneDisplay}}</div>
           <sc-if value="{{phoneHasResult}}" hint-placeholder-val="{{ false }}">
-            <button type="button" onClick="{{simulateScan}}" style="text-align: left; padding: 14px; border-radius: 16px; border: 2px solid #C69C72; background: #F5EDE3; color: #3B2A20; display: flex; align-items: center; gap: 12px">
+            <button type="button" onClick="{{simulateScan}}" style="text-align: left; padding: 14px; border-radius: 16px; border: 2px solid #B88A5A; background: #F7F1E7; color: #4A2C1A; display: flex; align-items: center; gap: 12px">
               <span style="width: 44px; height: 44px; border-radius: 999px; background: #06C755; color: #ffffff; display: flex; align-items: center; justify-content: center; font-weight: 700">พ</span>
               <span style="flex: 1; line-height: 1.3"><b style="font-size: 17px">คุณแพรว</b><br><span style="font-size: 14px; color: #6B5547">081-xxx-4821 · สะสม 8/10 · มีรางวัล 1</span></span>
-              <span style="font-size: 15px; font-weight: 700; color: #B4441C">เลือก</span>
+              <span style="font-size: 15px; font-weight: 700; color: #F4B942">เลือก</span>
             </button>
           </sc-if>
           <sc-if value="{{phoneNoResult}}" hint-placeholder-val="{{ true }}">
             <div style="font-size: 15px; color: #6B5547">พิมพ์อย่างน้อย 4 หลักเพื่อค้นหา</div>
           </sc-if>
-          <button type="button" onClick="{{closeOverlay}}" style="margin-top: auto; height: 60px; border-radius: 14px; border: 1px solid #D9C5B0; background: #FFFBF6; color: #3B2A20; font-size: 17px; font-weight: 600">ยกเลิก</button>
+          <button type="button" onClick="{{closeOverlay}}" style="margin-top: auto; height: 60px; border-radius: 14px; border: 1px solid #D9C5B0; background: #FFFFFF; color: #4A2C1A; font-size: 17px; font-weight: 600">ยกเลิก</button>
         </div>
         <div style="width: 300px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px">
           <sc-for list="{{phoneKeys}}" as="k" hint-placeholder-count="12">
-            <button type="button" onClick="{{k.press}}" aria-label="{{k.aria}}" style="height: 76px; border-radius: 14px; border: 1px solid #E4D6C6; background: #F5EDE3; color: #3B2A20; font-size: 28px; font-weight: 600">{{k.label}}</button>
+            <button type="button" onClick="{{k.press}}" aria-label="{{k.aria}}" style="height: 76px; border-radius: 14px; border: 1px solid #E4D6C6; background: #F7F1E7; color: #4A2C1A; font-size: 28px; font-weight: 600">{{k.label}}</button>
           </sc-for>
         </div>
       </div>
@@ -464,9 +464,9 @@ class Component extends DCLogic {
           name: m.name,
           delta: m.d ? '+' + baht(m.d) : 'ไม่เพิ่มราคา',
           selected: on ? 'true' : 'false',
-          bg: on ? '#3B2A20' : '#FFFBF6',
-          fg: on ? '#F5EDE3' : '#3B2A20',
-          border: on ? '#3B2A20' : '#D9C5B0',
+          bg: on ? '#4A2C1A' : '#FFFFFF',
+          fg: on ? '#F7F1E7' : '#4A2C1A',
+          border: on ? '#4A2C1A' : '#D9C5B0',
           toggle: function () {
             var cur = (self.state.sheet.sel[gid] || []).slice();
             var i = cur.indexOf(m.id);
@@ -490,7 +490,7 @@ class Component extends DCLogic {
     return {
       name: p.name, img: p.img, hasImg: !!p.img, noImg: !p.img, initial: thaiInitial(p.name),
       base: baht(p.price), qty: qty, groups: groups, blocked: blocked,
-      addBg: blocked ? '#C9B6A4' : '#B4441C',
+      addBg: blocked ? '#C9B6A4' : '#F4B942',
       addLabel: blocked ? 'เลือกตัวเลือกที่ต้องเลือกก่อน' : 'เพิ่มลงออเดอร์ · ' + baht(unit * qty),
       dec: function () { self.setState({ sheet: Object.assign({}, self.state.sheet, { qty: Math.max(1, qty - 1) }) }); },
       inc: function () { self.setState({ sheet: Object.assign({}, self.state.sheet, { qty: Math.min(99, qty + 1) }) }); },
@@ -511,8 +511,8 @@ class Component extends DCLogic {
       return {
         name: c.name,
         count: PRODUCTS.filter(function (p) { return c.id === 'all' || p.cat === c.id; }).length,
-        bg: on ? '#3B2A20' : 'transparent',
-        fg: on ? '#F5EDE3' : '#3B2A20',
+        bg: on ? '#4A2C1A' : 'transparent',
+        fg: on ? '#F7F1E7' : '#4A2C1A',
         pick: function () { self.setState({ cat: c.id }); }
       };
     });
@@ -572,7 +572,7 @@ class Component extends DCLogic {
       cats: cats, products: products, lines: lines,
       cartEmpty: s.cart.length === 0,
       itemCount: t.items, subtotal: baht(t.subtotal), discount: baht(t.discount), hasDiscount: t.discount > 0, total: baht(t.total),
-      payBg: s.cart.length === 0 ? '#C9B6A4' : '#B4441C',
+      payBg: s.cart.length === 0 ? '#C9B6A4' : '#F4B942',
       openPay: function () { if (self.state.cart.length) self.setState({ screen: 'payment', cashStr: '' }); },
 
       noMember: !member, hasMember: !!member,
@@ -582,8 +582,8 @@ class Component extends DCLogic {
       hasReward: !!(member && member.rewards > 0),
       rewardLabel: s.redeem ? 'ใช้รางวัล: เครื่องดื่มฟรี 1 แก้ว' : 'มีรางวัล: เครื่องดื่มฟรี ' + (member ? member.rewards : 0) + ' แก้ว',
       rewardAction: s.redeem ? 'ยกเลิก' : 'ใช้เลย',
-      rewardBg: s.redeem ? '#E7F1E8' : '#FFFBF6',
-      rewardBorder: s.redeem ? '#2F6B3F' : '#C69C72',
+      rewardBg: s.redeem ? '#E7F1E8' : '#FFFFFF',
+      rewardBorder: s.redeem ? '#2F6B3F' : '#B88A5A',
       toggleRedeem: function () { self.setState({ redeem: !self.state.redeem }); },
       removeMember: function () { self.setState({ member: null, redeem: false }); },
       openScan: function () { self.setState({ screen: 'scan' }); },
@@ -597,8 +597,8 @@ class Component extends DCLogic {
 
       showPay: s.screen === 'payment',
       isCash: isCash, isPromptPay: !isCash,
-      cashTabBg: isCash ? '#3B2A20' : 'transparent', cashTabFg: isCash ? '#F5EDE3' : '#3B2A20',
-      ppTabBg: !isCash ? '#3B2A20' : 'transparent', ppTabFg: !isCash ? '#F5EDE3' : '#3B2A20',
+      cashTabBg: isCash ? '#4A2C1A' : 'transparent', cashTabFg: isCash ? '#F7F1E7' : '#4A2C1A',
+      ppTabBg: !isCash ? '#4A2C1A' : 'transparent', ppTabFg: !isCash ? '#F7F1E7' : '#4A2C1A',
       pickCash: function () { self.setState({ payMethod: 'cash' }); },
       pickPromptPay: function () { self.setState({ payMethod: 'promptpay' }); },
       received: baht(received),

@@ -1,9 +1,9 @@
 import Image from "next/image";
 import { cn } from "cn";
 
-const FALLBACK_LOGO = "/assets/logo-mark.png";
+const FALLBACK_LOGO = "/assets/yelo-coffee-mascot.png";
 
-/** Shop logo, or the default Cafe'nMe mark when the shop has none. */
+/** Shop logo, or the default YELO Coffee mark when the shop has none. */
 export function BrandLogo({ logoUrl, size, className, alt = "" }: { logoUrl: string | null; size: number; className?: string; alt?: string }) {
   return <Image src={logoUrl ?? FALLBACK_LOGO} alt={alt} width={size} height={size} unoptimized={Boolean(logoUrl)}
     className={cn("shrink-0 object-contain", className)} style={{ width: size, height: size }} />;
@@ -21,7 +21,7 @@ export function BrandStamp({ filled, logoUrl, size, className, alt = "" }: { fil
   return <span role="img" aria-label={alt || undefined} aria-hidden={alt ? undefined : true}
     className={cn("inline-flex shrink-0 items-center justify-center rounded-full", className)}
     style={filled
-      ? { width: size, height: size, border: "2px solid var(--brand, #B4441C)", background: "#FFFFFF", transform: "rotate(-8deg)" }
+      ? { width: size, height: size, border: "2px solid var(--brand, #F4B942)", background: "#FFFFFF", transform: "rotate(-8deg)" }
       : { width: size, height: size, border: "2px dashed #D9C5B0" }}>
     {/* eslint-disable-next-line @next/next/no-img-element -- tiny decorative logo, already cache-busted */}
     {filled ? <img src={logoUrl} alt="" width={Math.round(size * 0.62)} height={Math.round(size * 0.62)} className="object-contain" /> : null}

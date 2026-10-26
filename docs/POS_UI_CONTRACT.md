@@ -4,12 +4,12 @@ The POS is built to match the design in `docs/design/pos/*.dc.html` (Main = sale
 overlays, Login = staff + PIN, Orders = today's orders + void). Those files are a prototype format:
 read the markup and inline styles for layout, sizes, colors and copy; ignore the `DCLogic` script
 mechanics. Image URLs `/_blob/...` map to the app's assets:
-logo `/assets/logo-mark.png`, stamp on/off `/assets/stamp-filled.png` / `/assets/stamp-empty.png`,
+logo `/assets/yelo-coffee-mascot.png`, stamp on/off `/assets/stamp-filled.png` / `/assets/stamp-empty.png`,
 reward `/assets/reward-free-drink.png`, product images come from the product's `imageUrl`.
 
-Design tokens (use Tailwind arbitrary values, e.g. `bg-[#3B2A20]`):
-espresso #3B2A20 · header chip #574235 · cream bg #F5EDE3 · surface #FFFBF6 · rail #EFE3D5 ·
-line #E4D6C6 / #D9C5B0 · muted text #6B5547 · pay terracotta #B4441C · success #2F6B3F (bg #E7F1E8, text #245232) ·
+Design tokens (use Tailwind arbitrary values, e.g. `bg-[#4A2C1A]`):
+espresso #4A2C1A · header chip #574235 · cream bg #F7F1E7 · surface #FFFFFF · rail #EFE3D5 ·
+line #E4D6C6 / #D9C5B0 · muted text #6B5547 · pay golden amber #F4B942 · success #2F6B3F (bg #E7F1E8, text #245232) ·
 error text #8E3415 (bg #F7DCD0) · disabled #C9B6A4 · LINE green #06C755 · overlay rgba(43,30,22,0.55).
 Font is already Noto Sans Thai (root layout). Target: landscape tablet 1280×800, must also work at
 1024×768 and larger; touch targets ≥ 44 px, primary actions 64–84 px tall. No hover-only affordances.

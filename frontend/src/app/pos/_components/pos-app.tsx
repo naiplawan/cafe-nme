@@ -288,10 +288,10 @@ export function PosApp({ shop, staff, menu, orderNo: initialOrderNo, logoUrl, ac
     setOrderNo(paidOrder.result.dailyNo + 1);
   }} />;
   if (storageBlocked) {
-    return <main className="flex min-h-dvh items-center justify-center bg-[#F5EDE3] p-6 text-[#3B2A20]"><section className="w-full max-w-[520px] space-y-4 rounded-[24px] border border-[#E4D6C6] bg-[#FFFBF6] p-7 text-center shadow-[0_12px_36px_rgba(59,42,32,0.08)]"><h1 className="text-xl font-bold">ยังเปิดออเดอร์ไม่ได้</h1><p role="alert" className="text-sm text-[#8E3415]">ไม่สามารถอ่านพื้นที่จัดเก็บรายการได้ กรุณาลองใหม่</p><button type="button" onClick={() => window.location.reload()} className="h-14 w-full rounded-2xl bg-[#3B2A20] text-base font-bold text-[#F5EDE3]">ลองใหม่</button></section></main>;
+    return <main className="flex min-h-dvh items-center justify-center bg-[#F7F1E7] p-6 text-[#4A2C1A]"><section className="w-full max-w-[520px] space-y-4 rounded-[24px] border border-[#E2D8C7] bg-[#FFFFFF] p-7 text-center shadow-[0_12px_36px_rgba(59,42,32,0.08)]"><h1 className="text-xl font-bold">ยังเปิดออเดอร์ไม่ได้</h1><p role="alert" className="text-sm text-[#8E3415]">ไม่สามารถอ่านพื้นที่จัดเก็บรายการได้ กรุณาลองใหม่</p><button type="button" onClick={() => window.location.reload()} className="h-14 w-full rounded-2xl bg-[#4A2C1A] text-base font-bold text-[#F7F1E7]">ลองใหม่</button></section></main>;
   }
   if (!storageReady) {
-    return <main className="flex min-h-dvh items-center justify-center bg-[#F5EDE3] p-6 text-[#3B2A20]"><p className="text-lg font-semibold">กำลังโหลดออเดอร์…</p></main>;
+    return <main className="flex min-h-dvh items-center justify-center bg-[#F7F1E7] p-6 text-[#4A2C1A]"><p className="text-lg font-semibold">กำลังโหลดออเดอร์…</p></main>;
   }
   if (pendingCheckout) {
     return <CheckoutRecovery pending={pendingCheckout} cartStorageKey={recoveryStorageKey} onRecovered={onRecoveredCheckout} onRejected={rejectPendingCheckout} />;
@@ -304,20 +304,20 @@ export function PosApp({ shop, staff, menu, orderNo: initialOrderNo, logoUrl, ac
   </div>;
 
   if (selfOrderId) {
-    return <main className="min-h-dvh space-y-5 bg-[#F5EDE3] p-6 text-[#3B2A20]">
+    return <main className="min-h-dvh space-y-5 bg-[#F7F1E7] p-6 text-[#4A2C1A]">
       {shiftBanner}
-      <section className="mx-auto max-w-2xl space-y-5 rounded-2xl border border-[#D9C5B0] bg-[#FFFBF6] p-5 sm:p-7">
+      <section className="mx-auto max-w-2xl space-y-5 rounded-2xl border border-[#E2D8C7] bg-[#FFFFFF] p-5 sm:p-7">
       <h1 className="text-2xl font-bold">รายการจาก QR · รับชำระเงิน</h1>
       <p>รับชำระตามรายการที่ลูกค้าส่งไว้ รายการนี้แก้ไขไม่ได้</p>
       {cartNotice ? <p role="alert">{cartNotice}</p> : null}
-      <ul className="divide-y divide-[#E4D6C6]">{cart.map((line, index) => (
+      <ul className="divide-y divide-[#E2D8C7]">{cart.map((line, index) => (
         // biome-ignore lint/suspicious/noArrayIndexKey: Accepted draft lines are immutable and never reordered.
-        <li key={`${selfOrderId}:${index}`} className="flex justify-between gap-4 py-4"><div><p className="text-lg font-semibold">{line.qty} × {pricing.lines[index]?.name ?? menu.products.find((product) => product.id === line.productId)?.name ?? "เมนูไม่พร้อมขาย"}</p><p className="text-sm text-[#6B5547]">{pricing.lines[index]?.modifiers.map((modifier) => modifier.name).join(" · ")}</p>{line.note ? <p className="mt-1 text-sm text-[#6B5547]">{line.note}</p> : null}</div><span className="shrink-0 font-bold tabular-nums">{pricing.lines[index] ? formatBaht(pricing.lines[index].lineTotalSatang) : "ตรวจสอบราคา"}</span></li>))}</ul>
-      <div className="flex items-baseline justify-between border-t border-[#E4D6C6] pt-4 font-bold"><span>ยอดชำระ</span><span className="text-3xl tabular-nums">{pricing.lines.length === cart.length ? formatBaht(pricing.subtotalSatang) : "รอตรวจสอบราคา"}</span></div>
+        <li key={`${selfOrderId}:${index}`} className="flex justify-between gap-4 py-4"><div><p className="text-lg font-semibold">{line.qty} × {pricing.lines[index]?.name ?? menu.products.find((product) => product.id === line.productId)?.name ?? "เมนูไม่พร้อมขาย"}</p><p className="text-sm text-[#817668]">{pricing.lines[index]?.modifiers.map((modifier) => modifier.name).join(" · ")}</p>{line.note ? <p className="mt-1 text-sm text-[#817668]">{line.note}</p> : null}</div><span className="shrink-0 font-bold tabular-nums">{pricing.lines[index] ? formatBaht(pricing.lines[index].lineTotalSatang) : "ตรวจสอบราคา"}</span></li>))}</ul>
+      <div className="flex items-baseline justify-between border-t border-[#E2D8C7] pt-4 font-bold"><span>ยอดชำระ</span><span className="text-3xl tabular-nums">{pricing.lines.length === cart.length ? formatBaht(pricing.subtotalSatang) : "รอตรวจสอบราคา"}</span></div>
       <div className="flex flex-wrap gap-3">
       <button type="button" onClick={() => setShowPayment(true)} disabled={!online} className="min-h-14 rounded-xl bg-[#2F6B3F] px-6 text-lg font-bold text-white disabled:opacity-50">ตรวจสอบยอดและรับชำระเงิน</button>
-      <Link href="/pos/requests" className="inline-flex min-h-14 items-center rounded-xl border border-[#D9C5B0] px-4 font-semibold">กลับรายการจาก QR</Link>
-      {!showPayment ? <button type="button" onClick={() => { clearSavedCart(); window.location.assign("/pos"); }} className="min-h-14 rounded-xl border border-[#D9C5B0] px-4 font-semibold">พักรายการนี้และกลับขายปกติ</button> : null}
+      <Link href="/pos/requests" className="inline-flex min-h-14 items-center rounded-xl border border-[#E2D8C7] px-4 font-semibold">กลับรายการจาก QR</Link>
+      {!showPayment ? <button type="button" onClick={() => { clearSavedCart(); window.location.assign("/pos"); }} className="min-h-14 rounded-xl border border-[#E2D8C7] px-4 font-semibold">พักรายการนี้และกลับขายปกติ</button> : null}
       </div></section>
       {showPayment && checkoutScope ? <PaymentDialog orderLabel={`#${String(orderNo).padStart(3, "0")}`}
         lines={pricing.lines.map((line) => ({ key: line.productId, name: line.name, qty: line.qty, modifiersText: line.modifiers.map((modifier) => modifier.name).join(" · "), lineTotalSatang: line.lineTotalSatang }))}
@@ -327,15 +327,15 @@ export function PosApp({ shop, staff, menu, orderNo: initialOrderNo, logoUrl, ac
     </main>;
   }
 
-  return <div className="flex h-dvh min-h-0 flex-col overflow-hidden bg-[#F5EDE3]">
+  return <div className="flex h-dvh min-h-0 flex-col overflow-hidden bg-[#F7F1E7]">
     {selfOrderError ? <p role="alert" className="bg-amber-100 p-3">{selfOrderError}</p> : null}
     <PosHeader shopName={shop.name} orderNo={orderNo} staffName={staff.name} staffRole={staffRole} online={online} logoUrl={logoUrl} />
     {shiftBanner}
     <div className="relative flex min-h-0 flex-1">
       {/* Overlays the content area so it never shifts the layout, covers the header, or blocks Pay. */}
       <div className="pointer-events-none absolute left-1/2 top-3 z-30 flex w-max max-w-[calc(100%-2rem)] -translate-x-1/2 flex-col items-center gap-2 lg:bottom-5 lg:top-auto lg:left-[calc((100%-min(404px,34vw))/2)]">
-        {removedLine && !showPayment ? <div role="status" className="pointer-events-auto flex items-center gap-3 rounded-xl bg-[#3B2A20] px-4 py-2 text-[#F5EDE3] shadow-xl"><span>นำรายการออกแล้ว</span><button type="button" onClick={undoRemoval} className="min-h-11 rounded-lg border border-[#D9C5B0] px-3 font-bold">เลิกทำ</button></div> : null}
-        {cartNotice ? <div role="status" className="rounded-xl bg-[#3B2A20] px-5 py-3 text-base font-semibold text-white shadow-xl">{cartNotice}</div> : null}
+        {removedLine && !showPayment ? <div role="status" className="pointer-events-auto flex items-center gap-3 rounded-xl bg-[#4A2C1A] px-4 py-2 text-[#F7F1E7] shadow-xl"><span>นำรายการออกแล้ว</span><button type="button" onClick={undoRemoval} className="min-h-11 rounded-lg border border-[#E2D8C7] px-3 font-bold">เลิกทำ</button></div> : null}
+        {cartNotice ? <div role="status" className="rounded-xl bg-[#4A2C1A] px-5 py-3 text-base font-semibold text-white shadow-xl">{cartNotice}</div> : null}
       </div>
       <div className={`${showCart ? "hidden" : "flex"} min-h-0 min-w-0 flex-1 flex-col md:flex-row lg:flex`}>
       <CategoryRail menu={menu} selectedId={categoryId} onSelect={setCategoryId} />
@@ -354,8 +354,8 @@ export function PosApp({ shop, staff, menu, orderNo: initialOrderNo, logoUrl, ac
         onPay={() => { if (cart.length > 100 || cart.reduce((count, line) => count + line.qty, 0) > 500) { setCartNotice("ออเดอร์ต้องไม่เกิน 100 รายการและ 500 ชิ้น กรุณาลดจำนวนหรือแยกออเดอร์"); return; } if (cart.length && online && !hasSoldOutLine(cart, menu)) { setRemovedLine(null); setShowPayment(true); } }} />
       </div>
     </div>
-    <div className="sticky bottom-0 z-20 shrink-0 border-t border-[#D9C5B0] bg-[#FFFBF6] p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] lg:hidden">
-      <button type="button" aria-pressed={showCart} className="flex min-h-14 w-full items-center justify-between gap-3 rounded-xl bg-[#3B2A20] px-4 font-bold text-[#F5EDE3]" onClick={() => setShowCart((value) => !value)}><span>{showCart ? "กลับไปเลือกเมนู" : "ดูตะกร้า"} ({cart.reduce((count, line) => count + line.qty, 0)} ชิ้น)</span><span className="tabular-nums">{formatBaht(totalSatang)}</span></button>
+    <div className="sticky bottom-0 z-20 shrink-0 border-t border-[#E2D8C7] bg-[#FFFFFF] p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] lg:hidden">
+      <button type="button" aria-pressed={showCart} className="flex min-h-14 w-full items-center justify-between gap-3 rounded-xl bg-[#4A2C1A] px-4 font-bold text-[#F7F1E7]" onClick={() => setShowCart((value) => !value)}><span>{showCart ? "กลับไปเลือกเมนู" : "ดูตะกร้า"} ({cart.reduce((count, line) => count + line.qty, 0)} ชิ้น)</span><span className="tabular-nums">{formatBaht(totalSatang)}</span></button>
     </div>
     {modifierProduct && <ModifierSheet key={`${modifierProduct.id}:${modifierLineIndex ?? "new"}`} product={modifierProduct}
       initialModifierIds={modifierLineIndex === null ? [] : cart[modifierLineIndex]?.modifierIds}

@@ -72,7 +72,7 @@ export function OrderForm({ menu, shopSlug, shopName }: { menu: PosMenu; shopSlu
     try { localStorage.removeItem(storageKey); setPending(null); setOrder(null); setLines([]); }
     catch { setError("ไม่สามารถเริ่มรายการใหม่ได้ กรุณาติดต่อพนักงาน"); }
   }
-  return <main className="mx-auto max-w-xl space-y-5 bg-[#FFFBF6] p-5 text-[#3B2A20]" aria-busy={busy}>
+  return <main className="mx-auto max-w-xl space-y-5 bg-[#FFFFFF] p-5 text-[#4A2C1A]" aria-busy={busy}>
     <h1 className="text-2xl font-bold">สั่งเครื่องดื่ม · {shopName}</h1><p>ส่งรายการให้ร้านตรวจสอบ แล้วชำระเงินกับพนักงาน</p>
     {error ? <p role="alert" className="rounded-xl bg-red-100 p-3">{error}</p> : null}
     {order ? <section className="space-y-4 rounded-xl border p-4" aria-live="polite"><h2 className="text-xl font-semibold">{statusLabels[order.status]}</h2>

@@ -20,6 +20,7 @@ versioning (pre-1.0: minor = features, patch = fixes).
 - Reserve recipe ingredients for 30 minutes when staff open a PromptPay QR, refreshed while the QR stays open. Other sales cannot consume reserved stock, and the QR is withheld when stock cannot be reserved.
 
 ### Changed
+- Rebrand the product from Cafe'nMe to YELO Coffee: deep coffee, golden amber, latte and cream palette across admin, POS, LIFF, receipts and charts; the golden-retriever mascot replaces the old logo mark; shops without their own accent now default to amber `#F4B942` instead of terracotta `#B4441C`. Amber is used only behind dark text; text links and labels use deep coffee `#4A2C1A` for contrast. New demo seeds create `YELO COFFEE` with the amber preset; existing shops keep their name.
 - Reject paid-order voids with `409 use_refund`; reverse paid sales through refund approval and separately confirmed payout. Only unpaid open bills can be cancelled without moving money.
 - Apply loyalty rewards to the cheapest eligible base price while retaining add-on charges; free reward units and zero-price drinks earn no stamps. Refund reward units first without reversing unearned stamps.
 - Tightened staff role changes so managers cannot create owners or change higher-privilege PINs; expanded shop scoping across member, POS, order, and report operations.

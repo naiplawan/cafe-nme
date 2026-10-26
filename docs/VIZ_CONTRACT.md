@@ -34,8 +34,8 @@ export type ChartDatum = { label: string; value: number };
 Shared rules for every chart:
 - `role="img"` + `aria-label`, plus a visually hidden `<table>`/`<ul>` listing every label/value (screen readers).
 - Empty or all-zero data → a calm empty state "ยังไม่มีข้อมูลในช่วงนี้" (no broken axes).
-- Palette: espresso `#3B2A20`, latte `#C69C72`, terracotta `#B4441C`, sage `#2F6B3F`, cream grid `#EADBC8`.
-  Default series colour = terracotta; donut default colours in that order.
+- Palette: espresso `#4A2C1A`, latte `#B88A5A`, golden amber `#F4B942`, sage `#2F6B3F`, cream grid `#E5D8C5`.
+  Default series colour = golden amber; donut default colours in that order.
 - Animate on mount and when `data` changes (`dependencies: [JSON.stringify(data)]`); with reduced motion,
   render final state immediately. Durations: admin ≤ 0.8 s total, POS ≤ 0.3 s.
 - Responsive: fill container width; no horizontal page scroll at 360 px.

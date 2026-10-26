@@ -136,7 +136,7 @@ async function BranchComparisonData({
                     </span>
                     <span className="truncate text-sm font-semibold">{branch.name}</span>
                     {branch.active && (
-                      <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
+                      <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-secondary-foreground">
                         กำลังดูสาขานี้
                       </span>
                     )}

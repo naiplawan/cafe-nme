@@ -5,13 +5,13 @@ import { SITE_URL } from "@/lib/site";
 export const LANDING_UPDATED = "2026-10-24";
 
 export const landing = {
-  name: "Cafe'nMe",
+  name: "YELO Coffee",
   title: "ระบบ POS ร้านกาแฟ พร้อมบัตรสะสมแต้มบน LINE",
   description:
-    "Cafe'nMe ระบบขายหน้าร้านสำหรับร้านกาแฟไทย ขายบนแท็บเล็ต รับเงินสดและพร้อมเพย์ QR ลูกค้าสะสมแต้มผ่าน LINE OA ของร้าน เจ้าของดูยอดขายและรายงานได้จากเว็บ",
+    "YELO Coffee ระบบขายหน้าร้านสำหรับร้านกาแฟไทย ขายบนแท็บเล็ต รับเงินสดและพร้อมเพย์ QR ลูกค้าสะสมแต้มผ่าน LINE OA ของร้าน เจ้าของดูยอดขายและรายงานได้จากเว็บ",
   sub: "ขายหน้าร้านบนแท็บเล็ต รับเงินสดหรือพร้อมเพย์ QR ลูกค้าสะสมแต้มผ่าน LINE Official Account ของร้าน และเจ้าของร้านดูยอดขายได้จากทุกที่",
   definition:
-    "Cafe'nMe คือระบบขายหน้าร้าน (POS) สำหรับร้านกาแฟไทย ที่รวมบัตรสะสมแต้มสมาชิกบน LINE ไว้ในระบบเดียว พนักงานขายบนแท็บเล็ต เจ้าของร้านจัดการเมนูและดูรายงานผ่านเว็บ ส่วนลูกค้าสะสมแต้มและแลกเครื่องดื่มฟรีผ่าน LINE OA ของร้าน",
+    "YELO Coffee คือระบบขายหน้าร้าน (POS) สำหรับร้านกาแฟไทย ที่รวมบัตรสะสมแต้มสมาชิกบน LINE ไว้ในระบบเดียว พนักงานขายบนแท็บเล็ต เจ้าของร้านจัดการเมนูและดูรายงานผ่านเว็บ ส่วนลูกค้าสะสมแต้มและแลกเครื่องดื่มฟรีผ่าน LINE OA ของร้าน",
   facts: ["จับคู่แท็บเล็ตด้วยรหัส 6 หลัก", "พร้อมเพย์ QR ใส่ยอดอัตโนมัติ", "ใบเสร็จ 58 มม.", "รองรับ PDPA"],
   features: [
     {
@@ -58,7 +58,7 @@ export const landing = {
     { name: "จับคู่แท็บเล็ตแล้วเริ่มขาย", text: "ใส่รหัส 6 หลักหรือสแกน QR บนแท็บเล็ต พนักงานเข้าด้วย PIN แล้วเปิดขายได้เลย" },
   ],
   compare: {
-    columns: ["Cafe'nMe", "เครื่องคิดเงินทั่วไป", "บัตรสะสมแต้มกระดาษ"],
+    columns: ["YELO Coffee", "เครื่องคิดเงินทั่วไป", "บัตรสะสมแต้มกระดาษ"],
     rows: [
       { label: "พร้อมเพย์ QR พร้อมยอดเงิน", values: ["yes", "some", "no"] },
       { label: "สะสมแต้มอัตโนมัติ ไม่ต้องปั๊มมือ", values: ["yes", "no", "no"] },
@@ -69,7 +69,7 @@ export const landing = {
     ],
   },
   faq: [
-    { q: "Cafe'nMe คืออะไร?", a: "Cafe'nMe คือระบบ POS สำหรับร้านกาแฟไทยที่มีบัตรสะสมแต้มบน LINE ในตัว ใช้ขายหน้าร้านบนแท็บเล็ต จัดการร้านผ่านเว็บ และให้ลูกค้าสะสมแต้มผ่าน LINE OA ของร้าน" },
+    { q: "YELO Coffee คืออะไร?", a: "YELO Coffee คือระบบ POS สำหรับร้านกาแฟไทยที่มีบัตรสะสมแต้มบน LINE ในตัว ใช้ขายหน้าร้านบนแท็บเล็ต จัดการร้านผ่านเว็บ และให้ลูกค้าสะสมแต้มผ่าน LINE OA ของร้าน" },
     { q: "ต้องมี LINE Official Account ก่อนไหม?", a: "ไม่ต้องสำหรับการขายหน้าร้าน ระบบ POS ใช้ได้ทันที แต่ถ้าต้องการบัตรสะสมแต้มให้ลูกค้า ต้องเชื่อม LINE OA ของร้านในหน้าตั้งค่า LINE" },
     { q: "ใช้กับอุปกรณ์อะไรได้บ้าง?", a: "หน้า POS ออกแบบสำหรับแท็บเล็ตจอสัมผัสและใช้งานผ่านเบราว์เซอร์ หน้าผู้ดูแลใช้ได้บนคอมพิวเตอร์และมือถือ ลูกค้าใช้บัตรสมาชิกผ่านแอป LINE" },
     { q: "รับชำระเงินแบบไหนได้บ้าง?", a: "รับเงินสดพร้อมปุ่มจำนวนเงินด่วน และพร้อมเพย์ QR ที่ใส่ยอดเงินของบิลให้อัตโนมัติ" },
@@ -85,7 +85,7 @@ export function landingJsonLd() {
   return {
     "@context": "https://schema.org",
     "@graph": [
-      { "@type": "Organization", "@id": org, name: landing.name, url: SITE_URL, logo: `${SITE_URL}/assets/logo-mark.png` },
+      { "@type": "Organization", "@id": org, name: landing.name, url: SITE_URL, logo: `${SITE_URL}/assets/yelo-coffee-mascot.png` },
       { "@type": "WebSite", "@id": `${SITE_URL}/#website`, url: SITE_URL, name: landing.name, inLanguage: "th-TH", publisher: { "@id": org } },
       {
         "@type": "SoftwareApplication",
@@ -106,7 +106,7 @@ export function landingJsonLd() {
       },
       {
         "@type": "HowTo",
-        name: "เริ่มใช้ Cafe'nMe ในร้านกาแฟ",
+        name: "เริ่มใช้ YELO Coffee ในร้านกาแฟ",
         step: landing.steps.map((step, index) => ({ "@type": "HowToStep", position: index + 1, name: step.name, text: step.text })),
       },
     ],

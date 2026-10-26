@@ -98,7 +98,7 @@ export default async function AdminDashboardPage() {
             <p className="mt-2 text-xs leading-5 text-muted-foreground">
               <span className="whitespace-nowrap">{todaySales.orders} ออเดอร์</span> · <span className="whitespace-nowrap">{todaySales.cups} แก้ว</span> · <span className="whitespace-nowrap">สมาชิก {todaySales.memberOrders} ออเดอร์</span>
             </p>
-            <Link href="/admin/reports" className="mt-2 inline-flex items-center text-sm font-medium text-primary underline-offset-4 hover:underline sm:mt-3">
+            <Link href="/admin/reports" className="mt-2 inline-flex items-center text-sm font-medium text-secondary-foreground underline-offset-4 hover:underline sm:mt-3">
               ดูรายงานวันนี้ <ArrowRight aria-hidden="true" size={16} className="ml-1" />
             </Link>
           </CardContent>
@@ -144,7 +144,7 @@ export default async function AdminDashboardPage() {
 
       <section aria-label="กราฟยอดขาย" className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <ChartCard title="ยอดขาย 7 วันล่าสุด" subtitle={`รวม ${formatBaht(weeklySales.netSatang)}`}>
-          <p className={`mb-3 text-sm font-medium ${salesChange === "ยังไม่มียอดให้เทียบ" ? "text-muted-foreground" : salesChangeDirection === "up" ? "text-[#2F6B3F]" : "text-[#B4441C]"}`}>
+          <p className={`mb-3 text-sm font-medium ${salesChange === "ยังไม่มียอดให้เทียบ" ? "text-muted-foreground" : salesChangeDirection === "up" ? "text-[#2F6B3F]" : "text-[#B3261E]"}`}>
             {salesChange === "ยังไม่มียอดให้เทียบ" ? salesChange : <span className="inline-flex items-center gap-1">{salesChangeDirection === "up" ? <ArrowUp aria-hidden="true" size={16} /> : <ArrowDown aria-hidden="true" size={16} />}{salesChange} เทียบ 7 วันก่อน</span>}
           </p>
           <AreaChart data={weeklyChart} format="baht" ariaLabel="ยอดขายสุทธิรายวัน 7 วันล่าสุด" />
@@ -158,15 +158,15 @@ export default async function AdminDashboardPage() {
         </ChartCard>
         <ChartCard
           title="เมนูขายดี 7 วัน"
-          action={<Link href="/admin/reports" className="text-sm font-medium text-primary underline-offset-4 hover:underline">ดูรายงาน</Link>}
+          action={<Link href="/admin/reports" className="text-sm font-medium text-secondary-foreground underline-offset-4 hover:underline">ดูรายงาน</Link>}
         >
           <HBarList data={items.slice(0, 5).map(({ name, qty }) => ({ label: name, value: qty }))} format="number" ariaLabel="เมนูขายดี 5 อันดับใน 7 วันล่าสุด" limit={5} />
         </ChartCard>
         <ChartCard title="ช่องทางชำระเงิน 7 วัน">
           <DonutChart
             data={[
-              { label: "เงินสด", value: weeklySales.byMethod.cash, color: "#3B2A20" },
-              { label: "พร้อมเพย์", value: weeklySales.byMethod.promptpay, color: "#C69C72" },
+              { label: "เงินสด", value: weeklySales.byMethod.cash, color: "#4A2C1A" },
+              { label: "พร้อมเพย์", value: weeklySales.byMethod.promptpay, color: "#B88A5A" },
             ]}
             format="baht"
             ariaLabel="ยอดขายแยกตามช่องทางชำระเงิน 7 วันล่าสุด"

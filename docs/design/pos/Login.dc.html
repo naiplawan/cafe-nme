@@ -13,23 +13,23 @@
 <style>
 body{margin:0}
 button{font-family:inherit;cursor:pointer}
-a{color:#3B2A20}a:hover{color:#B4441C}
+a{color:#4A2C1A}a:hover{color:#F4B942}
 </style>
 </helmet>
-<div style="width: 1280px; height: 800px; overflow: hidden; background: #F5EDE3; color: #3B2A20; font-family: 'Noto Sans Thai', sans-serif; display: flex">
+<div style="width: 1280px; height: 800px; overflow: hidden; background: #F7F1E7; color: #4A2C1A; font-family: 'Noto Sans Thai', sans-serif; display: flex">
 
   <section style="flex: 1; min-width: 0; padding: 48px 56px; display: flex; flex-direction: column; gap: 28px">
     <div style="display: flex; align-items: center; gap: 16px">
       <img src="/_blob/347132067251bd7559386ef4c5c00171" alt="" style="width: 64px; height: 64px; border-radius: 16px">
       <div style="line-height: 1.25">
-        <div style="font-size: 28px; font-weight: 700">Cafe'nMe</div>
+        <div style="font-size: 28px; font-weight: 700">YELO Coffee</div>
         <div style="font-size: 16px; color: #6B5547">แท็บเล็ตหน้าร้าน · จับคู่แล้ว</div>
       </div>
     </div>
     <h1 style="margin: 0; font-size: 34px; font-weight: 700">ใครเข้ากะตอนนี้?</h1>
     <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px">
       <sc-for list="{{staff}}" as="p" hint-placeholder-count="5">
-        <button type="button" onClick="{{p.pick}}" aria-pressed="{{p.pressed}}" style="height: 148px; border-radius: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; border: 3px solid {{p.border}}; background: {{p.bg}}; color: #3B2A20">
+        <button type="button" onClick="{{p.pick}}" aria-pressed="{{p.pressed}}" style="height: 148px; border-radius: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; border: 3px solid {{p.border}}; background: {{p.bg}}; color: #4A2C1A">
           <span style="width: 64px; height: 64px; border-radius: 999px; display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: 700; background: {{p.avatarBg}}; color: {{p.avatarFg}}">{{p.initial}}</span>
           <span style="font-size: 20px; font-weight: 700; line-height: 1.1">{{p.name}}</span>
           <span style="font-size: 14px; color: #6B5547">{{p.role}}</span>
@@ -38,13 +38,13 @@ a{color:#3B2A20}a:hover{color:#B4441C}
     </div>
   </section>
 
-  <aside style="width: 460px; flex-shrink: 0; background: #FFFBF6; border-left: 1px solid #E4D6C6; padding: 48px 40px; display: flex; flex-direction: column; align-items: center; gap: 22px">
+  <aside style="width: 460px; flex-shrink: 0; background: #FFFFFF; border-left: 1px solid #E4D6C6; padding: 48px 40px; display: flex; flex-direction: column; align-items: center; gap: 22px">
     <sc-if value="{{hasPicked}}" hint-placeholder-val="{{ true }}">
       <div style="font-size: 18px; color: #6B5547">ใส่ PIN ของ</div>
       <div style="font-size: 28px; font-weight: 700; margin-top: -14px">{{pickedName}}</div>
       <div aria-label="PIN ที่ใส่แล้ว {{pinLen}} หลัก" role="img" style="display: flex; gap: 16px; height: 28px; align-items: center">
         <sc-for list="{{dots}}" as="d" hint-placeholder-count="4">
-          <span style="width: 22px; height: 22px; border-radius: 999px; border: 2px solid #3B2A20; background: {{d.bg}}"></span>
+          <span style="width: 22px; height: 22px; border-radius: 999px; border: 2px solid #4A2C1A; background: {{d.bg}}"></span>
         </sc-for>
       </div>
       <sc-if value="{{error}}" hint-placeholder-val="{{ false }}">
@@ -52,18 +52,18 @@ a{color:#3B2A20}a:hover{color:#B4441C}
       </sc-if>
       <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; width: 100%">
         <sc-for list="{{keys}}" as="k" hint-placeholder-count="12">
-          <button type="button" onClick="{{k.press}}" aria-label="{{k.aria}}" style="height: 84px; border-radius: 18px; border: 1px solid #E4D6C6; background: #F5EDE3; color: #3B2A20; font-size: 30px; font-weight: 600">{{k.label}}</button>
+          <button type="button" onClick="{{k.press}}" aria-label="{{k.aria}}" style="height: 84px; border-radius: 18px; border: 1px solid #E4D6C6; background: #F7F1E7; color: #4A2C1A; font-size: 30px; font-weight: 600">{{k.label}}</button>
         </sc-for>
       </div>
       <sc-if value="{{ready}}" hint-placeholder-val="{{ false }}">
-        <a href="Main.dc.html" style="width: 100%; height: 72px; border-radius: 18px; background: #3B2A20; color: #F5EDE3; text-decoration: none; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 700">เข้าสู่หน้าขาย</a>
+        <a href="Main.dc.html" style="width: 100%; height: 72px; border-radius: 18px; background: #4A2C1A; color: #F7F1E7; text-decoration: none; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 700">เข้าสู่หน้าขาย</a>
       </sc-if>
       <div style="font-size: 14px; color: #6B5547; text-align: center">ตัวอย่างนี้: PIN ถูกต้องคือ 1234</div>
     </sc-if>
     <sc-if value="{{notPicked}}" hint-placeholder-val="{{ false }}">
       <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; text-align: center; color: #6B5547">
-        <svg aria-hidden="true" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#C69C72" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"></rect><path d="M8 10V7a4 4 0 0 1 8 0v3"></path></svg>
-        <span style="font-size: 20px; font-weight: 600; color: #3B2A20">เลือกชื่อของคุณ</span>
+        <svg aria-hidden="true" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#B88A5A" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"></rect><path d="M8 10V7a4 4 0 0 1 8 0v3"></path></svg>
+        <span style="font-size: 20px; font-weight: 600; color: #4A2C1A">เลือกชื่อของคุณ</span>
         <span style="font-size: 16px">แล้วใส่ PIN 4 หลักเพื่อเริ่มขาย</span>
       </div>
     </sc-if>
@@ -98,12 +98,12 @@ class Component extends DCLogic {
       var on = p.id === s.picked;
       return {
         name: p.name, role: p.role, initial: thaiInitial(p.name), pressed: on ? 'true' : 'false',
-        border: on ? '#3B2A20' : '#E4D6C6', bg: on ? '#FFFBF6' : '#FBF5EE',
-        avatarBg: on ? '#3B2A20' : '#EADBC8', avatarFg: on ? '#F5EDE3' : '#3B2A20',
+        border: on ? '#4A2C1A' : '#E4D6C6', bg: on ? '#FFFFFF' : '#FBF5EE',
+        avatarBg: on ? '#4A2C1A' : '#EADBC8', avatarFg: on ? '#F7F1E7' : '#4A2C1A',
         pick: function () { self.setState({ picked: p.id, pin: '', error: false, ready: false }); }
       };
     });
-    var dots = [0, 1, 2, 3].map(function (i) { return { bg: i < s.pin.length ? '#3B2A20' : 'transparent' }; });
+    var dots = [0, 1, 2, 3].map(function (i) { return { bg: i < s.pin.length ? '#4A2C1A' : 'transparent' }; });
     var keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'ล้าง', '0', '⌫'].map(function (k) {
       return {
         label: k, aria: k === '⌫' ? 'ลบ' : k,

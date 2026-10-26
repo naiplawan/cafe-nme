@@ -20,7 +20,7 @@ export default async function ProviderPaymentPage({ params }: { params: Promise<
   } catch {
     notFound();
   }
-  return <main className="min-h-dvh space-y-5 bg-[#F5EDE3] p-5 text-[#3B2A20]">
+  return <main className="min-h-dvh space-y-5 bg-[#F7F1E7] p-5 text-[#4A2C1A]">
     <Link href="/pos/requests" className="underline">กลับรายการจาก QR</Link>
     <h1 className="text-2xl font-bold">รับชำระคำสั่งจาก QR</h1>
     <p>ยอดที่ร้านตรวจสอบจากเมนู: ฿{(draft.totalSatang / 100).toLocaleString("th-TH", { minimumFractionDigits: 2 })}</p>

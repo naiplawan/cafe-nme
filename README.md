@@ -1,4 +1,4 @@
-# Cafe'nMe
+# YELO Coffee
 
 A point of sale for Thai cafés with a LINE stamp-card membership. Staff sell on a tablet POS, owners manage the shop and see sales charts in a web admin, and customers collect stamps and redeem free drinks from a LINE Official Account (rich menu + LIFF member card).
 

@@ -23,7 +23,7 @@ export class RecoveryMailer {
       body: JSON.stringify({
         from: process.env.RECOVERY_EMAIL_FROM,
         to: [email],
-        subject: 'ตั้งรหัสผ่านใหม่สำหรับ Cafe’nMe',
+        subject: 'ตั้งรหัสผ่านใหม่สำหรับ YELO Coffee',
         text: `เปิดลิงก์นี้เพื่อตั้งรหัสผ่านใหม่ (ใช้ได้ครั้งเดียวภายใน 30 นาที):\n${url}\n\nหากคุณไม่ได้ร้องขอ สามารถละเว้นอีเมลนี้ได้`,
       }),
       signal: AbortSignal.timeout(10_000),
