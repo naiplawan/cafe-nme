@@ -1,4 +1,4 @@
-import { NextResponse, type NextRequest } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 
 // Visitors with a session cookie skip the landing page. The matcher runs this only when that cookie
 // exists, so anonymous visits to / stay static. A stale cookie reaches /admin, which sends them to /login.

@@ -2,7 +2,7 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("next/font/google", () => ({ Noto_Serif_Thai: () => ({ variable: "font-serif-stub" }) }));
+vi.mock("next/font/google", () => ({ Lilita_One: () => ({ variable: "font-display-stub" }), Mitr: () => ({ variable: "font-heading-stub" }) }));
 
 const { default: LandingPage } = await import("./page");
 const { landing, landingJsonLd } = await import("./landing-content");
