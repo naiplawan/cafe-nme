@@ -1322,6 +1322,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/shops/{shopId}/orders/release-promptpay-stock/{requestId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["OrdersController_releasePromptPayStock"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/shops/{shopId}/orders/promptpay-config": {
         parameters: {
             query?: never;
@@ -2763,6 +2779,12 @@ export interface components {
             discountSatang: number;
             totalSatang: number;
         };
+        ReleasePromptPayStockDto: {
+            staffId: string;
+        };
+        OrderVoidResultDto: {
+            ok: boolean;
+        };
         PromptPayIdDto: {
             promptpayId: string | null;
         };
@@ -2826,9 +2848,6 @@ export interface components {
         };
         VoidOrderDto: {
             managerStaffId: string;
-        };
-        OrderVoidResultDto: {
-            ok: boolean;
         };
         ReconciliationRowDto: {
             paymentId: string;
@@ -11453,6 +11472,95 @@ export interface operations {
                         /** Format: date-time */
                         expiresAt: string;
                     };
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
+            };
+            /** @description Resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
+            };
+            /** @description Unexpected server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
+            };
+            /** @description Dependency unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
+            };
+        };
+    };
+    OrdersController_releasePromptPayStock: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                shopId: string;
+                requestId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReleasePromptPayStockDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderVoidResultDto"];
                 };
             };
             /** @description Invalid request */

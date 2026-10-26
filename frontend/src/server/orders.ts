@@ -223,3 +223,10 @@ export async function reservePromptPayStock(session: { shopId: string; staffId: 
     });
   return response;
 }
+
+export async function releasePromptPayStock(session: { shopId: string; staffId: string }, requestId: string): Promise<void> {
+  await request(`/v1/shops/${encodeURIComponent(session.shopId)}/orders/release-promptpay-stock/${encodeURIComponent(requestId)}`,
+    z.object({ ok: z.boolean() }) satisfies z.ZodType<components['schemas']['OrderVoidResultDto']>,
+    { method: 'POST', body: JSON.stringify({ staffId: session.staffId }) },
+  );
+}

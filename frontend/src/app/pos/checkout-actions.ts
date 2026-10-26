@@ -7,7 +7,7 @@ import { sendOperationalAlert } from "@/lib/operational-alert";
 import { logger } from "@/lib/logger";
 import { formatBaht } from "@/lib/money";
 import { getPosPromptPayConfig, getPosReceiptRecipient } from "@/server/pos-operations";
-import { CheckoutError, quoteCheckout, reservePromptPayStock, checkout, getOrder, type CheckoutInput, type CheckoutResult } from "@/server/orders";
+import { CheckoutError, quoteCheckout, releasePromptPayStock, reservePromptPayStock, checkout, getOrder, type CheckoutInput, type CheckoutResult } from "@/server/orders";
 import { requirePosStaff } from "@/server/pos-session";
 import { pushText } from "@/server/line";
 import type { CheckoutSessionScope } from "@/lib/checkout-attempt";
@@ -123,5 +123,15 @@ export async function reservePromptPayStockAction(input: CheckoutInput & { expec
   } catch (error) {
     logger.error({ err: error, shopId: session.shopId }, "PromptPay stock reservation failed");
     return { ok: false as const, message: error instanceof CheckoutError ? CHECKOUT_MESSAGES[error.code] : "จองวัตถุดิบไม่สำเร็จ กรุณาลองใหม่" };
+  }
+}
+
+// Best effort: an unreleased hold still expires on its own.
+export async function releasePromptPayStockAction(requestId: string) {
+  const session = await requirePosStaff();
+  try {
+    await releasePromptPayStock({ shopId: session.shopId, staffId: session.staff.id }, requestId);
+  } catch (error) {
+    logger.error({ err: error, shopId: session.shopId }, "PromptPay stock release failed");
   }
 }

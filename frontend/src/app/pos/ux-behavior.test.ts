@@ -2,7 +2,7 @@
 import React from "react";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
-const actions = vi.hoisted(() => ({ getPosDeviceId: vi.fn(), getOrderAction: vi.fn(), voidOrderAction: vi.fn(), searchMembersByPhone: vi.fn(), quoteCheckoutAction: vi.fn(), reservePromptPayStockAction: vi.fn(), checkoutAction: vi.fn(), loadQueueAction: vi.fn(), advancePreparationAction: vi.fn(), remakeDrinkAction: vi.fn(), loadRequestsAction: vi.fn(), decideRequestAction: vi.fn(), openShiftAction: vi.fn(), closeShiftAction: vi.fn(), cashMovementAction: vi.fn() }));
+const actions = vi.hoisted(() => ({ getPosDeviceId: vi.fn(), getOrderAction: vi.fn(), voidOrderAction: vi.fn(), searchMembersByPhone: vi.fn(), quoteCheckoutAction: vi.fn(), reservePromptPayStockAction: vi.fn(), releasePromptPayStockAction: vi.fn(), checkoutAction: vi.fn(), loadQueueAction: vi.fn(), advancePreparationAction: vi.fn(), remakeDrinkAction: vi.fn(), loadRequestsAction: vi.fn(), decideRequestAction: vi.fn(), openShiftAction: vi.fn(), closeShiftAction: vi.fn(), cashMovementAction: vi.fn() }));
 vi.mock("./orders/actions", () => actions);
 vi.mock("./queue/actions", () => actions);
 vi.mock("./requests/actions", () => actions);
@@ -76,11 +76,26 @@ it("withholds QR until a changed quote is accepted and submits exact satang", as
   expect(await screen.findByTestId("qr")).toBeTruthy();
   expect(screen.getByTestId("qr").textContent).toBe("5050");
   fireEvent.click(screen.getByRole("tab", { name: "เงินสด" }));
+  expect(actions.releasePromptPayStockAction).toHaveBeenCalledWith(actions.reservePromptPayStockAction.mock.calls[0][0].requestId);
   fireEvent.click(screen.getByRole("button", { name: "พอดี" }));
   fireEvent.click(screen.getByRole("button", { name: /รับเงิน · ทอน/ }));
   await waitFor(() => expect(onPaid).toHaveBeenCalled());
   expect(actions.checkoutAction).toHaveBeenCalledWith(expect.objectContaining({ expectedTotalSatang: 5050, payment: { method: "cash", cashReceivedSatang: 5050 } }));
   expect(actions.checkoutAction).toHaveBeenCalledWith(expect.objectContaining({ requestId: actions.reservePromptPayStockAction.mock.calls[0][0].requestId }));
+});
+
+it("releases the PromptPay stock hold when the dialog closes without payment", async () => {
+  const line = { key: "coffee", name: "Coffee", qty: 1, modifiersText: "", lineTotalSatang: 5000 };
+  actions.quoteCheckoutAction.mockResolvedValue({ ok: true, quote: { lines: [line], subtotalSatang: 5000, discountSatang: 0, totalSatang: 5000 } });
+  actions.reservePromptPayStockAction.mockResolvedValue({ ok: true, reservation: { expiresAt: new Date(Date.now() + 1800000) } });
+  const onClose = vi.fn();
+  render(React.createElement(PaymentDialog, { orderLabel: "#001", lines: [line], subtotalSatang: 5000, discountSatang: 0, totalSatang: 5000, checkoutInput: { lines: [{ productId: "11111111-1111-4111-8111-111111111111", qty: 1, modifierIds: [] }] }, cartStorageKey: "cart", expectedScope: { shopId: "shop", staffId: "staff", deviceId: "device" }, promptpayEnabled: true, shopName: "Cafe", onClose, onPaid: vi.fn() }));
+  await screen.findByRole("tab", { name: "พร้อมเพย์" });
+  fireEvent.click(screen.getByRole("tab", { name: "พร้อมเพย์" }));
+  await screen.findByTestId("qr");
+  fireEvent.click(screen.getByRole("button", { name: "กลับ" }));
+  expect(onClose).toHaveBeenCalled();
+  expect(actions.releasePromptPayStockAction).toHaveBeenCalledWith(actions.reservePromptPayStockAction.mock.calls[0][0].requestId);
 });
 
 it("does not display a PromptPay QR or accept confirmation when stock cannot be reserved", async () => {

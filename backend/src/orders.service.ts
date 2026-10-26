@@ -239,6 +239,12 @@ export class OrdersService {
     }
   }
 
+  // A cancelled QR returns its stock at once instead of holding it until expiry.
+  async releasePromptPayStock(shopId: string, staffId: string, requestId: string): Promise<void> {
+    await this.database.connection`delete from promptpay_stock_holds
+      where shop_id=${shopId}::uuid and request_id=${requestId}::uuid and staff_id=${staffId}::uuid`;
+  }
+
   async checkout(shopId: string, staffId: string, input: CheckoutInput, providerIntentId?: string): Promise<CheckoutReceipt> {
     if (providerIntentId && (!input.selfOrderId || input.requestId !== providerIntentId || input.payment.method !== 'promptpay' || input.memberId || input.redeemRewardId)) {
       throw new ConflictException('Invalid provider settlement context');

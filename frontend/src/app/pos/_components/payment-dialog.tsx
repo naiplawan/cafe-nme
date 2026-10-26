@@ -5,7 +5,7 @@ import { formatBaht, parseBahtToSatang } from "@/lib/money";
 import { suggestCashAmounts } from "@/lib/pricing";
 import type { CheckoutInput, CheckoutResult, CheckoutQuote } from "@/server/orders";
 import { submitBrowserCheckout } from "@/lib/browser-checkout";
-import { checkoutAction, quoteCheckoutAction, reservePromptPayStockAction } from "@/app/pos/checkout-actions";
+import { checkoutAction, quoteCheckoutAction, releasePromptPayStockAction, reservePromptPayStockAction } from "@/app/pos/checkout-actions";
 import { gsap, MOTION, prefersReducedMotion, useGSAP } from "@/components/motion/gsap";
 import { Keypad } from "./keypad";
 import { PromptPayQr } from "./promptpay-qr";
@@ -121,6 +121,12 @@ export function PaymentDialog({ orderLabel, lines: cartLines, subtotalSatang: ca
     if (!result.ok) throw new Error(result.message);
   }, [checkoutInput, expectedScope, totalSatang]);
 
+  const releasePromptPay = useCallback(() => {
+    if (!promptPayRequestId || !stockReserved) return;
+    setStockReserved(false);
+    void releasePromptPayStockAction(promptPayRequestId);
+  }, [promptPayRequestId, stockReserved]);
+
   async function selectPromptPay() {
     if (!promptpayEnabled || !ready || pending) return;
     setError(null);
@@ -180,6 +186,7 @@ export function PaymentDialog({ orderLabel, lines: cartLines, subtotalSatang: ca
   });
   const requestClose = useCallback(() => {
     if (closing || pending || recovering) return;
+    releasePromptPay();
     if (prefersReducedMotion()) {
       onClose();
       return;
@@ -190,7 +197,7 @@ export function PaymentDialog({ orderLabel, lines: cartLines, subtotalSatang: ca
     root.style.pointerEvents = "none";
     setClosing(true);
     animateClose(root, dialog, onClose);
-  }, [animateClose, closing, onClose, pending, recovering]);
+  }, [animateClose, closing, onClose, pending, recovering, releasePromptPay]);
 
   useEffect(() => {
     dialogRef.current?.focus();
@@ -279,7 +286,7 @@ export function PaymentDialog({ orderLabel, lines: cartLines, subtotalSatang: ca
           <legend className="sr-only">วิธีชำระและจำนวนเงินที่รับ</legend>
           <div role="tablist" aria-label="วิธีชำระ" className="relative grid grid-cols-2 rounded-[18px] bg-[#F1E7DC] p-1.5">
             <span ref={indicatorRef} aria-hidden="true" className="absolute inset-y-1.5 left-1.5 w-[calc(50%-6px)] rounded-[14px] bg-[#3B2A20] shadow-sm" />
-            <button type="button" role="tab" aria-selected={isCash} onClick={() => { setMethod("cash"); setError(null); }}
+            <button type="button" role="tab" aria-selected={isCash} onClick={() => { releasePromptPay(); setMethod("cash"); setError(null); }}
               className={`relative z-10 h-[60px] rounded-[14px] text-lg font-bold transition-colors ${isCash ? "text-[#F5EDE3]" : "text-[#3B2A20]"}`}>เงินสด</button>
             <button type="button" role="tab" aria-selected={!isCash} disabled={!promptpayEnabled}
               onClick={() => void selectPromptPay()}

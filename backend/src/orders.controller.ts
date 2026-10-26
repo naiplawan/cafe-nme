@@ -13,7 +13,7 @@ import {
 import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiResponse, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { ApiErrorDto } from './common/api-error.dto.js';
 import { ApiStandardErrors } from './common/api-errors.decorator.js';
-import { CheckoutDto, VoidOrderDto } from './common/request.dto.js';
+import { CheckoutDto, ReleasePromptPayStockDto, VoidOrderDto } from './common/request.dto.js';
 import { CheckoutReceiptDto } from './checkout-receipt.dto.js';
 import {
   CheckoutQuoteDto,
@@ -144,6 +144,20 @@ export class OrdersController {
   reservePromptPayStock(@Param('shopId', new ParseUUIDPipe()) shopId: string, @Body() body: CheckoutDto) {
     const input = parseCheckout(body);
     return this.orders.reservePromptPayStock(shopId, input.staffId, input);
+  }
+
+  @Post('release-promptpay-stock/:requestId')
+  @ApiCreatedResponse({ type: OrderVoidResultDto })
+  releasePromptPayStock(
+    @Param('shopId', new ParseUUIDPipe()) shopId: string,
+    @Param('requestId', new ParseUUIDPipe()) requestId: string,
+    @Body() body: ReleasePromptPayStockDto,
+  ) {
+    const staffId = body && typeof body === 'object' ? body.staffId : undefined;
+    if (typeof staffId !== 'string' || !UUID_PATTERN.test(staffId)) {
+      throw new BadRequestException('staffId must be a valid UUID');
+    }
+    return this.orders.releasePromptPayStock(shopId, staffId, requestId).then(() => ({ ok: true }));
   }
 
   @Get('promptpay-config')

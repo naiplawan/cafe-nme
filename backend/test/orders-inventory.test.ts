@@ -43,3 +43,22 @@ test("PromptPay stock reservation prevents another checkout consuming stock befo
  const reservation=await sql`select count(*)::int as n from promptpay_stock_holds where shop_id=${f.shopId} and request_id=${requestId}`;
  assert.equal(reservation[0].n,0);
 });
+
+test("releasing a cancelled PromptPay reservation frees its stock and only the reserving staff can release it",{skip:!process.env.TEST_DATABASE_URL},async()=>{
+ const sql=f.database.connection;
+ const [p]=await sql`insert into products(shop_id,name,base_price_satang) values(${f.shopId},'Released Latte',6500) returning id`;
+ const [milk]=await sql`insert into ingredients(shop_id,name,unit) values(${f.shopId},'Released Milk','ml') returning id`;
+ await sql`insert into recipe_lines(shop_id,product_id,ingredient_id,quantity_milliunits) values(${f.shopId},${p.id},${milk.id},200000)`;
+ const {InventoryService}=await import("../src/inventory.service.js");
+ await new InventoryService(f.database as never).move(f.shopId,f.managerId,milk.id,{requestId:randomUUID(),kind:"receive",quantityMilliunits:200000,reason:"Opening stock"});
+ const orders=new OrdersService(f.database as never);
+ const requestId=randomUUID();
+ await orders.reservePromptPayStock(f.shopId,f.ownerId,{requestId,lines:[{productId:p.id,qty:1,modifierIds:[]}],payment:{method:"promptpay" as const}});
+ const holds=async()=>(await sql`select count(*)::int as n from promptpay_stock_holds where shop_id=${f.shopId} and request_id=${requestId}`)[0].n;
+ await orders.releasePromptPayStock(f.shopId,f.managerId,requestId);
+ assert.equal(await holds(),1);
+ await orders.releasePromptPayStock(f.shopId,f.ownerId,requestId);
+ assert.equal(await holds(),0);
+ const receipt=await orders.checkout(f.shopId,f.ownerId,{lines:[{productId:p.id,qty:1,modifierIds:[]}],payment:{method:"promptpay" as const}});
+ assert.equal(receipt.totalSatang,6500);
+});

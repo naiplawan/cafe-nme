@@ -85,6 +85,10 @@ export class VoidOrderDto {
   @ApiProperty({ type: String }) @Allow() managerStaffId!: string;
 }
 
+export class ReleasePromptPayStockDto {
+  @ApiProperty({ type: String }) @Allow() staffId!: string;
+}
+
 export class CheckoutLineDto {
   @ApiProperty({ type: String }) @Allow() productId!: string;
   @ApiProperty({ type: Number }) @Allow() qty!: number;
