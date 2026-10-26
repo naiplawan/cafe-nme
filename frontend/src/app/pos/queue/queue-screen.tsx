@@ -6,7 +6,7 @@ import { advancePreparationAction, loadQueueAction, remakeDrinkAction } from "./
 
 interface QueueScreenProps { initial: PreparationRow[]; initialError?: string }
 const labels = { received: "รับออเดอร์แล้ว", preparing: "กำลังทำ", ready: "พร้อมรับแล้ว" };
-const statusStyles = { received: "bg-[#F7F1E7] text-[#817668]", preparing: "bg-[#F7DCD0] text-[#8E3415]", ready: "bg-[#E7F1E8] text-[#245232]" };
+const statusStyles = { received: "bg-[#F7F1E7] text-[#6B5E55]", preparing: "bg-[#F7DCD0] text-[#8E3415]", ready: "bg-[#E7F1E8] text-[#245232]" };
 const REFRESH_INTERVAL_MS = 5000;
 
 export function QueueScreen({ initial, initialError }: QueueScreenProps) {

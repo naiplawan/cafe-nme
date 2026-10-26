@@ -76,7 +76,7 @@ export function CartPanel({ lines, pricedLines, subtotalSatang, discountSatang, 
   return <aside ref={panelRef} data-cart-panel aria-label="ออเดอร์ปัจจุบัน" className="flex w-full min-w-0 overflow-y-auto lg:w-[min(404px,34vw)] lg:min-w-[320px] shrink-0 flex-col border-l border-[#E2D8C7] bg-[#FFFFFF] shadow-[-8px_0_24px_rgba(59,42,32,0.035)]">
     <MemberPanel member={member} loading={memberLoading} lookupError={memberLookupError} redeemRewardId={redeemRewardId} onScan={onScan} onPhone={onPhone} onRemove={onRemoveMember} onToggleReward={onToggleReward} />
     <div className="min-h-32 flex-1 overflow-y-auto px-4 py-1.5">
-      {lines.length === 0 ? <div className="flex h-full flex-col items-center justify-center gap-2 text-center text-[#817668]">
+      {lines.length === 0 ? <div className="flex h-full flex-col items-center justify-center gap-2 text-center text-[#6B5E55]">
         <Coffee aria-hidden="true" size={44} className="text-[#B88A5A]" /><span className="text-[17px] font-semibold">ยังไม่มีรายการ</span><span className="text-sm">แตะเมนูทางซ้ายเพื่อเริ่มออเดอร์</span>
       </div> : lines.map((line, index) => {
         const priced = pricedLines[index];
@@ -85,7 +85,7 @@ export function CartPanel({ lines, pricedLines, subtotalSatang, discountSatang, 
         return <div key={lineKey} data-cart-line data-line-key={lineKey} className="flex gap-2.5 border-b border-[#EFE3D5] py-3">
           <button type="button" onClick={() => onEdit(index)} aria-label={`แก้ไข ${productNames.get(line.productId) ?? priced?.name}${modifiersText ? ` ${modifiersText}` : ""}`}
             className="min-h-11 min-w-0 flex-1 rounded-lg text-left focus-visible:outline-2 focus-visible:outline-[#F4B942]">
-            <div className="text-[17px] font-semibold">{productNames.get(line.productId) ?? priced?.name}</div>{soldOutIds.has(line.productId) ? <div className="text-sm font-semibold text-[#8E3415]">หมดแล้ว — กดปุ่มลดจำนวนเพื่อนำออก</div> : <div className="text-sm text-[#817668]">{modifiersText || "แตะเพื่อแก้ไขรายการ"}</div>}
+            <div className="text-[17px] font-semibold">{productNames.get(line.productId) ?? priced?.name}</div>{soldOutIds.has(line.productId) ? <div className="text-sm font-semibold text-[#8E3415]">หมดแล้ว — กดปุ่มลดจำนวนเพื่อนำออก</div> : <div className="text-sm text-[#6B5E55]">{modifiersText || "แตะเพื่อแก้ไขรายการ"}</div>}
             <div className="mt-1 text-[15px] font-bold tabular-nums">{formatBaht(priced?.lineTotalSatang ?? 0)}</div></button>
           <div className="flex items-center gap-1">
             <button type="button" aria-label={`ลดจำนวน ${productNames.get(line.productId)}`} onClick={() => { if (line.qty === 1) { removeLineWithMotionRef.current(index); } onQuantity(index, -1); }} className="flex size-11 items-center justify-center rounded-xl border border-[#E2D8C7] bg-[#FFFFFF] active:scale-[0.97] motion-reduce:transition-none"><Minus aria-hidden="true" size={20} /></button>
@@ -96,7 +96,7 @@ export function CartPanel({ lines, pricedLines, subtotalSatang, discountSatang, 
       })}
     </div>
     <footer className="flex shrink-0 flex-col gap-1.5 border-t border-[#E2D8C7] p-[14px_16px_16px]">
-      <div className="flex justify-between text-[15px] text-[#817668]"><span>รวม {itemCount} รายการ</span><span className="tabular-nums">{formatBaht(subtotalSatang)}</span></div>
+      <div className="flex justify-between text-[15px] text-[#6B5E55]"><span>รวม {itemCount} รายการ</span><span className="tabular-nums">{formatBaht(subtotalSatang)}</span></div>
       {discountSatang > 0 && <div className="flex justify-between text-[15px] font-semibold text-[#2F6B3F]"><span>ส่วนลดรางวัลสมาชิก</span><span className="tabular-nums">−{formatBaht(discountSatang)}</span></div>}
       <div className="mt-0.5 flex items-baseline justify-between"><span className="text-lg font-semibold">ยอดชำระ</span><span className="text-[32px] font-bold tabular-nums">{formatBaht(totalSatang)}</span></div>
       <button ref={payRef} type="button" disabled={!lines.length || !online || hasSoldOut} onClick={onPay} className="relative mt-1.5 h-[72px] overflow-hidden rounded-2xl bg-[#F4B942] text-[22px] font-bold text-[#2F2A25] shadow-[0_5px_12px_rgba(244,185,66,0.22)] transition-transform active:scale-[0.99] motion-reduce:transform-none motion-reduce:transition-none disabled:bg-[#D1C1A8]">

@@ -59,8 +59,8 @@ export function ReceiptView({ order, logoUrl }: { order: OrderDetail; logoUrl: s
         <div className="space-y-2">
           {order.items.map((item) => <div key={item.id}>
             <div className="flex justify-between gap-2"><span className="min-w-0 break-words">{item.name} × {item.qty}</span><span className="shrink-0 tabular-nums">{formatBaht(item.unitPriceSatang * item.qty)}</span></div>
-            {item.modifiers.length ? <p className="m-0 pl-2 text-[11px] text-[#817668]">{item.modifiers.map((modifier) => modifier.name).join(" · ")}</p> : null}
-            {item.note ? <p className="m-0 pl-2 text-[11px] text-[#817668]">หมายเหตุ: {item.note}</p> : null}
+            {item.modifiers.length ? <p className="m-0 pl-2 text-[11px] text-[#6B5E55]">{item.modifiers.map((modifier) => modifier.name).join(" · ")}</p> : null}
+            {item.note ? <p className="m-0 pl-2 text-[11px] text-[#6B5E55]">หมายเหตุ: {item.note}</p> : null}
           </div>)}
         </div>
         <div className="my-3 border-t border-dashed border-[#817668]" />

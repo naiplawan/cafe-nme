@@ -103,11 +103,11 @@ export function DoneScreen({ result, method, onNewOrder }: DoneScreenProps) {
             <path ref={checkRef} d="m5 12 5 5L20 7" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </span>
-        <div className="text-xl text-[#817668]">ชำระเงินเรียบร้อย · ออเดอร์</div>
+        <div className="text-xl text-[#6B5E55]">ชำระเงินเรียบร้อย · ออเดอร์</div>
         <span ref={orderRef} className="text-[72px] font-bold leading-none tabular-nums">{orderLabel}</span>
 
         {method === "cash" && <div ref={changeRef} className="rounded-[18px] border border-[#E2D8C7] bg-[#FFFFFF] px-8 py-2.5 shadow-[0_4px_14px_rgba(59,42,32,0.05)]">
-          <span className="text-lg text-[#817668]">เงินทอน </span><span className="text-[40px] font-bold tabular-nums">{formatBaht(result.changeSatang)}</span>
+          <span className="text-lg text-[#6B5E55]">เงินทอน </span><span className="text-[40px] font-bold tabular-nums">{formatBaht(result.changeSatang)}</span>
         </div>}
 
         {member && <div className="flex items-center gap-3 rounded-[18px] border border-[#E2D8C7] bg-[#FFFFFF] px-5 py-3 text-left shadow-[0_4px_14px_rgba(74,44,26,0.04)]">
@@ -155,7 +155,7 @@ export function DoneScreen({ result, method, onNewOrder }: DoneScreenProps) {
             <MessageCircle aria-hidden="true" className="size-[22px]" />{sending ? "กำลังส่ง…" : "ส่งใบเสร็จทาง LINE"}
           </button>}
         </div>
-        {lineMessage && <p role="status" className="text-sm text-[#817668]">{lineMessage}</p>}
+        {lineMessage && <p role="status" className="text-sm text-[#6B5E55]">{lineMessage}</p>}
         <button ref={newOrderRef} type="button" onClick={onNewOrder}
           className="h-[76px] w-full rounded-[18px] bg-[#4A2C1A] text-[22px] font-bold text-[#F7F1E7] shadow-[0_8px_20px_rgba(59,42,32,0.16)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#F4B942]">เริ่มออเดอร์ใหม่</button>
       </div>

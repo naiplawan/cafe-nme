@@ -88,7 +88,7 @@ export function ProductGrid({ menu, categoryId, addedProductId, onChoose }: Prod
         <input type="search" aria-label="ค้นหาเมนู" placeholder="ค้นหาเมนู" value={query} onChange={(event) => setQuery(event.target.value)}
           className="h-12 w-full rounded-xl border border-[#E2D8C7] bg-[#FFFFFF] pl-12 pr-12 text-base text-[#4A2C1A] outline-none placeholder:text-[#8A796B] focus-visible:ring-2 focus-visible:ring-[#F4B942]" />
         {query && <button type="button" aria-label="ล้างคำค้นหา" onClick={() => setQuery("")}
-          className="absolute right-1 top-1/2 flex size-10 -translate-y-1/2 items-center justify-center rounded-lg text-[#817668] hover:bg-[#F1E7DC] focus-visible:outline-2 focus-visible:outline-[#F4B942]"><X aria-hidden="true" size={18} /></button>}
+          className="absolute right-1 top-1/2 flex size-10 -translate-y-1/2 items-center justify-center rounded-lg text-[#6B5E55] hover:bg-[#F1E7DC] focus-visible:outline-2 focus-visible:outline-[#F4B942]"><X aria-hidden="true" size={18} /></button>}
       </label>
       <button type="button" aria-pressed={manageSoldOut} onClick={() => setManageSoldOut((current) => !current)}
         className={`h-12 shrink-0 rounded-xl border px-4 text-base font-semibold ${manageSoldOut ? "border-[#4A2C1A] bg-[#4A2C1A] text-[#F7F1E7]" : "border-[#E2D8C7] bg-[#FFFFFF] text-[#4A2C1A]"}`}>
@@ -97,8 +97,8 @@ export function ProductGrid({ menu, categoryId, addedProductId, onChoose }: Prod
     </div>
     {manageSoldOut && <div role="status" className="mb-3 shrink-0 rounded-xl border border-dashed border-[#F4B942] bg-[#F7DCD0] px-4 py-2 text-sm font-semibold text-[#8E3415]">แตะเมนูเพื่อสลับ หมด/มีขาย</div>}
     {notice ? <div role="status" className="mb-3 shrink-0 rounded-xl bg-[#4A2C1A] px-5 py-3 text-base font-semibold text-white">{notice}</div> : null}
-    {searchTerm ? <p className="mb-3 text-sm text-[#817668]">กำลังค้นหาเมนูจากทุกหมวดหมู่</p> : null}
-    {products.length === 0 ? <div className="flex flex-1 items-center justify-center text-lg text-[#817668]">{searchTerm ? "ไม่พบเมนูที่ค้นหา" : "ยังไม่มีเมนูในหมวดหมู่นี้"}</div> :
+    {searchTerm ? <p className="mb-3 text-sm text-[#6B5E55]">กำลังค้นหาเมนูจากทุกหมวดหมู่</p> : null}
+    {products.length === 0 ? <div className="flex flex-1 items-center justify-center text-lg text-[#6B5E55]">{searchTerm ? "ไม่พบเมนูที่ค้นหา" : "ยังไม่มีเมนูในหมวดหมู่นี้"}</div> :
       <div ref={gridRef} className="grid grid-cols-[repeat(auto-fill,minmax(160px,1fr))] content-start gap-3">
         {products.map((product) => {
           const soldOut = soldOutOverrides[product.id] ?? product.soldOut;

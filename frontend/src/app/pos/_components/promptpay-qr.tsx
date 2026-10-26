@@ -64,12 +64,12 @@ export function PromptPayQr({ amountSatang, shopName }: PromptPayQrProps) {
               <span className="rounded-md bg-[#E2D8C7]" /><span className="rounded-md bg-[#F7F1E7]" />
               <span className="col-span-2 rounded-md bg-[#E2D8C7]" />
             </div>
-            <span className="text-sm text-[#817668]">กำลังสร้าง QR พร้อมเพย์…</span>
+            <span className="text-sm text-[#6B5E55]">กำลังสร้าง QR พร้อมเพย์…</span>
           </div>
         )}
       </div>
       <p className="font-semibold text-[#4A2C1A]">สแกนจ่าย {formatBaht(amountSatang)} · {shopName}</p>
-      <p className="text-sm text-[#817668]">ตรวจยอดเงินเข้าในแอปธนาคาร แล้วกด “ได้รับเงินแล้ว”</p>
+      <p className="text-sm text-[#6B5E55]">ตรวจยอดเงินเข้าในแอปธนาคาร แล้วกด “ได้รับเงินแล้ว”</p>
     </div>
   );
 }

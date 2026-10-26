@@ -56,17 +56,17 @@ export function PhoneDialog({ onClose, onAttach }: PhoneDialogProps) {
       className="relative flex flex-col sm:flex-row max-h-[calc(100dvh-32px)] w-[min(760px,calc(100vw-32px))] gap-6 overflow-y-auto rounded-3xl border border-[#E2D8C7] bg-[#FFFFFF] p-6 shadow-[0_24px_70px_rgba(43,30,22,0.22)] outline-none">
       <div className="flex min-w-0 flex-1 flex-col gap-3.5">
         <div className="flex min-h-11 items-center justify-between gap-2"><h2 id={`${id}-phone-title`} className="text-[22px] font-bold">ค้นหาด้วยเบอร์โทร</h2>
-          <button type="button" aria-label="ปิดหน้าต่าง" onClick={onClose} className="flex size-11 shrink-0 items-center justify-center rounded-xl text-[#817668] transition-colors hover:bg-[#EFE3D5]"><X aria-hidden="true" /></button>
+          <button type="button" aria-label="ปิดหน้าต่าง" onClick={onClose} className="flex size-11 shrink-0 items-center justify-center rounded-xl text-[#6B5E55] transition-colors hover:bg-[#EFE3D5]"><X aria-hidden="true" /></button>
         </div>
         <div aria-live="polite" className="flex h-[68px] items-center rounded-2xl border-2 border-[#4A2C1A] px-[18px] text-[30px] font-bold tracking-wide">{display}</div>
         <div ref={resultsRef} className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
-          {phone.length < 4 && <p className="text-[15px] text-[#817668]">พิมพ์อย่างน้อย 4 หลักเพื่อค้นหา</p>}
-          {loading && <p className="flex items-center gap-2 text-[#817668]"><Search aria-hidden="true" size={18} />กำลังค้นหา…</p>}
-          {hasCurrentResult && !searchResult.error && members.length === 0 && <p className="text-[15px] text-[#817668]">ไม่พบสมาชิก</p>}
+          {phone.length < 4 && <p className="text-[15px] text-[#6B5E55]">พิมพ์อย่างน้อย 4 หลักเพื่อค้นหา</p>}
+          {loading && <p className="flex items-center gap-2 text-[#6B5E55]"><Search aria-hidden="true" size={18} />กำลังค้นหา…</p>}
+          {hasCurrentResult && !searchResult.error && members.length === 0 && <p className="text-[15px] text-[#6B5E55]">ไม่พบสมาชิก</p>}
           {hasCurrentResult && searchResult.error && <div role="alert">ค้นหาไม่สำเร็จ กรุณาลองใหม่ <button type="button" className="min-h-11 underline" onClick={() => setRetry((value) => value + 1)}>ลองใหม่</button></div>}
           {members.map((member) => <button data-member-result key={member.id} type="button" onClick={() => { onAttach(member); onClose(); }} className="flex min-h-[72px] items-center gap-3 rounded-2xl border border-[#B88A5A] bg-[#F7F1E7] p-3 text-left shadow-[0_3px_10px_rgba(59,42,32,0.05)] transition-colors hover:bg-[#EFE3D5]">
             <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-[#06C755] font-bold text-white">{thaiInitial(member.displayName)}</span>
-            <span className="min-w-0 flex-1 leading-tight"><b className="text-[17px]">{member.displayName}</b><br /><span className="text-sm text-[#817668]">{maskPhone(member.phone) || "ไม่ระบุเบอร์"} · สะสม {member.stampBalance}/{member.stampGoal} · มีรางวัล {member.availableRewards.length}</span></span>
+            <span className="min-w-0 flex-1 leading-tight"><b className="text-[17px]">{member.displayName}</b><br /><span className="text-sm text-[#6B5E55]">{maskPhone(member.phone) || "ไม่ระบุเบอร์"} · สะสม {member.stampBalance}/{member.stampGoal} · มีรางวัล {member.availableRewards.length}</span></span>
             <span className="shrink-0 text-[15px] font-bold text-[#6B4226]">เลือก</span>
           </button>)}
         </div>

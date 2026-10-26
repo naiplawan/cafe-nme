@@ -37,7 +37,7 @@ export function CheckoutRecovery({ pending, cartStorageKey = null, onRecovered, 
   return <main className="flex min-h-dvh items-center justify-center bg-[#F7F1E7] p-6 text-[#4A2C1A]">
     <section className="w-full max-w-[560px] space-y-5 rounded-[24px] border border-[#E2D8C7] bg-[#FFFFFF] p-7 text-center shadow-[0_12px_36px_rgba(59,42,32,0.08)]" aria-live="polite" aria-busy={busy}>
       <h1 className="text-2xl font-bold">พบรายการชำระเงินที่ยังไม่ยืนยัน</h1>
-      <p className="text-base text-[#817668]">ระบบจะตรวจสอบรายการเดิมด้วยรหัสเดิม เพื่อป้องกันการบันทึกซ้ำ</p>
+      <p className="text-base text-[#6B5E55]">ระบบจะตรวจสอบรายการเดิมด้วยรหัสเดิม เพื่อป้องกันการบันทึกซ้ำ</p>
       <Link href="/pos/login" className="inline-flex min-h-11 items-center text-sm font-semibold underline">เข้าสู่ระบบด้วยพนักงานที่รับรายการเดิม</Link>
       {message ? <p role="alert" className="text-sm font-semibold text-[#8E3415]">{message}</p> : null}
       <button type="button" disabled={busy} onClick={() => void recover()} className="h-16 w-full rounded-2xl bg-[#2F6B3F] text-lg font-bold text-white disabled:opacity-60">

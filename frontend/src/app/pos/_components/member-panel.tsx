@@ -42,8 +42,8 @@ export function MemberPanel({ member, loading = false, lookupError, redeemReward
   return <section ref={panelRef} className="flex flex-col gap-2.5 border-b border-[#E2D8C7] p-[14px_16px]">
     <div className="flex items-center gap-3">
       <span className="flex size-11 items-center justify-center rounded-full bg-[#06C755] text-lg font-bold text-white">{thaiInitial(member.displayName)}</span>
-      <div className="min-w-0 flex-1 leading-tight"><div className="truncate text-[17px] font-bold">{member.displayName}</div><div className="text-sm text-[#817668]">{maskPhone(member.phone) || "ไม่ระบุเบอร์"} · สะสม {member.stampBalance}/{member.stampGoal}</div></div>
-      <button type="button" aria-label="นำสมาชิกออก" onClick={onRemove} className="flex size-11 items-center justify-center rounded-xl border border-[#E2D8C7] bg-[#FFFFFF] text-[#817668]"><X aria-hidden="true" size={18} /></button>
+      <div className="min-w-0 flex-1 leading-tight"><div className="truncate text-[17px] font-bold">{member.displayName}</div><div className="text-sm text-[#6B5E55]">{maskPhone(member.phone) || "ไม่ระบุเบอร์"} · สะสม {member.stampBalance}/{member.stampGoal}</div></div>
+      <button type="button" aria-label="นำสมาชิกออก" onClick={onRemove} className="flex size-11 items-center justify-center rounded-xl border border-[#E2D8C7] bg-[#FFFFFF] text-[#6B5E55]"><X aria-hidden="true" size={18} /></button>
     </div>
     <div role="img" aria-label={`แสตมป์ ${member.stampBalance} จาก ${member.stampGoal}`} className="flex flex-col gap-1.5">
       <div className="flex flex-wrap gap-1.5">

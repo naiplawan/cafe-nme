@@ -36,6 +36,5 @@ export default async function PosPage({ searchParams }: { searchParams: Promise<
   }
   const nextOrderNo = Math.max(0, ...orders.map((order) => order.dailyNo)) + 1;
 
-  const logoUrl = brand.logoUrl ?? (session.shop.name === "YELO COFFEE" ? "/assets/yelo-coffee-mascot.png" : null);
-  return <PosApp cashShiftOpen={cashShiftOpen} acceptedSelfOrder={acceptedSelfOrder} selfOrderError={selfOrderError} shop={session.shop} staff={session.staff} menu={menu} orderNo={nextOrderNo} logoUrl={logoUrl} />;
+  return <PosApp cashShiftOpen={cashShiftOpen} acceptedSelfOrder={acceptedSelfOrder} selfOrderError={selfOrderError} shop={session.shop} staff={session.staff} menu={menu} orderNo={nextOrderNo} logoUrl={brand.logoUrl} />;
 }

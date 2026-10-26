@@ -91,7 +91,7 @@ export function ScanDialog({ onClose, onAttach, onLookupStart, onLookupEnd }: Sc
     <button ref={backdropRef} type="button" tabIndex={-1} aria-label="ปิดหน้าต่าง" onClick={onClose} className="absolute inset-0 bg-[rgba(43,30,22,0.55)]" />
     <div ref={dialogRef} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby={`${id}-scan-title`} onKeyDown={(event) => { trapDialogTab(event); if (event.key === "Escape") onClose(); }}
       className="relative flex w-[min(560px,calc(100vw-32px))] flex-col items-center gap-4 rounded-3xl bg-[#FFFFFF] p-6 outline-none">
-      <button type="button" aria-label="ปิดหน้าต่าง" onClick={onClose} className="absolute right-3 top-3 flex size-11 items-center justify-center rounded-xl text-[#817668]"><X aria-hidden="true" /></button>
+      <button type="button" aria-label="ปิดหน้าต่าง" onClick={onClose} className="absolute right-3 top-3 flex size-11 items-center justify-center rounded-xl text-[#6B5E55]"><X aria-hidden="true" /></button>
       <h2 id={`${id}-scan-title`} className="text-[22px] font-bold">สแกนบัตรสมาชิก</h2>
       <div className="relative flex h-[280px] w-full items-center justify-center overflow-hidden rounded-2xl bg-[#4A2C1A]">
         <video ref={videoRef} muted playsInline className="h-full w-full object-cover" />
@@ -100,11 +100,11 @@ export function ScanDialog({ onClose, onAttach, onLookupStart, onLookupEnd }: Sc
             <title>กรอบสำหรับจัด QR</title>
             <path data-scan-corner d="M2 22V2H22 M78 2H98V22 M98 78V98H78 M22 98H2V78" stroke="#F7F1E7" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
-          {scanning && <span data-scan-line className="absolute left-2 right-2 top-1/2 h-[2px] rounded-full bg-[#D9653B] shadow-[0_0_12px_rgba(217,101,59,0.85)]" />}
+          {scanning && <span data-scan-line className="absolute left-2 right-2 top-1/2 h-[2px] rounded-full bg-[#F4B942] shadow-[0_0_12px_rgba(244,185,66,0.85)]" />}
         </div>
         {!scanning && <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-[#F7F1E7]"><Camera aria-hidden="true" size={38} /><span>พร้อมสแกนเมื่อเปิดกล้องได้</span></div>}
       </div>
-      <p className="text-sm text-[#817668]">วาง QR ให้อยู่ในกรอบ หรือใช้เครื่องสแกน USB</p>
+      <p className="text-sm text-[#6B5E55]">วาง QR ให้อยู่ในกรอบ หรือใช้เครื่องสแกน USB</p>
       <input ref={inputRef} aria-label="รหัส QR สมาชิกจากเครื่องสแกน" autoComplete="off" onKeyDown={(event) => {
         if (event.key === "Enter") { event.preventDefault(); const target = event.currentTarget; void submitToken(target.value); target.value = ""; }
       }} className="fixed left-0 top-0 size-px opacity-0" />

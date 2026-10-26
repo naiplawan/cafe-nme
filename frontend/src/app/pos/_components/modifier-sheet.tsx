@@ -78,7 +78,7 @@ export function ModifierSheet({ product, initialModifierIds = [], initialQty = 1
           <ProductTile name={product.name} tileColor={product.tileColor} className="hidden md:block size-[232px] rounded-2xl text-[80px]" />}
         <h2 id={`${id}-modifier-title`} className="text-[26px] font-bold">{product.name}</h2>
         {isEditing && <p className="-mt-2 text-sm font-medium text-[#8A6A4F]">แก้ไขรายการในออเดอร์</p>}
-        <p className="text-[17px] text-[#817668]">ราคาเริ่มต้น {formatBaht(product.basePriceSatang)}</p>
+        <p className="text-[17px] text-[#6B5E55]">ราคาเริ่มต้น {formatBaht(product.basePriceSatang)}</p>
         <div className="mt-auto flex flex-col gap-2">
           <span className="text-[15px] font-semibold">จำนวน</span>
           <div className="flex items-center gap-2">
@@ -96,7 +96,7 @@ export function ModifierSheet({ product, initialModifierIds = [], initialQty = 1
             const rule = group.minSelect > 0 ? `ต้องเลือก ${group.minSelect}` : group.maxSelect === 1 ? "ไม่บังคับ" : `เลือกได้สูงสุด ${group.maxSelect}`;
             return <section key={group.id} className="flex flex-col gap-2.5">
               <div className="flex items-center gap-2.5"><h3 className="text-[19px] font-bold">{group.name}</h3>
-                <span data-required-badge data-missing={missing} className={`rounded-full px-2.5 py-1 text-[13px] font-semibold ${missing ? "bg-[#F7DCD0] text-[#8E3415]" : "bg-[#EFE3D5] text-[#817668]"}`}>{rule}</span>
+                <span data-required-badge data-missing={missing} className={`rounded-full px-2.5 py-1 text-[13px] font-semibold ${missing ? "bg-[#F7DCD0] text-[#8E3415]" : "bg-[#EFE3D5] text-[#6B5E55]"}`}>{rule}</span>
               </div>
               {group.modifiers.length < group.minSelect && <p role="alert" className="text-sm text-[#6B4226]">ตัวเลือกไม่ครบ สินค้านี้ยังไม่พร้อมขาย กรุณาให้ผู้จัดการตั้งค่าตัวเลือกในหลังร้าน</p>}
               <div className="grid grid-cols-2 gap-2.5 min-[700px]:grid-cols-4">
@@ -104,7 +104,7 @@ export function ModifierSheet({ product, initialModifierIds = [], initialQty = 1
                   const isSelected = chosen.has(modifier.id);
                   return <button key={modifier.id} type="button" aria-pressed={isSelected} onClick={() => toggle(group.id, modifier.id, group.maxSelect)}
                     className={`relative flex h-16 flex-col items-center justify-center rounded-[14px] border text-[17px] font-semibold leading-tight transition-[background-color,border-color,color] duration-150 active:scale-[0.98] motion-reduce:transform-none motion-reduce:transition-none ${isSelected ? "border-[#4A2C1A] bg-[#4A2C1A] text-[#F7F1E7]" : "border-[#E2D8C7] bg-[#FFFFFF] text-[#4A2C1A]"}`}>
-                    {isSelected && <svg aria-hidden="true" className="absolute right-2 top-2 size-4" viewBox="0 0 16 16" fill="none"><path data-modifier-check d="m2 8 4 4 8-9" stroke="#D9653B" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg>}
+                    {isSelected && <svg aria-hidden="true" className="absolute right-2 top-2 size-4" viewBox="0 0 16 16" fill="none"><path data-modifier-check d="m2 8 4 4 8-9" stroke="#F4B942" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg>}
                     {modifier.name}<span className="text-[13px] font-medium">{modifier.priceDeltaSatang ? `+${formatBaht(modifier.priceDeltaSatang)}` : "ไม่เพิ่มราคา"}</span>
                   </button>;
                 })}

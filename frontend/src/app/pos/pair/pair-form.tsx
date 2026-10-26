@@ -82,6 +82,6 @@ export function PairForm({ initialCode = "" }: { initialCode?: string }) {
       <Keypad value={code} onChange={(value) => setCode(value.replace(/\D/g, "").slice(0, 8))} maxLength={8} keyClassName="h-[68px]" className="gap-2.5" />
       <PairButton disabled={code.length !== 8 || Boolean(state.success)} />
     </form>
-    <p className="mt-5 text-center text-sm text-[#817668]">ดูรหัสได้ที่หลังร้าน › เครื่อง POS</p>
+    <p className="mt-5 text-center text-sm text-[#6B5E55]">ดูรหัสได้ที่หลังร้าน › เครื่อง POS</p>
   </section>;
 }

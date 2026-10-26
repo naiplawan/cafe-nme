@@ -3,7 +3,7 @@
 import { useEffect, useState, type RefObject } from "react";
 import type { ChartDatum } from "./format";
 
-export const CHART_COLORS = ["#F4B942", "#B88A5A", "#4A2C1A", "#2F6B3F", "#D9653B"] as const;
+export const CHART_COLORS = ["#F4B942", "#B88A5A", "#4A2C1A", "#2F6B3F", "#E57373"] as const;
 export const GRID_COLOR = "#EADBC8";
 
 export function useMeasuredWidth(ref: RefObject<HTMLElement | null>): number {
