@@ -670,3 +670,15 @@ export const providerWebhookEvents = pgTable('provider_webhook_events', {
   outcome: text('outcome').notNull(),
   createdAt: createdAt(),
 }, (t) => [primaryKey({ columns: [t.shopId, t.eventId] })]);
+
+export const contactMessages = pgTable('contact_messages', {
+  id: id(),
+  name: text('name').notNull(),
+  email: text('email').notNull(),
+  phone: text('phone'),
+  shopName: text('shop_name'),
+  topic: text('topic').notNull(),
+  message: text('message').notNull(),
+  clientAddressHash: text('client_address_hash').notNull(),
+  createdAt: createdAt(),
+}, (t) => [index('contact_messages_created_at_idx').on(t.createdAt)]).enableRLS();

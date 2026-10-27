@@ -4,10 +4,31 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* YELO design system v2 (docs/BRAND_CONTRACT.md). Public pages use these; the shadcn vars in :root stay as they are. */
+@theme {
+  --color-espresso: #4a2c1a;
+  --color-roast: #6b4226;
+  --color-caramel: #8b4f28;
+  --color-latte: #b88a5a;
+  --color-amber: #f4b942;
+  --color-butter: #fbe7b5;
+  --color-blush: #f6a6c8;
+  --color-cream: #f7f1e7;
+  --color-ink: #2f2a25;
+  --color-muted-ink: #6b5e55;
+  --color-line: #e5d8c5;
+  --color-leaf: #2e7d32;
+  --color-danger: #b3261e;
+  --radius-section: 40px;
+  --radius-card: 24px;
+  --shadow-soft: 0 24px 48px -24px rgb(74 44 26 / 0.35);
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-noto-sans-thai);
+  --font-display: var(--font-display-thai), var(--font-noto-sans-thai), sans-serif;
   --font-mono: var(--font-geist-mono);
   --font-heading: var(--font-sans);
   --color-sidebar-ring: var(--sidebar-ring);
@@ -127,4 +148,23 @@
   html {
     @apply font-sans;
   }
+}
+
+/* Condensed display face: the wdth axis of Noto Sans Thai (see components/site/display-font.ts). */
+@utility font-display-condensed {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-variation-settings: "wdth" var(--display-wdth, 75);
+  text-transform: uppercase;
+  line-height: 1.2;
+}
+
+@utility bg-checker {
+  background-image: conic-gradient(var(--color-espresso) 25%, var(--color-cream) 0 50%, var(--color-espresso) 0 75%, var(--color-cream) 0);
+  background-size: 40px 40px;
+}
+
+@utility bg-checker-amber {
+  background-image: conic-gradient(var(--color-amber) 25%, var(--color-cream) 0 50%, var(--color-amber) 0 75%, var(--color-cream) 0);
+  background-size: 40px 40px;
 }

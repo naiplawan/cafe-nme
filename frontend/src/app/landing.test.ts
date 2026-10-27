@@ -2,9 +2,10 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("next/font/google", () => ({ Lilita_One: () => ({ variable: "font-display-stub" }), Mitr: () => ({ variable: "font-heading-stub" }) }));
+vi.mock("next/font/google", () => ({ Noto_Sans_Thai: () => ({ variable: "font-display-stub" }) }));
 
 const { default: LandingPage } = await import("./page");
+const marqueeModule = await import("@/components/site/marquee");
 const { landing, landingJsonLd } = await import("./landing-content");
 const { default: robots, PRIVATE_PATHS } = await import("./robots");
 const { default: sitemap } = await import("./sitemap");
@@ -29,6 +30,14 @@ describe("landing page", () => {
     for (const item of landing.faq) {
       expect(markup).toContain(item.q);
     }
+  });
+
+  it("exposes each marquee word to screen readers once and hides the looping repeats", () => {
+    const { Marquee } = marqueeModule;
+    const band = renderToStaticMarkup(createElement(Marquee, { words: ["กาแฟ", "นม"], tone: "amber" }));
+    expect(band.match(/<ul class=/g)).toHaveLength(1);
+    expect(band.match(/<ul aria-hidden="true"/g)).toHaveLength(3);
+    expect(markup.match(/data-marquee-track/g)).toHaveLength(2);
   });
 
   it("escapes < inside the JSON-LD script", () => {

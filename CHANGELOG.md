@@ -18,6 +18,8 @@ versioning (pre-1.0: minor = features, patch = fixes).
 - Added configurable stamp and reward expiry with ledger history, plus checkout/API failure alerts and a repeatable isolated PostgreSQL restore drill.
 - Added a public Thai landing page at `/` with features, setup steps, comparison, FAQ, and matching JSON-LD, plus `robots.txt`, `sitemap.xml`, `llms.txt`, and a generated Open Graph image. Signed-in users are still sent to `/admin`; app screens stay `noindex` and out of the sitemap.
 - Reserve recipe ingredients for 30 minutes when staff open a PromptPay QR, refreshed while the QR stays open. Other sales cannot consume reserved stock, and the QR is withheld when stock cannot be reserved.
+- Add the internal `POST /v1/contact-messages` API for website contact messages: it validates name, email, optional phone and shop, topic, message and `consent: true`, stores each message in `contact_messages` (RLS on, client address kept only as a SHA-256 hash), allows five messages per hour per address and three per day per email (`429 contact_rate_limited`), and optionally announces it by Resend email to `CONTACT_INBOX_EMAIL` with the sender as reply-to. Email failure never loses a stored message.
+- Add a public contact page at `/contact`: the form keeps typed values and the consent tick after a validation error, drops honeypot submissions without calling the API, sends the client address from `x-real-ip`, and shows Thai success, validation, rate-limit and failure messages. `/contact` is linked from the new header and footer and listed in the sitemap.
 
 ### Changed
 - Rebrand the product from Cafe'nMe to YELO Coffee: deep coffee, golden amber, latte and cream palette across admin, POS, LIFF, receipts and charts; the golden-retriever mascot replaces the old logo mark; shops without their own accent now default to amber `#F4B942` instead of terracotta `#B4441C`. Amber is used only behind dark text; text links and labels use deep coffee `#4A2C1A` for contrast. New demo seeds create `YELO COFFEE` with the amber preset; existing shops keep their name.
@@ -40,6 +42,7 @@ versioning (pre-1.0: minor = features, patch = fixes).
 - Enter shift and drawer amounts on the on-screen keypad instead of the tablet keyboard; drawer movements sit in a collapsible section so the shift page shows one keypad.
 - Add icons to the POS header shortcuts so they fit on one row, a bottom cart bar with item count and total on narrow screens, a five-second undo after removing a cart line, and a note when search covers all categories.
 - Disable Pay while the cart contains a sold-out item.
+- Introduce the YELO design system v2 on public pages: espresso, roast, caramel, latte, amber, butter, blush, cream, ink, muted-ink, line, leaf and danger tokens, 40px section and 24px card radii, one soft shadow, and a condensed display face from Noto Sans Thai's width axis. The "YELO COFFEE" wordmark is now live condensed text beside the unchanged mascot, replacing Lilita One and Mitr. The landing page and the login/signup showcase use pill buttons, tilted labels, stickers, section cards, amber and blush marquees (static under reduced motion, read once by screen readers) and a new header and footer, with no raw colours outside the decorative POS mock. POS, admin, LIFF and shop menus are unchanged.
 
 ### Operations
 - Apply migrations `0032`–`0038` before deploying the business-rule updates. Existing shops keep payment-time stock consumption until they opt into preparation tracking. Historical costs and closed cash balances are not backfilled; see `docs/pos-business-rules.md` for policies and setup.
@@ -51,6 +54,7 @@ versioning (pre-1.0: minor = features, patch = fixes).
 - Run API tests with `TEST_DATABASE_URL=… pnpm --filter @cafenme/backend test:db`, which migrates the disposable database first. The refund and Omise reconciliation tests now query the current Bangkok business date instead of a fixed day, so they no longer fail after 2026-10-24.
 - Set `NEXT_PUBLIC_SITE_URL` to the public frontend origin before deploying the landing page; without it, canonical URLs, the sitemap, `robots.txt`, and JSON-LD point to `http://localhost:3000`.
 - Follow `docs/operations-readiness.md` for the isolated restore drill and operator alert receiver. Local restore evidence does not establish production retention, alert delivery, or recovery objectives.
+- Apply migration `0039_cynical_mojo` (adds `contact_messages`) before deploying the contact API and `/contact`. Set `CONTACT_INBOX_EMAIL` on the API to receive contact emails; without it, messages are stored only. There is no automatic retention job or reading API yet.
 
 ### Security
 - Override vulnerable transitive `body-parser`, `multer`, and `fast-uri` versions with patched releases required by current advisories.
