@@ -18,6 +18,7 @@ versioning (pre-1.0: minor = features, patch = fixes).
 - Added configurable stamp and reward expiry with ledger history, plus checkout/API failure alerts and a repeatable isolated PostgreSQL restore drill.
 - Added a public Thai landing page at `/` with features, setup steps, comparison, FAQ, and matching JSON-LD, plus `robots.txt`, `sitemap.xml`, `llms.txt`, and a generated Open Graph image. Signed-in users are still sent to `/admin`; app screens stay `noindex` and out of the sitemap.
 - Reserve recipe ingredients for 30 minutes when staff open a PromptPay QR, refreshed while the QR stays open. Other sales cannot consume reserved stock, and the QR is withheld when stock cannot be reserved.
+- Add the internal `POST /v1/contact-messages` API for website contact messages: it validates name, email, optional phone and shop, topic, message and `consent: true`, stores each message in `contact_messages` (RLS on, client address kept only as a SHA-256 hash), allows five messages per hour per address and three per day per email (`429 contact_rate_limited`), and optionally announces it by Resend email to `CONTACT_INBOX_EMAIL` with the sender as reply-to. Email failure never loses a stored message.
 
 ### Changed
 - Rebrand the product from Cafe'nMe to YELO Coffee: deep coffee, golden amber, latte and cream palette across admin, POS, LIFF, receipts and charts; the golden-retriever mascot replaces the old logo mark; shops without their own accent now default to amber `#F4B942` instead of terracotta `#B4441C`. Amber is used only behind dark text; text links and labels use deep coffee `#4A2C1A` for contrast. New demo seeds create `YELO COFFEE` with the amber preset; existing shops keep their name.
@@ -51,6 +52,7 @@ versioning (pre-1.0: minor = features, patch = fixes).
 - Run API tests with `TEST_DATABASE_URL=… pnpm --filter @cafenme/backend test:db`, which migrates the disposable database first. The refund and Omise reconciliation tests now query the current Bangkok business date instead of a fixed day, so they no longer fail after 2026-10-24.
 - Set `NEXT_PUBLIC_SITE_URL` to the public frontend origin before deploying the landing page; without it, canonical URLs, the sitemap, `robots.txt`, and JSON-LD point to `http://localhost:3000`.
 - Follow `docs/operations-readiness.md` for the isolated restore drill and operator alert receiver. Local restore evidence does not establish production retention, alert delivery, or recovery objectives.
+- Apply migration `0039_cynical_mojo` (adds `contact_messages`) before deploying the contact API and `/contact`. Set `CONTACT_INBOX_EMAIL` on the API to receive contact emails; without it, messages are stored only. There is no automatic retention job or reading API yet.
 
 ### Security
 - Override vulnerable transitive `body-parser`, `multer`, and `fast-uri` versions with patched releases required by current advisories.

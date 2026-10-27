@@ -175,3 +175,21 @@ export async function ordersForExport(shopId: string, from: string, to: string):
 
 ### POS recovery session binding
 The frontend pending-checkout envelope retains the original shop, staff and device IDs alongside the exact request ID and checkout input. The Server Action compares that scope with the current authenticated session before forwarding to Nest; it never uses the client envelope as authentication and strips it from the API payload. Missing/mismatched scope and idempotency conflicts remain unresolved. A tab-local sessionStorage pointer finds the original device/staff-scoped pending record after shared-cookie login changes; storage failure blocks POST. The original staff can sign in again through /pos/login to recover the same request.
+
+## Contact messages (2026-10-27)
+
+`POST /v1/contact-messages` is server-to-server and requires the internal API token.
+The body contains trimmed `name` (1–100), lower-cased `email` (valid email, ≤254),
+optional `phone` (`^[0-9+\- ]{9,20}$`), optional `shopName` (≤120),
+`topic` (`demo|pricing|support|other`), `message` (10–2000), and `consent: true`.
+Unknown properties are rejected. Responses: 201 `{status: "received"}`, 400 invalid
+body, 401 invalid token, 429 with `code: "contact_rate_limited"`, 500 storage failure.
+Errors use `ApiErrorDto`.
+
+Rate limits use `x-client-address` (fallback `unknown`): five requests per hour per
+IP and three per day per normalized email. Messages live in `contact_messages`
+with RLS enabled; only a SHA-256 hash of the address is stored. When optional
+`CONTACT_INBOX_EMAIL` and existing `RESEND_API_KEY`/`RECOVERY_EMAIL_FROM` are set,
+Resend sends a plain-text notification with the sender as `reply_to`. Notification
+failure never changes a successful storage response. No automatic retention job
+or message-reading API is provided.

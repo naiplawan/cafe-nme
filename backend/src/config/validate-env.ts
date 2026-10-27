@@ -1,3 +1,5 @@
+import { isEmail } from 'class-validator';
+
 export interface RuntimeEnvironment {
   API_PORT: number;
   DATABASE_URL: string;
@@ -8,6 +10,7 @@ export interface RuntimeEnvironment {
   RESEND_API_KEY?: string;
   RECOVERY_EMAIL_FROM?: string;
   FRONTEND_URL?: string;
+  CONTACT_INBOX_EMAIL?: string;
 }
 
 export function validateEnvironment(environment: Record<string, unknown>): RuntimeEnvironment {
@@ -44,7 +47,13 @@ export function validateEnvironment(environment: Record<string, unknown>): Runti
     throw new Error("LINE_DEV_MOCK=1 is allowed only when NODE_ENV=development");
   }
 
+  const inbox = environment.CONTACT_INBOX_EMAIL;
+  if (inbox !== undefined && inbox !== "" && (typeof inbox !== "string" || !isEmail(inbox))) {
+    throw new Error("CONTACT_INBOX_EMAIL must be a valid email address");
+  }
+
   return {
+    ...(typeof inbox === "string" && inbox !== "" ? { CONTACT_INBOX_EMAIL: inbox } : {}),
     ...(typeof environment.RESEND_API_KEY === "string" ? { RESEND_API_KEY: environment.RESEND_API_KEY } : {}),
     ...(typeof environment.RECOVERY_EMAIL_FROM === "string" ? { RECOVERY_EMAIL_FROM: environment.RECOVERY_EMAIL_FROM } : {}),
     ...(typeof environment.FRONTEND_URL === "string" ? { FRONTEND_URL: environment.FRONTEND_URL } : {}),
