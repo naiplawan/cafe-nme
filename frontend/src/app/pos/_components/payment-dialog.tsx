@@ -98,13 +98,20 @@ export function PaymentDialog({ orderLabel, lines: cartLines, subtotalSatang: ca
   const attemptRef = useRef<CheckoutAttempt | null>(null);
   const submittingRef = useRef(false);
   const previousQuoteInput = useRef(quoteInput);
+  const releasePromptPay = useCallback(() => {
+    if (!promptPayRequestId || !stockReserved) return;
+    setStockReserved(false);
+    void releasePromptPayStockAction(promptPayRequestId);
+  }, [promptPayRequestId, stockReserved]);
   useEffect(() => {
     if (previousQuoteInput.current === quoteInput) return;
     previousQuoteInput.current = quoteInput;
     attemptRef.current = null;
+    // The hold was for the old cart; give its stock back instead of letting it wait out the expiry.
+    releasePromptPay();
     setPromptPayRequestId(null);
     setStockReserved(false);
-  }, [quoteInput]);
+  }, [quoteInput, releasePromptPay]);
   const receivedSatang = parseBahtToSatang(cashInput.replace(/\.$/, "")) ?? 0;
   const changeSatang = receivedSatang - totalSatang;
   const shortBySatang = Math.max(0, -changeSatang);
@@ -120,12 +127,6 @@ export function PaymentDialog({ orderLabel, lines: cartLines, subtotalSatang: ca
     });
     if (!result.ok) throw new Error(result.message);
   }, [checkoutInput, expectedScope, totalSatang]);
-
-  const releasePromptPay = useCallback(() => {
-    if (!promptPayRequestId || !stockReserved) return;
-    setStockReserved(false);
-    void releasePromptPayStockAction(promptPayRequestId);
-  }, [promptPayRequestId, stockReserved]);
 
   async function selectPromptPay() {
     if (!promptpayEnabled || !ready || pending) return;

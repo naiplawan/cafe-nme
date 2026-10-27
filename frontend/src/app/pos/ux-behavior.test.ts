@@ -98,6 +98,19 @@ it("releases the PromptPay stock hold when the dialog closes without payment", a
   expect(actions.releasePromptPayStockAction).toHaveBeenCalledWith(actions.reservePromptPayStockAction.mock.calls[0][0].requestId);
 });
 
+it("releases the PromptPay stock hold when the cart changes while the QR is open", async () => {
+  const line = { key: "coffee", name: "Coffee", qty: 1, modifiersText: "", lineTotalSatang: 5000 };
+  actions.quoteCheckoutAction.mockResolvedValue({ ok: true, quote: { lines: [line], subtotalSatang: 5000, discountSatang: 0, totalSatang: 5000 } });
+  actions.reservePromptPayStockAction.mockResolvedValue({ ok: true, reservation: { expiresAt: new Date(Date.now() + 1800000) } });
+  const props = { orderLabel: "#001", lines: [line], subtotalSatang: 5000, discountSatang: 0, totalSatang: 5000, checkoutInput: { lines: [{ productId: "11111111-1111-4111-8111-111111111111", qty: 1, modifierIds: [] }] }, cartStorageKey: "cart", expectedScope: { shopId: "shop", staffId: "staff", deviceId: "device" }, promptpayEnabled: true, shopName: "Cafe", onClose: vi.fn(), onPaid: vi.fn() };
+  const { rerender } = render(React.createElement(PaymentDialog, props));
+  await screen.findByRole("tab", { name: "พร้อมเพย์" });
+  fireEvent.click(screen.getByRole("tab", { name: "พร้อมเพย์" }));
+  await screen.findByTestId("qr");
+  rerender(React.createElement(PaymentDialog, { ...props, checkoutInput: { lines: [{ productId: "11111111-1111-4111-8111-111111111111", qty: 2, modifierIds: [] }] } }));
+  expect(actions.releasePromptPayStockAction).toHaveBeenCalledWith(actions.reservePromptPayStockAction.mock.calls[0][0].requestId);
+});
+
 it("does not display a PromptPay QR or accept confirmation when stock cannot be reserved", async () => {
   const line = { key: "coffee", name: "Coffee", qty: 1, modifiersText: "", lineTotalSatang: 5000 };
   actions.quoteCheckoutAction.mockResolvedValue({ ok: true, quote: { lines: [line], subtotalSatang: 5000, discountSatang: 0, totalSatang: 5000 } });
