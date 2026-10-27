@@ -2,7 +2,8 @@ import { SITE_URL } from "@/lib/site";
 
 // One source for the landing page copy and its JSON-LD, so the FAQ and steps search engines read
 // always match what visitors see. Keep claims to features that exist in the product.
-export const LANDING_UPDATED = "2026-10-24";
+export const LANDING_UPDATED = "2026-10-27";
+export const landingUpdatedLabel = new Intl.DateTimeFormat("th-TH", { dateStyle: "long", timeZone: "Asia/Bangkok" }).format(new Date(LANDING_UPDATED));
 
 export const landing = {
   name: "YELO Coffee",
@@ -12,6 +13,11 @@ export const landing = {
   sub: "ขายหน้าร้านบนแท็บเล็ต รับเงินสดหรือพร้อมเพย์ QR ลูกค้าสะสมแต้มผ่าน LINE Official Account ของร้าน และเจ้าของร้านดูยอดขายได้จากทุกที่",
   definition:
     "YELO Coffee คือระบบขายหน้าร้าน (POS) สำหรับร้านกาแฟไทย ที่รวมบัตรสะสมแต้มสมาชิกบน LINE ไว้ในระบบเดียว พนักงานขายบนแท็บเล็ต เจ้าของร้านจัดการเมนูและดูรายงานผ่านเว็บ ส่วนลูกค้าสะสมแต้มและแลกเครื่องดื่มฟรีผ่าน LINE OA ของร้าน",
+  tagline: "Good Coffee, Better Days",
+  marquee: {
+    features: ["POS ร้านกาแฟ", "พร้อมเพย์ QR", "บัตรสะสมแต้มบน LINE", "ใบเสร็จ 58 มม.", "รายงานยอดขาย", "รองรับ PDPA"],
+    brand: ["Good Coffee", "Better Days", "YELO Coffee", "Simple", "Warm", "Friendly", "Professional"],
+  },
   facts: ["จับคู่แท็บเล็ตด้วยรหัส 6 หลัก", "พร้อมเพย์ QR ใส่ยอดอัตโนมัติ", "ใบเสร็จ 58 มม.", "รองรับ PDPA"],
   features: [
     {

@@ -1,14 +1,15 @@
 // biome-ignore-all lint/correctness/useUniqueElementIds: the page renders once and its section ids are the targets of the in-page nav links.
 import type { Metadata } from "next";
-import { Lilita_One, Mitr } from "next/font/google";
 import Image from "next/image";
-import Link from "next/link";
-import { LANDING_UPDATED, landing, landingJsonLd } from "./landing-content";
+import { displayFont } from "@/components/site/display-font";
+import { Marquee } from "@/components/site/marquee";
+import { PillLink } from "@/components/site/pill";
+import { SectionCard } from "@/components/site/section-card";
+import { SiteFooter } from "@/components/site/site-footer";
+import { SiteHeader } from "@/components/site/site-header";
+import { Sticker, TiltLabel } from "@/components/site/sticker";
+import { landing, landingJsonLd, landingUpdatedLabel } from "./landing-content";
 import { LandingMotion } from "./landing-motion";
-
-// Lilita One has no Thai glyphs: it sets the Latin wordmark and tagline, Mitr sets Thai headings.
-const display = Lilita_One({ variable: "--font-landing-display", subsets: ["latin"], weight: "400" });
-const thaiHeading = Mitr({ variable: "--font-landing-heading", subsets: ["latin", "thai"], weight: ["500", "600"] });
 
 export const metadata: Metadata = {
   title: { absolute: `${landing.title} · ${landing.name}` },
@@ -18,21 +19,15 @@ export const metadata: Metadata = {
   openGraph: { title: `${landing.title} · ${landing.name}`, description: landing.description, url: "/" },
 };
 
-// YELO brand kit: deep coffee #4A2C1A, medium roast #6B4226, latte #B88A5A (decoration only, 2.7:1 on cream),
-// warm cream #F7F1E7, ink #2F2A25, golden amber #F4B942 (ink text only; white on amber is 1.8:1).
-const wordmark = "font-[family-name:var(--font-landing-display)] tracking-wide text-[#4A2C1A]";
-const heading = "font-[family-name:var(--font-landing-heading)] text-[#4A2C1A]";
-const eyebrow = "inline-flex rounded-full bg-[#F4B942]/25 px-3 py-1 text-sm font-semibold text-[#6B4226]";
-const h2 = `${heading} mt-3 text-[clamp(26px,3.4vw,38px)] font-semibold leading-tight`;
-const muted = "text-[#6B5E55]";
-const card = "rounded-3xl border border-[#E5D8C5] bg-white shadow-[0_2px_10px_rgba(74,44,26,.05)]";
-const primaryButton = "inline-flex min-h-[46px] items-center rounded-2xl bg-[#F4B942] px-6 font-semibold text-[#2F2A25] shadow-[0_6px_14px_rgba(244,185,66,.35)] transition-colors hover:bg-[#EDAF2F]";
-const outlineButton = "inline-flex min-h-[46px] items-center rounded-2xl border-[1.5px] border-[#4A2C1A] px-6 font-semibold text-[#4A2C1A] hover:bg-white/60";
+// Colours, radii and the display face come from the YELO design system tokens in globals.css.
+const h2 = "font-display-condensed mt-3 text-[clamp(28px,3.6vw,44px)] leading-[1.25] text-espresso";
+const h3 = "font-display-condensed text-espresso";
+const muted = "text-muted-ink";
+const card = "rounded-card border-[1.5px] border-line bg-white";
 
 const cell = { yes: "✓", no: "—", some: "บางรุ่น" } as const;
 const cellLabel = { yes: "มี", no: "ไม่มี", some: "บางรุ่น" } as const;
-const cellStyle = { yes: "font-bold text-[#2E7D32]", no: "opacity-45", some: `text-[13px] ${muted}` } as const;
-const updatedLabel = new Intl.DateTimeFormat("th-TH", { dateStyle: "long", timeZone: "Asia/Bangkok" }).format(new Date(LANDING_UPDATED));
+const cellStyle = { yes: "font-bold text-leaf", no: "opacity-45", some: `text-[13px] ${muted}` } as const;
 
 const mockMenu = [
   { name: "Americano", price: 60, image: "/assets/menu/iced-americano.webp" },
@@ -47,7 +42,7 @@ function Ticks({ items }: { items: readonly string[] }) {
   return (
     <ul className="mt-4 grid gap-2">
       {items.map((item) => (
-        <li key={item} className="relative pl-7 leading-relaxed before:absolute before:left-0 before:top-[0.35em] before:size-[18px] before:rounded-full before:bg-[#F4B942] after:absolute after:left-[5px] after:top-[0.62em] after:h-[5px] after:w-2 after:-rotate-45 after:border-b-2 after:border-l-2 after:border-[#2F2A25]">
+        <li key={item} className="relative pl-7 leading-relaxed before:absolute before:left-0 before:top-[0.35em] before:size-[18px] before:rounded-full before:bg-amber after:absolute after:left-[5px] after:top-[0.62em] after:h-[5px] after:w-2 after:-rotate-45 after:border-b-2 after:border-l-2 after:border-ink">
           {item}
         </li>
       ))}
@@ -106,72 +101,57 @@ function PosMock() {
 
 export default function LandingPage() {
   return (
-    <LandingMotion className={`${display.variable} ${thaiHeading.variable} bg-[#F7F1E7] text-[#2F2A25]`}>
+    <LandingMotion className={`${displayFont.variable} bg-cream text-ink`}>
       {/* biome-ignore lint/security/noDangerouslySetInnerHtml: static JSON-LD with "<" escaped, as the Next.js JSON-LD guide recommends. */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(landingJsonLd()).replace(/</g, "\\u003c") }} />
 
-      <header className="mx-auto flex h-[72px] max-w-[1140px] items-center gap-5 px-4">
-        <Link href="/" className="flex items-center gap-2">
-          <Image src="/assets/yelo-coffee-mascot.png" alt="" width={44} height={44} className="size-11 object-contain" preload />
-          <span className={`${wordmark} text-2xl uppercase leading-none`}>{landing.name}</span>
-        </Link>
-        <nav aria-label="เมนูหลัก" className="ml-auto hidden gap-6 text-[15px] md:flex">
-          {[["#features", "ฟีเจอร์"], ["#how", "วิธีเริ่ม"], ["#compare", "เปรียบเทียบ"], ["#faq", "คำถาม"]].map(([href, label]) => (
-            <a key={href} href={href} className="text-[#4A2C1A]/80 hover:text-[#4A2C1A]">{label}</a>
-          ))}
-        </nav>
-        <Link href="/login" className="ml-auto hidden min-h-10 items-center rounded-2xl border-[1.5px] border-[#4A2C1A] px-4 text-sm font-semibold text-[#4A2C1A] sm:inline-flex md:ml-0">เข้าสู่ระบบ</Link>
-        <Link href="/signup" className="ml-auto inline-flex min-h-10 items-center rounded-2xl bg-[#F4B942] px-4 text-sm font-semibold text-[#2F2A25] sm:ml-0">สมัครใช้งาน</Link>
-      </header>
+      <SiteHeader />
 
       <main>
-        <section className="mx-auto grid max-w-[1140px] items-center gap-12 px-4 pb-20 pt-8 lg:grid-cols-[1fr_1.05fr]">
+        <section className="mx-auto grid max-w-[1140px] items-center gap-12 px-4 pb-10 pt-12 lg:grid-cols-[1fr_1.05fr]">
           <div>
-            <p className={eyebrow}>สำหรับร้านกาแฟและคาเฟ่ในไทย</p>
-            <h1 className={`${heading} mb-3 mt-4 text-[clamp(34px,4.6vw,54px)] font-semibold leading-[1.25]`}>{landing.title}</h1>
-            <p className={`${wordmark} relative mb-6 inline-block text-[clamp(22px,2.6vw,30px)] text-[#6B4226]`}>
-              Good Coffee, Better Days
-              <svg aria-hidden viewBox="0 0 300 14" preserveAspectRatio="none" className="absolute -bottom-3 left-0 h-3 w-full overflow-visible">
-                <path data-motion="squiggle" d="M3 9 C 40 2, 70 13, 110 7 S 180 2, 220 8 S 275 11, 297 4" fill="none" stroke="#F4B942" strokeWidth="3.5" strokeLinecap="round" />
-              </svg>
-            </p>
-            <p className={`text-lg leading-[1.75] ${muted}`}>{landing.sub}</p>
+            <Sticker>สำหรับร้านกาแฟและคาเฟ่ในไทย</Sticker>
+            <h1 className="font-display-condensed text-balance mb-5 mt-5 text-[clamp(40px,5.4vw,72px)] leading-[1.2] text-espresso">{landing.title}</h1>
+            <TiltLabel>{landing.tagline}</TiltLabel>
+            <p className={`mt-8 text-[17px] leading-[1.75] ${muted}`}>{landing.sub}</p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <Link href="/signup" className={primaryButton}>สมัครใช้งาน</Link>
-              <a href="#how" className={outlineButton}>ดูวิธีเริ่มใช้</a>
+              <PillLink href="/signup">สมัครใช้งาน</PillLink>
+              <PillLink href="#how" variant="outline">ดูวิธีเริ่มใช้</PillLink>
             </div>
             <ul className={`mt-7 flex flex-wrap gap-x-5 gap-y-2 text-sm ${muted}`}>
               {landing.facts.map((fact) => (
-                <li key={fact} className="before:mr-2 before:align-middle before:text-[8px] before:text-[#F4B942] before:content-['●']">{fact}</li>
+                <li key={fact} className="before:mr-2 before:align-middle before:text-[8px] before:text-amber before:content-['●']">{fact}</li>
               ))}
             </ul>
           </div>
           <div className="relative pb-14 pl-6 sm:pl-10">
             <PosMock />
-            <Image data-motion="mascot" src="/landing/yelo-coffee-break.webp" alt="" width={512} height={512} className="absolute -bottom-2 -left-4 w-[110px] drop-shadow-[0_10px_16px_rgba(74,44,26,.2)] sm:-left-6 sm:w-[150px]" sizes="150px" preload />
+            <Image data-motion="mascot" src="/landing/yelo-coffee-break.webp" alt="" width={512} height={512} className="absolute -bottom-2 -left-4 w-[110px] drop-shadow-[0_10px_16px_rgb(74_44_26/0.2)] sm:-left-6 sm:w-[150px]" sizes="150px" preload />
           </div>
         </section>
 
-        <section className="mx-4">
-          <div data-reveal className={`${card} mx-auto grid max-w-[1000px] items-center gap-8 px-6 py-12 md:grid-cols-[180px_1fr] md:px-12`}>
+        <Marquee words={landing.marquee.features} tone="amber" />
+
+        <SectionCard tone="caramel" className="mt-4">
+          <div data-reveal className="mx-auto grid max-w-[1000px] items-center gap-8 px-6 py-14 md:grid-cols-[180px_1fr] md:px-12 md:py-20">
             <Image data-motion="float" src="/landing/yelo-yumm.webp" alt="" width={512} height={512} className="mx-auto w-[150px] md:w-[180px]" sizes="180px" />
             <div>
-              <h2 className={`${heading} text-[clamp(26px,3.4vw,38px)] font-semibold leading-tight`}>{landing.name} คืออะไร?</h2>
-              <p className={`mt-4 text-[clamp(17px,2vw,21px)] leading-[1.8] ${muted}`}>{landing.definition}</p>
+              <h2 className="font-display-condensed text-[clamp(28px,3.6vw,44px)] leading-[1.25]">{landing.name} คืออะไร?</h2>
+              <p className="mt-4 text-[clamp(17px,2vw,21px)] leading-[1.8]">{landing.definition}</p>
             </div>
           </div>
-        </section>
+        </SectionCard>
 
-        <section id="features" className="mx-auto max-w-[1140px] scroll-mt-4 px-4 py-20">
-          <p className={eyebrow}>ฟีเจอร์</p>
+        <section id="features" className="mx-auto max-w-[1140px] scroll-mt-4 px-4 py-20 md:py-28">
+          <Sticker tone="amber">ฟีเจอร์</Sticker>
           <h2 className={h2}>{landing.name} ทำอะไรได้บ้าง?</h2>
           {landing.features.map((feature, index) => (
             <div key={feature.title} data-reveal className="grid items-center gap-6 py-11 md:grid-cols-2 md:gap-14">
-              <figure className={`overflow-hidden rounded-3xl border border-[#E5D8C5] bg-white p-2 shadow-[0_12px_30px_-18px_rgba(74,44,26,.4)] ${index % 2 ? "md:order-2" : ""} ${feature.image.width < feature.image.height ? "mx-auto max-w-[280px]" : ""}`}>
+              <figure className={`overflow-hidden rounded-card border-[1.5px] border-line bg-white p-2 shadow-soft ${index % 2 ? "md:order-2" : ""} ${feature.image.width < feature.image.height ? "mx-auto max-w-[280px]" : ""}`}>
                 <Image src={feature.image.src} alt={feature.image.alt} width={feature.image.width} height={feature.image.height} className="rounded-2xl" sizes="(min-width: 768px) 540px, 100vw" />
               </figure>
               <div>
-                <h3 className={`${heading} mb-3 text-[28px] font-semibold`}>{feature.title}</h3>
+                <h3 className={`${h3} mb-3 text-[clamp(24px,2.6vw,32px)] leading-[1.25]`}>{feature.title}</h3>
                 <p className={`leading-[1.8] ${muted}`}>{feature.answer}</p>
                 <Ticks items={feature.bullets} />
               </div>
@@ -182,7 +162,7 @@ export default function LandingPage() {
               <div key={extra.title} data-reveal className={`${card} flex items-center gap-5 p-6`}>
                 <Image data-motion="float" src={extraArt[index % extraArt.length]} alt="" width={512} height={512} className="w-24 shrink-0" sizes="96px" />
                 <div>
-                  <h3 className={`${heading} mb-2 text-[21px] font-semibold`}>{extra.title}</h3>
+                  <h3 className={`${h3} mb-2 text-[22px] leading-[1.25]`}>{extra.title}</h3>
                   <p className={`leading-[1.75] ${muted}`}>{extra.answer}</p>
                 </div>
               </div>
@@ -190,42 +170,43 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <section id="how" className="scroll-mt-4 bg-white py-20">
-          <div className="mx-auto max-w-[1140px] px-4">
-            <p className={eyebrow}>วิธีเริ่ม</p>
+        <SectionCard tone="butter" id="how">
+          <div aria-hidden className="bg-checker-amber h-6" />
+          <div className="mx-auto max-w-[1140px] px-4 py-16 md:py-24">
+            <Sticker>วิธีเริ่ม</Sticker>
             <h2 className={h2}>เริ่มใช้ {landing.name} อย่างไร?</h2>
             <ol className="mt-9 grid gap-5 md:grid-cols-3">
               {landing.steps.map((step, index) => (
-                <li key={step.name} data-reveal className="rounded-3xl border border-[#E5D8C5] bg-[#F7F1E7] p-7">
-                  <span className={`${wordmark} mb-4 grid size-[46px] place-items-center rounded-2xl bg-[#F4B942] text-2xl text-[#2F2A25]`}>{index + 1}</span>
-                  <h3 className={`${heading} mb-1.5 text-xl font-semibold`}>{step.name}</h3>
+                <li key={step.name} data-reveal className={`${card} p-7`}>
+                  <span className="font-display-condensed mb-4 grid size-[52px] place-items-center rounded-full bg-amber text-2xl text-ink">{index + 1}</span>
+                  <h3 className={`${h3} mb-1.5 text-[22px] leading-[1.25]`}>{step.name}</h3>
                   <p className={`leading-[1.7] ${muted}`}>{step.text}</p>
                 </li>
               ))}
             </ol>
           </div>
-        </section>
+        </SectionCard>
 
-        <section id="compare" className="mx-auto max-w-[1140px] scroll-mt-4 px-4 py-20">
-          <p className={eyebrow}>เปรียบเทียบ</p>
+        <section id="compare" className="mx-auto max-w-[1140px] scroll-mt-4 px-4 py-20 md:py-28">
+          <Sticker tone="amber">เปรียบเทียบ</Sticker>
           <h2 className={`${h2} mb-7`}>ต่างจากเครื่องคิดเงินและบัตรสะสมแต้มกระดาษอย่างไร?</h2>
           <div data-reveal className={`${card} relative overflow-x-auto p-2`}>
             <table className="w-full min-w-[560px] border-collapse text-[15px]">
-              <caption className={`px-3 pb-2.5 pt-2 text-left text-[13px] ${muted}`}>เปรียบเทียบความสามารถหลัก ณ {updatedLabel}</caption>
+              <caption className={`px-3 pb-2.5 pt-2 text-left text-[13px] ${muted}`}>เปรียบเทียบความสามารถหลัก ณ {landingUpdatedLabel}</caption>
               <thead>
-                <tr className="border-b border-[#E5D8C5]">
+                <tr className="border-b border-line">
                   <th scope="col" className="p-3 text-left text-sm">ความสามารถ</th>
                   {landing.compare.columns.map((column, index) => (
-                    <th key={column} scope="col" className={`p-3 text-sm ${index === 0 ? "rounded-t-xl bg-[#F4B942]/25 text-[#4A2C1A]" : ""}`}>{column}</th>
+                    <th key={column} scope="col" className={`p-3 text-sm ${index === 0 ? "rounded-t-xl bg-amber/25 text-espresso" : ""}`}>{column}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {landing.compare.rows.map((row) => (
-                  <tr key={row.label} className="border-b border-[#EFE5D6] last:border-0">
+                  <tr key={row.label} className="border-b border-line last:border-0">
                     <th scope="row" className="p-3 text-left font-medium">{row.label}</th>
                     {row.values.map((value, index) => (
-                      <td key={landing.compare.columns[index]} className={`p-3 text-center ${index === 0 ? "bg-[#F4B942]/25" : ""} ${cellStyle[value]}`}>
+                      <td key={landing.compare.columns[index]} className={`p-3 text-center ${index === 0 ? "bg-amber/25" : ""} ${cellStyle[value]}`}>
                         <span aria-hidden>{cell[value]}</span>
                         <span className="sr-only">{cellLabel[value]}</span>
                       </td>
@@ -237,44 +218,37 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <section id="faq" className="scroll-mt-4 bg-white py-20">
-          <div className="mx-auto max-w-[860px] px-4">
-            <p className={eyebrow}>คำถามที่พบบ่อย</p>
-            <h2 className={`${h2} mb-3`}>คำถามเกี่ยวกับ {landing.name}</h2>
+        <section id="faq" className="mx-auto max-w-[860px] scroll-mt-4 px-4 pb-20 md:pb-28">
+          <Sticker>คำถามที่พบบ่อย</Sticker>
+          <h2 className={`${h2} mb-8`}>คำถามเกี่ยวกับ {landing.name}</h2>
+          <div className="grid gap-3">
             {landing.faq.map((item, index) => (
-              <details key={item.q} open={index === 0} className="group border-b border-[#E5D8C5] py-[18px]">
-                <summary className="flex cursor-pointer list-none justify-between gap-4 text-[17px] font-semibold text-[#4A2C1A] [&::-webkit-details-marker]:hidden">
+              <details key={item.q} open={index === 0} className="group rounded-[28px] border-[1.5px] border-line bg-white px-6 py-1 open:bg-butter">
+                <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 rounded-full text-[17px] font-bold text-espresso focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-espresso [&::-webkit-details-marker]:hidden">
                   {item.q}
-                  <span aria-hidden className="grid size-7 shrink-0 place-items-center rounded-full bg-[#F4B942] text-lg leading-none text-[#2F2A25] transition-transform group-open:rotate-45">+</span>
+                  <span aria-hidden className="grid size-8 shrink-0 place-items-center rounded-full bg-amber text-lg leading-none text-ink transition-transform group-open:rotate-45">+</span>
                 </summary>
-                <p className={`mt-2.5 leading-[1.75] ${muted}`}>{item.a}</p>
+                <p className={`pb-4 pt-1 leading-[1.75] ${muted}`}>{item.a}</p>
               </details>
             ))}
           </div>
         </section>
 
-        <section className="mx-auto max-w-[1140px] px-4 py-20">
-          <div data-reveal className="grid items-center gap-6 overflow-hidden rounded-[32px] bg-[#4A2C1A] px-8 py-12 text-center md:grid-cols-[1fr_220px] md:text-left">
+        <Marquee words={landing.marquee.brand} tone="blush" reverse />
+
+        <SectionCard tone="espresso" className="mt-4">
+          <div data-reveal className="mx-auto grid max-w-[1000px] items-center gap-6 px-6 py-14 text-center md:grid-cols-[1fr_220px] md:px-12 md:py-20 md:text-left">
             <div>
-              <h2 className={`${heading} text-[clamp(26px,3.4vw,38px)] font-semibold leading-tight text-[#F7F1E7]`}>พร้อมเปิดร้านด้วย {landing.name} แล้วหรือยัง?</h2>
-              <p className="mb-7 mt-3 max-w-[560px] text-lg text-[#E7D6C0] max-md:mx-auto">สมัคร ตั้งเมนู และจับคู่แท็บเล็ตเครื่องแรกของร้านคุณ</p>
-              <Link href="/signup" className={primaryButton}>สมัครใช้งาน</Link>
+              <h2 className="font-display-condensed text-[clamp(28px,3.6vw,44px)] leading-[1.25]">พร้อมเปิดร้านด้วย {landing.name} แล้วหรือยัง?</h2>
+              <p className="mb-7 mt-3 max-w-[560px] text-lg text-butter max-md:mx-auto">สมัคร ตั้งเมนู และจับคู่แท็บเล็ตเครื่องแรกของร้านคุณ</p>
+              <PillLink href="/signup">สมัครใช้งาน</PillLink>
             </div>
             <Image data-motion="float" src="/landing/yelo-take-a-break.webp" alt="" width={512} height={512} className="mx-auto w-[180px] md:w-[220px]" sizes="220px" />
           </div>
-        </section>
+        </SectionCard>
       </main>
 
-      <footer className={`border-t border-[#E5D8C5] py-10 text-sm ${muted}`}>
-        <div className="mx-auto flex max-w-[1140px] flex-wrap items-center justify-between gap-4 px-4">
-          <span className="flex items-center gap-2">
-            <span className={`${wordmark} text-lg uppercase`}>{landing.name}</span>
-            <span>· ระบบ POS ร้านกาแฟพร้อมบัตรสะสมแต้ม LINE · © 2026</span>
-          </span>
-          <span className="text-xs font-medium uppercase tracking-[0.14em]">Simple / Warm / Friendly / Professional</span>
-          <span>อัปเดตล่าสุด <time dateTime={LANDING_UPDATED}>{updatedLabel}</time></span>
-        </div>
-      </footer>
+      <SiteFooter />
     </LandingMotion>
   );
 }

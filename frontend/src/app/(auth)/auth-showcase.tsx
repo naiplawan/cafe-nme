@@ -1,5 +1,8 @@
-import Image from 'next/image';
 import { ChartNoAxesCombined, Coffee, Store } from 'lucide-react';
+import Image from 'next/image';
+import { displayFont } from '@/components/site/display-font';
+import { Sticker } from '@/components/site/sticker';
+import { Wordmark } from '@/components/site/wordmark';
 
 const features = [
   { icon: Store, text: 'ดูแลหลายสาขาในบัญชีเดียว' },
@@ -12,31 +15,31 @@ export function AuthShowcase() {
     <aside
       data-auth-showcase
       aria-label="เกี่ยวกับ YELO Coffee"
-      className="relative hidden min-h-[620px] flex-col justify-between overflow-hidden rounded-[2rem] bg-[#4A2C1A] p-8 text-[#F7F1E7] shadow-[0_24px_64px_rgba(74,44,26,0.18)] lg:flex xl:p-10"
+      className={`${displayFont.variable} relative hidden min-h-[620px] flex-col justify-between overflow-hidden rounded-section bg-espresso p-8 text-cream shadow-soft lg:flex xl:p-10`}
     >
-      <div className="absolute -top-24 -right-24 size-80 rounded-full border border-white/10" aria-hidden="true" />
-      <div className="absolute -top-12 -right-12 size-56 rounded-full border border-white/10" aria-hidden="true" />
+      <div className="absolute -top-24 -right-24 size-80 rounded-full border border-cream/10" aria-hidden="true" />
+      <div className="absolute -top-12 -right-12 size-56 rounded-full border border-cream/10" aria-hidden="true" />
       <div className="relative z-10 flex items-center gap-3">
-        <Image src="/assets/yelo-coffee-mascot.png" alt="" width={48} height={48} className="rounded-xl bg-white/10 p-1" />
-        <span className="text-lg font-semibold tracking-tight">YELO Coffee</span>
+        <Image src="/assets/yelo-coffee-mascot.png" alt="" width={48} height={48} className="rounded-xl bg-cream/10 p-1" />
+        <Wordmark tone="cream" className="text-[28px]" />
       </div>
 
       <div className="relative z-10 max-w-lg py-10">
-        <p className="mb-4 inline-flex items-center rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-medium tracking-wide text-[#F4B942]">
-          เครื่องมือสำหรับร้านกาแฟของคุณ
-        </p>
-        <h2 className="text-4xl leading-[1.15] font-semibold tracking-tight xl:text-5xl">
+        <div className="mb-5">
+          <Sticker>เครื่องมือสำหรับร้านกาแฟของคุณ</Sticker>
+        </div>
+        <h2 className="font-display-condensed text-5xl leading-[1.2] xl:text-6xl">
           ดูแลทุกสาขา
           <br />
           ได้ในที่เดียว
         </h2>
-        <p className="mt-4 max-w-md text-base leading-7 text-white/70">
+        <p className="mt-4 max-w-md text-base leading-7 text-butter">
           จัดการหน้าร้าน เมนู และความสัมพันธ์กับลูกค้าได้จากพื้นที่ทำงานเดียว
         </p>
         <ul className="mt-8 space-y-4">
           {features.map(({ icon: Icon, text }) => (
-            <li key={text} className="flex items-center gap-3 text-sm font-medium text-white/90">
-              <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-white/10 text-[#F4B942]">
+            <li key={text} className="flex items-center gap-3 text-sm font-medium text-cream">
+              <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-cream/10 text-amber">
                 <Icon aria-hidden="true" size={18} />
               </span>
               {text}
@@ -46,10 +49,10 @@ export function AuthShowcase() {
       </div>
 
       <div className="relative z-10 flex items-end justify-between gap-4">
-        <p className="max-w-[220px] text-xs leading-5 text-white/55">
+        <p className="max-w-[220px] text-xs leading-5 text-butter">
           ทุกวันของร้านจัดการได้ง่ายขึ้น เมื่อข้อมูลอยู่ครบในที่เดียว
         </p>
-        <div className="relative size-36 shrink-0 overflow-hidden rounded-3xl border border-white/15 shadow-2xl xl:size-44">
+        <div className="relative size-36 shrink-0 overflow-hidden rounded-card border border-cream/15 shadow-2xl xl:size-44">
           <Image
             src="/assets/menu/pink-milk.webp"
             alt="นมชมพูเย็นจากเมนูตัวอย่าง"
